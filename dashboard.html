@@ -66,13 +66,13 @@
             // 5. Insert into Database (Matching your lowercase columns)
             const { error: dbError } = await _supabase
                 .from('Product Details')
-                .insert([{
-                    title: document.getElementById('title').value,
-                    description: document.getElementById('description').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    image_url: publicUrl,
-                    seller_id: user.id
-                }]);
+               .insert([{ 
+    title: document.getElementById('title').value,
+    description: document.getElementById('description').value,
+    price: parseFloat(document.getElementById('price').value),
+    image_url: publicUrl, // This must be lowercase!
+    seller_id: user.id    // This must be lowercase!
+}]);
 
             if (dbError) throw dbError;
 
