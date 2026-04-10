@@ -1,0 +1,24 @@
+/* Shared Forjify theme styles */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+.bg-electric-blue {
+  background-color: #2563eb;
+}
+
+.text-electric-blue {
+  color: #2563eb;
+}
+
+.bg-deep-charcoal {
+  background-color: #1a1a1a;
+}
+
+.text-deep-charcoal {
+  color: #1a1a1a;
+}
+
+.border-electric-blue {
+  border-color: #2563eb;
+}
