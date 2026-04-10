@@ -3,129 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forjify - Digital Marketplace for Creators</title>
+    <title>ariexo | Premium Digital Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-deep-charcoal text-white">
-    <nav class="bg-deep-charcoal border-b border-gray-800 sticky top-0 z-50">
+<body class="bg-deep-charcoal text-white font-['Inter']">
+
+    <nav class="fixed w-full z-50 bg-deep-charcoal/80 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
-                    <a href="/" class="text-2xl font-bold text-electric-blue">Forjify</a>
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-extrabold text-electric-blue tracking-tighter">ariexo</span>
                 </div>
+                
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="text-gray-300 hover:text-electric-blue transition-colors">Home</a>
-                    <a href="#features" class="text-gray-300 hover:text-electric-blue transition-colors">Features</a>
-                    <a href="#products" class="text-gray-300 hover:text-electric-blue transition-colors">Products</a>
-                    <a href="#pricing" class="text-gray-300 hover:text-electric-blue transition-colors">Pricing</a>
-                    <a href="/login" class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center">Login</a>
-                    <a href="/signup" class="border border-electric-blue text-electric-blue px-4 py-2 rounded-lg hover:bg-electric-blue hover:text-white transition-colors text-center">Sign Up</a>
+                    <a href="#home" class="text-sm font-medium hover:text-electric-blue transition-colors">Home</a>
+                    <a href="#features" class="text-sm font-medium hover:text-electric-blue transition-colors">Features</a>
+                    <a href="#products" class="text-sm font-medium hover:text-electric-blue transition-colors">Products</a>
                 </div>
-                <div class="md:hidden">
-                    <button id="mobileMenuBtn" class="text-gray-300 hover:text-white">
-                        <i data-lucide="menu" class="w-6 h-6"></i>
-                    </button>
+
+                <div class="flex items-center gap-4" id="nav-auth">
+                    <a href="/login" id="loginBtn" class="text-sm font-medium hover:text-electric-blue transition-colors">Login</a>
+                    <a href="/signup" id="signupBtn" class="bg-electric-blue hover:bg-blue-600 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <section id="home" class="relative overflow-hidden bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700">
-        <div class="absolute inset-0 bg-black/20"></div>
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-            <div class="text-center">
-                <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-                    Sell & Discover
-                    <span class="block bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Premium Digital Products</span>
-                </h1>
-                <p class="text-xl md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto">
-                    Join thousands of creators and businesses selling high-quality digital assets.
-                    From UI kits to templates, find everything you need to accelerate your projects.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button class="bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg">
-                        Explore Products
-                    </button>
-                    <button class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-200">
-                        Start Selling
-                    </button>
-                </div>
+    <header id="home" class="relative pt-32 pb-20 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="inline-block px-4 py-1.5 mb-6 rounded-full border border-electric-blue/30 bg-electric-blue/10 text-electric-blue text-xs font-bold tracking-widest uppercase">
+                The Future of Digital Trade
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">
+                Sell & Discover <span class="text-electric-blue">Premium</span> Digital Products
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                Join the ariexo ecosystem. From high-end UI kits to complex templates, find everything you need to scale your vision.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Explore Marketplace</a>
+                <a href="/signup" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all">Start Selling</a>
             </div>
         </div>
-    </section>
+    </header>
 
-    <section id="features" class="py-20 bg-gray-900">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Complete Platform Features</h2>
-                <p class="text-xl text-gray-300 max-w-3xl mx-auto">Everything you need for a professional digital marketplace</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
-                    <div class="flex items-center mb-6">
-                        <div class="bg-gradient-to-r from-green-500 to-emerald-500 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
-                            <i data-lucide="lock" class="w-6 h-6 text-white"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-white">Authentication System</h3>
-                    </div>
-                    <ul class="space-y-3">
-                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-3 mt-0.5"></i>Professional login/signup</li>
-                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-3 mt-0.5"></i>Secure password hashing</li>
-                    </ul>
-                </div>
-                <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
-                    <div class="flex items-center mb-6">
-                        <div class="bg-gradient-to-r from-blue-500 to-cyan-500 w-12 h-12 rounded-lg flex items-center justify-center mr-4">
-                            <i data-lucide="credit-card" class="w-6 h-6 text-white"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-white">Payment Integration</h3>
-                    </div>
-                    <ul class="space-y-3">
-                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-3 mt-0.5"></i>PayPal & Razorpay</li>
-                        <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-3 mt-0.5"></i>Secure processing</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="products" class="py-20 bg-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Featured Products</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <div class="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden">
-                    <div class="aspect-video bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-4xl">🎨</div>
-                    <div class="p-6">
-                        <h3 class="text-lg font-semibold text-white mb-2">Premium UI Kit</h3>
-                        <div class="flex justify-between items-center">
-                            <span class="text-2xl font-bold text-white">$49</span>
-                            <button class="text-electric-blue hover:underline">View</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="bg-gray-900 text-white border-t border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 py-12 text-center">
-            <h3 class="text-2xl font-bold text-electric-blue mb-4">Forjify</h3>
-            <p class="text-gray-400">© 2026 Forjify. All rights reserved.</p>
-        </div>
+    <footer class="py-12 border-t border-white/5 text-center">
+        <p class="text-3xl font-extrabold text-electric-blue tracking-tighter mb-4">ariexo</p>
+        <p class="text-gray-500 text-sm">© 2026 ariexo. All rights reserved.</p>
     </footer>
 
     <script>
-        lucide.createIcons();
-        const mobileBtn = document.getElementById('mobileMenuBtn');
-        mobileBtn.addEventListener('click', () => {
-            alert('Mobile menu navigation is under construction!');
-        });
+        // Initialize Supabase
+        const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; // Replace with your key
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Check login status to update Nav
+        async function checkUser() {
+            const { data: { user } } = await _supabase.auth.getUser();
+            const authContainer = document.getElementById('nav-auth');
+
+            if (user) {
+                authContainer.innerHTML = `
+                    <span class="text-xs text-gray-400 hidden sm:inline">${user.email}</span>
+                    <button onclick="handleLogout()" class="bg-gray-800 hover:bg-red-900/20 hover:text-red-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all">Logout</button>
+                `;
+            }
+        }
+
+        async function handleLogout() {
+            await _supabase.auth.signOut();
+            window.location.reload();
+        }
+
+        checkUser();
     </script>
 </body>
 </html>
