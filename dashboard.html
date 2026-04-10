@@ -7,11 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: #1e293b; padding: 30px; border-radius: 12px; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: none; background: #334155; color: white; }
-        button { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #64748b; }
-        label { display: block; margin-top: 10px; font-size: 0.9rem; color: #94a3b8; }
+        .container { max-width: 600px; margin: auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #64748b; cursor: not-allowed; }
+        label { display: block; margin-top: 15px; color: #94a3b8; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -22,14 +23,14 @@
         <input type="text" id="title" placeholder="Product Title" required>
         <textarea id="description" placeholder="Description" rows="4" required></textarea>
         <input type="number" id="price" placeholder="Price (e.g. 19.99)" step="0.01" required>
-        <label>Product Image:</label>
+        <label>Upload Product Image:</label>
         <input type="file" id="imageFile" accept="image/*" required>
         <button type="submit" id="submitBtn">Publish to Marketplace</button>
     </form>
 </div>
 
 <script>
-    // 1. Setup Supabase
+    // 1. Initialize Supabase
     const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -39,15 +40,15 @@
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        btn.innerText = "Uploading...";
+        btn.innerText = "Processing...";
         btn.disabled = true;
 
         try {
-            // 2. Get Authenticated User
-            const { data: { user }, error: userError } = await _supabase.auth.getUser();
+            // 2. Check Authentication
+            const { data: { user }, error: authError } = await _supabase.auth.getUser();
             if (!user) throw new Error("Please log in first.");
 
-            // 3. Upload Image to Storage
+            // 3. Upload Image
             const file = document.getElementById('imageFile').files[0];
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -59,12 +60,12 @@
 
             if (uploadError) throw uploadError;
 
-            // 4. Get Public URL
+            // 4. Get URL
             const { data: { publicUrl } } = _supabase.storage
                 .from('product-images')
                 .getPublicUrl(filePath);
 
-            // 5. Insert into Database (Must match RLS policy column: seller_id)
+            // 5. Insert Data (Crucial: Lowercase column names)
             const { error: dbError } = await _supabase
                 .from('Product Details')
                 .insert([{
@@ -72,17 +73,17 @@
                     description: document.getElementById('description').value,
                     price: parseFloat(document.getElementById('price').value),
                     image_url: publicUrl,
-                    seller_id: user.id 
+                    seller_id: user.id
                 }]);
 
             if (dbError) throw dbError;
 
-            alert("Success! Your product is live.");
+            alert("Success! Your product is now live on the marketplace.");
             form.reset();
 
         } catch (error) {
             alert("Error: " + error.message);
-            console.error("Full error details:", error);
+            console.error(error);
         } finally {
             btn.innerText = "Publish to Marketplace";
             btn.disabled = false;
