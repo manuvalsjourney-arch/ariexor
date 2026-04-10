@@ -3,86 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forjify | Login</title>
+  <title>ariexo | Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-deep-charcoal text-white min-h-screen">
-  <nav class="bg-deep-charcoal border-b border-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <a href="/" class="text-2xl font-bold text-electric-blue">Forjify</a>
-        <div class="space-x-4">
-          <a href="/signup" class="text-gray-300 hover:text-electric-blue transition-colors">Sign Up</a>
-        </div>
-      </div>
-    </div>
+<body class="bg-deep-charcoal text-white min-h-screen flex flex-col">
+  <nav class="p-6">
+    <a href="/" class="text-2xl font-bold text-electric-blue tracking-tighter">ariexo</a>
   </nav>
 
-  <main class="max-w-md mx-auto px-4 py-20">
-    <section class="bg-gray-900/95 border border-gray-800 rounded-3xl p-8 shadow-2xl">
-      <h2 class="text-2xl font-semibold text-white mb-6">Welcome Back</h2>
-      
+  <main class="flex-grow flex items-center justify-center px-4">
+    <section class="max-w-md w-full bg-gray-900/50 border border-gray-800 rounded-3xl p-8 shadow-2xl">
+      <h2 class="text-2xl font-bold mb-6">Welcome Back</h2>
       <form id="loginForm" class="space-y-4">
-        <label class="block">
-          <span class="text-gray-300">Email</span>
-          <input id="email" type="email" required class="mt-1 w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/30" placeholder="you@example.com" />
-        </label>
-
-        <label class="block">
-          <span class="text-gray-300">Password</span>
-          <input id="password" type="password" required class="mt-1 w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/30" placeholder="••••••••" />
-        </label>
-
-        <button type="submit" id="submitBtn" class="w-full bg-electric-blue hover:bg-blue-700 text-white font-semibold rounded-2xl px-4 py-3 transition mt-2">
-          Login
-        </button>
+        <input id="email" type="email" required class="w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue" placeholder="Email" />
+        <input id="password" type="password" required class="w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue" placeholder="Password" />
+        <button type="submit" id="submitBtn" class="w-full bg-electric-blue py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all">Login</button>
       </form>
-      
       <p class="mt-6 text-center text-gray-400 text-sm">
-        Don't have an account? <a href="/signup" class="text-electric-blue hover:underline">Sign up</a>
+        New here? <a href="/signup" class="text-electric-blue hover:underline">Join ariexo</a>
       </p>
     </section>
   </main>
 
   <script>
-    // 1. Initialize Supabase
     const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
+    const supabaseKey = 'YOUR_ANON_KEY';
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. Handle Login
-    const loginForm = document.getElementById('loginForm');
-    
-    loginForm.addEventListener('submit', async (e) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.innerText = "Logging in...";
-      submitBtn.disabled = true;
-
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      const { data, error } = await _supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
+      const { error } = await _supabase.auth.signInWithPassword({
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value
       });
 
-      if (error) {
-        alert("Login failed: " + error.message);
-        submitBtn.innerText = "Login";
-        submitBtn.disabled = false;
-      } else {
-        alert("Login successful!");
-        // Redirect to your main store or dashboard
-        window.location.href = "/"; 
-      }
+      if (error) alert(error.message);
+      else window.location.href = "/";
     });
-
-    lucide.createIcons();
   </script>
 </body>
 </html>
