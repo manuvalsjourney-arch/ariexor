@@ -8,9 +8,10 @@
     <style>
         body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; padding: 20px; }
         .container { max-width: 600px; margin: auto; background: #1e293b; padding: 30px; border-radius: 12px; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: none; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: none; background: #334155; color: white; }
         button { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         button:disabled { background: #64748b; }
+        label { display: block; margin-top: 10px; font-size: 0.9rem; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -28,9 +29,9 @@
 </div>
 
 <script>
-    // 1. Setup Supabase (Using your project credentials)
+    // 1. Setup Supabase
     const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; // PASTE YOUR KEY HERE
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const form = document.getElementById('productForm');
@@ -42,14 +43,14 @@
         btn.disabled = true;
 
         try {
-            // 2. Get User
+            // 2. Get Authenticated User
             const { data: { user }, error: userError } = await _supabase.auth.getUser();
             if (!user) throw new Error("Please log in first.");
 
             // 3. Upload Image to Storage
             const file = document.getElementById('imageFile').files[0];
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
             const filePath = `product-images/${fileName}`;
 
             const { error: uploadError } = await _supabase.storage
@@ -63,16 +64,16 @@
                 .from('product-images')
                 .getPublicUrl(filePath);
 
-            // 5. Insert into Database (Matching your lowercase columns)
+            // 5. Insert into Database (Must match RLS policy column: seller_id)
             const { error: dbError } = await _supabase
                 .from('Product Details')
-               .insert([{ 
-    title: document.getElementById('title').value,
-    description: document.getElementById('description').value,
-    price: parseFloat(document.getElementById('price').value),
-    image_url: publicUrl, // This must be lowercase!
-    seller_id: user.id    // This must be lowercase!
-}]);
+                .insert([{
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    price: parseFloat(document.getElementById('price').value),
+                    image_url: publicUrl,
+                    seller_id: user.id 
+                }]);
 
             if (dbError) throw dbError;
 
@@ -81,7 +82,7 @@
 
         } catch (error) {
             alert("Error: " + error.message);
-            console.error(error);
+            console.error("Full error details:", error);
         } finally {
             btn.innerText = "Publish to Marketplace";
             btn.disabled = false;
