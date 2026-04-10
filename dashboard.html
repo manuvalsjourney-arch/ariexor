@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ariexo | Seller Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --electric-blue: #007AFF; --deep-charcoal: #0a0a0a; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--deep-charcoal); }
+  </style>
+</head>
+<body class="text-white min-h-screen">
+
+  <nav class="border-b border-gray-800 p-6 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <a href="/" class="text-2xl font-bold text-blue-500 tracking-tighter">ariexo</a>
+      <div class="flex items-center gap-6">
+        <span id="userEmail" class="text-sm text-gray-400"></span>
+        <button onclick="handleLogout()" class="text-sm font-medium hover:text-red-500 transition-colors">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-4xl mx-auto px-4 py-12">
+    <div class="mb-10 text-center">
+        <h1 class="text-3xl font-bold mb-2">Seller Dashboard</h1>
+        <p class="text-gray-400">List your premium digital assets on the ariexo marketplace.</p>
+    </div>
+
+    <div class="bg-gray-900/50 border border-gray-800 rounded-3xl p-8 backdrop-blur-sm">
+      <h2 class="text-xl font-semibold mb-6">Create New Listing</h2>
+      
+      <form id="productForm" class="space-y-6">
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Product Title</label>
+                <input id="title" type="text" required class="w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-white outline-none focus:border-blue-500" placeholder="e.g. Modern UI Kit">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Price ($)</label>
+                <input id="price" type="number" step="0.01" required class="w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-white outline-none focus:border-blue-500" placeholder="29.99">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Description</label>
+            <textarea id="description" required rows="4" class="w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-white outline-none focus:border-blue-500" placeholder="Describe the features and files included..."></textarea>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-400 mb-2">Image URL</label>
+            <input id="image_url" type="url" required class="w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-white outline-none focus:border-blue-500" placeholder="https://images.unsplash.com/your-image-link">
+        </div>
+
+        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl px-4 py-4 transition-all transform hover:scale-[1.01]">
+          Publish to Marketplace
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Initial load: check if user is logged in
+    async function init() {
+        const { data: { user } } = await _supabase.auth.getUser();
+        if (!user) {
+            window.location.href = '/login';
+        } else {
+            document.getElementById('userEmail').innerText = user.email;
+        }
+    }
+
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.innerText = "Processing...";
+      btn.disabled = true;
+
+      const { data: { user } } = await _supabase.
