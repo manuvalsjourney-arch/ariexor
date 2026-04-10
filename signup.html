@@ -21,19 +21,53 @@
     </div>
   </nav>
 
-  <main class="max-w-4xl mx-auto px-4 py-16">
-    <div class="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <div class="grid gap-12 lg:grid-cols-[1fr_1fr] items-start">
       <div>
-        <p class="text-sm uppercase tracking-[0.3em] text-electric-blue mb-4">Join the community</p>
+        <p class="text-sm uppercase tracking-[0.3em] text-electric-blue mb-4">Start your journey</p>
         <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Create your creator account</h1>
-        <p class="text-gray-300 text-lg max-w-xl">
-          Start selling your digital assets or browse premium UI kits, templates, and graphics today.
+        <p class="text-gray-300 text-lg max-w-xl mb-8">
+          Join thousands of professionals buying and selling premium digital assets.
         </p>
+        
+        <div class="space-y-4">
+            <div class="flex items-start p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+                <i data-lucide="shopping-cart" class="w-6 h-6 text-electric-blue mr-4"></i>
+                <div>
+                    <h4 class="font-semibold text-white">Buyer Account</h4>
+                    <p class="text-sm text-gray-400">Access instant downloads and purchase history.</p>
+                </div>
+            </div>
+            <div class="flex items-start p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+                <i data-lucide="store" class="w-6 h-6 text-green-500 mr-4"></i>
+                <div>
+                    <h4 class="font-semibold text-white">Seller Account</h4>
+                    <p class="text-sm text-gray-400">List products and track your earnings dashboard.</p>
+                </div>
+            </div>
+        </div>
       </div>
 
       <section class="bg-gray-900/95 border border-gray-800 rounded-3xl p-8 shadow-2xl">
         <h2 class="text-2xl font-semibold text-white mb-6">Sign up</h2>
+        
         <form id="signupForm" class="space-y-4" onsubmit="event.preventDefault(); alert('Account creation coming soon!');">
+          
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <label class="relative cursor-pointer">
+                <input type="radio" name="role" value="buyer" checked class="peer sr-only">
+                <div class="p-4 text-center rounded-2xl border border-gray-700 bg-gray-900 peer-checked:border-electric-blue peer-checked:ring-1 peer-checked:ring-electric-blue transition-all">
+                    <span class="block text-sm font-medium text-gray-400 peer-checked:text-white">Buyer</span>
+                </div>
+            </label>
+            <label class="relative cursor-pointer">
+                <input type="radio" name="role" value="seller" class="peer sr-only">
+                <div class="p-4 text-center rounded-2xl border border-gray-700 bg-gray-900 peer-checked:border-electric-blue peer-checked:ring-1 peer-checked:ring-electric-blue transition-all">
+                    <span class="block text-sm font-medium text-gray-400 peer-checked:text-white">Seller</span>
+                </div>
+            </label>
+          </div>
+
           <label class="block">
             <span class="text-gray-300">Full Name</span>
             <input type="text" required class="mt-1 w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/30" placeholder="Jane Doe" />
