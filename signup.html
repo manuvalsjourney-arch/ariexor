@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forjify | Sign Up</title>
+  <title>ariexo | Sign Up</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -14,25 +14,23 @@
   <nav class="bg-deep-charcoal border-b border-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
-        <a href="/" class="text-2xl font-bold text-electric-blue">Forjify</a>
+        <a href="/" class="text-2xl font-bold text-electric-blue tracking-tighter">ariexo</a>
         <div class="space-x-4">
-          <a href="/login" class="text-gray-300 hover:text-electric-blue transition-colors">Login</a>
+          <a href="/login" class="text-gray-300 hover:text-electric-blue transition-colors text-sm font-medium">Login</a>
         </div>
       </div>
     </div>
   </nav>
 
   <main class="max-w-5xl mx-auto px-4 py-12">
-    <div class="grid gap-12 lg:grid-cols-[1fr_1fr] items-start">
+    <div class="grid gap-12 lg:grid-cols-[1fr_1fr] items-center">
       <div>
-        <p class="text-sm uppercase tracking-[0.3em] text-electric-blue mb-4">Start your journey</p>
-        <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Create your creator account</h1>
-        <p class="text-gray-300 text-lg max-w-xl mb-8">Join thousands of professionals buying and selling premium digital assets.</p>
+        <p class="text-sm uppercase tracking-[0.3em] text-electric-blue mb-4">Join the ecosystem</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Create your ariexo account</h1>
+        <p class="text-gray-400 text-lg max-w-xl mb-8">The premier marketplace for high-end digital assets.</p>
       </div>
 
-      <section class="bg-gray-900/95 border border-gray-800 rounded-3xl p-8 shadow-2xl">
-        <h2 class="text-2xl font-semibold text-white mb-6">Sign up</h2>
-        
+      <section class="bg-gray-900/50 border border-gray-800 rounded-3xl p-8 backdrop-blur-sm">
         <form id="signupForm" class="space-y-4">
           <div class="grid grid-cols-2 gap-4 mb-6">
             <label class="relative cursor-pointer">
@@ -49,18 +47,11 @@
             </label>
           </div>
 
-          <label class="block">
-            <span class="text-gray-300">Email</span>
-            <input id="email" type="email" required class="mt-1 w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/30" placeholder="you@example.com" />
-          </label>
+          <input id="email" type="email" required class="w-full rounded-2xl border border-gray-700 bg-gray-900/50 px-4 py-3 text-white outline-none focus:border-electric-blue" placeholder="Email Address" />
+          <input id="password" type="password" required minlength="8" class="w-full rounded-2xl border border-gray-700 bg-gray-900/50 px-4 py-3 text-white outline-none focus:border-electric-blue" placeholder="Password (8+ chars)" />
 
-          <label class="block">
-            <span class="text-gray-300">Password</span>
-            <input id="password" type="password" required minlength="8" class="mt-1 w-full rounded-2xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none focus:border-electric-blue focus:ring-2 focus:ring-electric-blue/30" placeholder="Min. 8 characters" />
-          </label>
-
-          <button type="submit" id="submitBtn" class="w-full bg-electric-blue hover:bg-blue-700 text-white font-semibold rounded-2xl px-4 py-3 transition mt-2">
-            Create Account
+          <button type="submit" id="submitBtn" class="w-full bg-electric-blue hover:bg-blue-600 text-white font-bold rounded-2xl px-4 py-4 transition-all transform hover:scale-[1.01] mt-4">
+            Get Started
           </button>
         </form>
       </section>
@@ -68,44 +59,33 @@
   </main>
 
   <script>
-    // 1. Initialize Supabase
     const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-    // IMPORTANT: Paste your actual long ANON KEY inside the quotes below
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
+    const supabaseKey = 'YOUR_ANON_KEY'; 
     const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. Handle Form Submission
-    const signupForm = document.getElementById('signupForm');
-    
-    signupForm.addEventListener('submit', async (e) => {
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const submitBtn = document.getElementById('submitBtn');
-      submitBtn.innerText = "Creating account...";
-      submitBtn.disabled = true;
+      const btn = document.getElementById('submitBtn');
+      btn.innerText = "Verifying...";
+      btn.disabled = true;
 
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const role = document.querySelector('input[name="role"]:checked').value;
 
       const { data, error } = await _supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: { user_role: role }
-        }
+        email, password, options: { data: { role: role } }
       });
 
       if (error) {
-        alert("Error: " + error.message);
-        submitBtn.innerText = "Create Account";
-        submitBtn.disabled = false;
+        alert(error.message);
+        btn.innerText = "Get Started";
+        btn.disabled = false;
       } else {
-        alert("Success! Check your email for a confirmation link.");
+        alert("Account created! Welcome to ariexo.");
         window.location.href = "/login";
       }
     });
-
-    lucide.createIcons();
   </script>
 </body>
 </html>
