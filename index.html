@@ -49,23 +49,54 @@
             </div>
         </div>
     </header>
-
+<section id="products" class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-extrabold mb-12">Latest Products</h2>
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                </div>
+        </div>
+    </section>
     <footer class="py-12 border-t border-white/5 text-center">
         <p class="text-3xl font-extrabold text-electric-blue tracking-tighter mb-4">ariexo</p>
         <p class="text-gray-500 text-sm">© 2026 ariexo. All rights reserved.</p>
     </footer>
 
     <script>
-        // Initialize Supabase
+      // Initialize Supabase
         const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; // Replace with your key
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Check login status to update Nav
+        // 1. Fetch products from the 'product_details' table
+        async function loadProducts() {
+            const { data, error } = await _supabase
+                .from('product_details') 
+                .select('*');
+
+            if (error) {
+                console.error('Error:', error);
+                return;
+            }
+
+            const grid = document.getElementById('products-grid');
+            if (data && grid) {
+                grid.innerHTML = data.map(product => `
+                    <div class="bg-gray-900 p-6 rounded-2xl border border-white/5 hover:border-electric-blue/50 transition-all">
+                        <img src="${product.image_url}" class="w-full h-48 object-cover rounded-xl mb-4">
+                        <h3 class="text-xl font-bold mb-2">${product.title}</h3>
+                        <div class="flex justify-between items-center">
+                            <p class="text-electric-blue font-bold">$${product.price}</p>
+                            <button class="bg-white text-black px-4 py-2 rounded-lg text-sm font-bold">Buy Now</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 2. Check login status
         async function checkUser() {
             const { data: { user } } = await _supabase.auth.getUser();
             const authContainer = document.getElementById('nav-auth');
-
             if (user) {
                 authContainer.innerHTML = `
                     <span class="text-xs text-gray-400 hidden sm:inline">${user.email}</span>
@@ -79,7 +110,9 @@
             window.location.reload();
         }
 
+        // Run functions
         checkUser();
+        loadProducts(); 
     </script>
 </body>
 </html>
