@@ -21,11 +21,12 @@
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#home" class="text-sm font-medium hover:text-electric-blue transition-colors">Home</a>
                     <a href="#products" class="text-sm font-medium hover:text-electric-blue transition-colors">Products</a>
+                    <a href="analytics.html" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
                 </div>
 
                 <div class="flex items-center gap-4" id="nav-auth">
-                    <a href="/login" id="loginBtn" class="text-sm font-medium hover:text-electric-blue transition-colors">Login</a>
-                    <a href="/signup" id="signupBtn" class="bg-electric-blue hover:bg-blue-600 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
+                    <a href="login.html" id="loginBtn" class="text-sm font-medium hover:text-electric-blue transition-colors">Login</a>
+                    <a href="signup.html" id="signupBtn" class="bg-electric-blue hover:bg-blue-600 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
                 </div>
             </div>
         </div>
@@ -42,9 +43,11 @@
             <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
                 Join the ariexo ecosystem. Find everything you need to scale your vision.
             </p>
+            
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Explore Marketplace</a>
-                <a href="/dashboard.html" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all">Start Selling</a>
+                <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all text-center">Explore Marketplace</a>
+                <a href="dashboard.html" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all text-center">Start Selling</a>
+                <a href="analytics.html" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all text-center">View Analytics</a>
             </div>
         </div>
     </header>
@@ -63,17 +66,12 @@
     </footer>
 
     <script>
-        // Initialize Supabase
         const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 1. Fetch products from the 'product_details' table
         async function loadProducts() {
-            const { data, error } = await _supabase
-                .from('product_details') 
-                .select('*');
-
+            const { data, error } = await _supabase.from('product_details').select('*');
             if (error) {
                 console.error('Error fetching products:', error);
                 return;
@@ -87,8 +85,8 @@
                             <img src="${product.image_url}" class="w-full h-48 object-cover rounded-xl mb-4" alt="${product.title}">
                             <h3 class="text-xl font-bold mb-2">${product.title}</h3>
                             <div class="flex justify-between items-center">
-                                <p class="text-electric-blue font-bold">$${product.price}</p>
-                                <span class="text-xs text-gray-500 group-hover:text-electric-blue transition-colors">View Details →</span>
+                                <span class="text-electric-blue font-bold">$${product.price}</span>
+                                <span class="text-xs text-gray-500">View Details →</span>
                             </div>
                         </div>
                     </a>
@@ -96,26 +94,8 @@
             }
         }
 
-        // 2. Check login status to update Nav UI
-        async function checkUser() {
-            const { data: { user } } = await _supabase.auth.getUser();
-            const authContainer = document.getElementById('nav-auth');
-            if (user) {
-                authContainer.innerHTML = `
-                    <span class="text-xs text-gray-400 hidden sm:inline">${user.email}</span>
-                    <button onclick="handleLogout()" class="bg-gray-800 hover:bg-red-900/20 hover:text-red-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all">Logout</button>
-                `;
-            }
-        }
-
-        async function handleLogout() {
-            await _supabase.auth.signOut();
-            window.location.reload();
-        }
-
-        // Run functions on page load
-        checkUser();
         loadProducts();
     </script>
 </body>
 </html>
+
