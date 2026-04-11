@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | ariexo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-[#0a0a0a] text-white font-['Inter']">
+
+    <nav class="p-6 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="text-2xl font-extrabold text-[#00f0ff] tracking-tighter">ariexo</a>
+            <a href="/" class="text-sm font-medium hover:text-[#00f0ff] transition-colors">← Back to Marketplace</a>
+        </div>
+    </nav>
+
+    <main id="product-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00f0ff]"></div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function loadProductDetails() {
+            // Get ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Fetch specific product
+            const { data: product, error } = await _supabase
+                .from('product_details')
+                .select('*')
+                .eq('id', productId)
+                .single();
+
+            const container = document.getElementById('product-content');
+
+            if (error || !product) {
+                container.innerHTML = `<div class="text-center py-20"><h1 class="text-2xl font-bold">Product not found.</h1><a href="/" class="text-[#00f0ff] mt-4 block underline">Return Home</a></div>`;
+                return;
+            }
+
+            // Render Product
+            container.innerHTML = `
+                <div class="grid md:grid-cols-2 gap-16 items-start">
+                    <div class="relative group">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-[#00f0ff] to-blue-600 rounded-3xl blur opacity-25"></div>
+                        <img src="${product.image_url}" class="relative w-full rounded-2xl border border-white/10 shadow-2xl" alt="${product.title}">
+                    </div>
+                    
+                    <div>
+                        <div class="inline-block px-3 py-1 rounded-full bg-[#00f0ff]/10 text-[#00f0ff] text-xs font-bold uppercase tracking-widest mb-6">Verified Digital Asset</div>
+                        <h1 class="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">${product.title}</h1>
+                        <p class="text-3xl text-[#00f0ff] font-bold mb-8">$${product.price}</p>
+                        
+                        <div class="space-y-6 text-gray-400 text-lg leading-relaxed mb-10">
+                            <p>${product.description || 'Experience high-quality digital craftsmanship with this exclusive ariexo listing. Perfect for creators and developers looking to scale their vision.'}</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-4">
+                            <button class="w-full bg-white text-black py-4 rounded-xl font-bold hover:bg-gray-200 transition-all transform hover:scale-[1.02]">
+                                Purchase Digital License
+                            </button>
+                            <div class="flex items-center gap-2 text-sm text-gray-500 justify-center py-2">
+                                <span>✔ Instant Download</span>
+                                <span>•</span>
+                                <span>✔ Secure Payment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        loadProductDetails();
+    </script>
+</body>
+</html>
