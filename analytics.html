@@ -12,6 +12,7 @@
         .glass-card { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
         .neon-glow-blue { box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
         .stat-value { background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="p-6 lg:p-12">
@@ -20,7 +21,7 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
             <div>
                 <h1 class="text-4xl font-extrabold tracking-tight">Analytics</h1>
-                <p class="text-slate-500 mt-1 uppercase text-xs tracking-[0.2em] font-bold">Performance Dashboard</p>
+                <p class="text-slate-500 mt-1 uppercase text-xs tracking-[0.2em] font-bold">Your Performance Dashboard</p>
             </div>
             <div class="flex gap-3">
                 <a href="index.html" class="glass-card px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-2">
@@ -36,7 +37,7 @@
             <div class="glass-card p-6 rounded-3xl neon-glow-blue">
                 <div class="flex items-center gap-3 mb-4 text-indigo-400">
                     <i data-lucide="package" class="w-5 h-5"></i>
-                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Total Assets</span>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">My Assets</span>
                 </div>
                 <h2 id="totalItems" class="text-3xl font-bold stat-value">0</h2>
             </div>
@@ -44,7 +45,7 @@
             <div class="glass-card p-6 rounded-3xl">
                 <div class="flex items-center gap-3 mb-4 text-emerald-400">
                     <i data-lucide="dollar-sign" class="w-5 h-5"></i>
-                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Market Value</span>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Inventory Value</span>
                 </div>
                 <h2 id="totalValue" class="text-3xl font-bold stat-value">$0.00</h2>
             </div>
@@ -52,24 +53,24 @@
             <div class="glass-card p-6 rounded-3xl">
                 <div class="flex items-center gap-3 mb-4 text-purple-400">
                     <i data-lucide="trending-up" class="w-5 h-5"></i>
-                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Avg. Listing</span>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Avg. Price</span>
                 </div>
                 <h2 id="avgPrice" class="text-3xl font-bold stat-value">$0.00</h2>
             </div>
 
             <div class="glass-card p-6 rounded-3xl">
                 <div class="flex items-center gap-3 mb-4 text-blue-400">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Account Type</span>
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-bold tracking-widest uppercase text-slate-500">Status</span>
                 </div>
-                <h2 class="text-3xl font-bold stat-value uppercase tracking-tighter">Seller</h2>
+                <h2 class="text-3xl font-bold stat-value uppercase tracking-tighter">Verified</h2>
             </div>
         </div>
 
         <div class="glass-card rounded-[2rem] overflow-hidden border-white/5">
             <div class="p-8 border-b border-white/5 flex justify-between items-center">
-                <h3 class="text-lg font-bold">Listing Management</h3>
-                <span class="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full font-bold uppercase tracking-widest">Live Sync</span>
+                <h3 class="text-lg font-bold">My Listings</h3>
+                <span class="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full font-bold uppercase tracking-widest">Secured</span>
             </div>
             
             <div class="overflow-x-auto">
@@ -82,14 +83,13 @@
                             <th class="px-8 py-5 text-right">Control</th>
                         </tr>
                     </thead>
-                    <tbody id="inventoryList" class="divide-y divide-white/5">
-                        </tbody>
+                    <tbody id="inventoryList" class="divide-y divide-white/5"></tbody>
                 </table>
             </div>
             
             <div id="loading" class="p-20 text-center">
                 <div class="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p class="text-slate-500 text-sm font-medium">Syncing with Marketplace...</p>
+                <p class="text-slate-500 text-sm font-medium">Loading your products...</p>
             </div>
         </div>
     </div>
@@ -103,11 +103,22 @@
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function fetchAnalytics() {
-            // Using your specific seller_id found in the product_details table
+            // 1. Identify the current user
+            const { data: { user }, error: userError } = await sb.auth.getUser();
+
+            if (!user) {
+                // If not logged in, they can't see analytics
+                document.getElementById('loading').innerHTML = `
+                    <p class="text-slate-400">Please <a href="login.html" class="text-indigo-400 font-bold underline">Login</a> to view your analytics.</p>
+                `;
+                return;
+            }
+
+            // 2. Fetch ONLY products where seller_id matches this user
             const { data, error } = await sb
                 .from('product_details')
                 .select('*')
-                .eq('seller_id', '0ace8f40-0d76-43ef-826a-ea6c977b750b')
+                .eq('seller_id', user.id)
                 .order('id', { ascending: false });
 
             const list = document.getElementById('inventoryList');
@@ -116,9 +127,9 @@
             if (data && data.length > 0) {
                 loading.classList.add('hidden');
                 
-                // Update Global Stats
+                // Update Global Stats for this user only
                 document.getElementById('totalItems').innerText = data.length;
-                const totalValue = data.reduce((sum, item) => sum + (item.price || 0), 0);
+                const totalValue = data.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
                 document.getElementById('totalValue').innerText = `$${totalValue.toLocaleString()}`;
                 document.getElementById('avgPrice').innerText = `$${(totalValue / data.length).toFixed(2)}`;
 
@@ -135,13 +146,10 @@
                         </td>
                         <td class="px-8 py-6">
                             <span class="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md w-fit">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Active
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active
                             </span>
                         </td>
-                        <td class="px-8 py-6">
-                            <span class="text-lg font-mono font-bold text-indigo-400">$${item.price}</span>
-                        </td>
+                        <td class="px-8 py-6 font-mono font-bold text-indigo-400">$${item.price}</td>
                         <td class="px-8 py-6 text-right">
                             <button onclick="deleteAsset(${item.id})" class="p-2 hover:bg-red-500/10 text-slate-600 hover:text-red-500 rounded-xl transition-all">
                                 <i data-lucide="trash-2" class="w-5 h-5"></i>
@@ -151,14 +159,15 @@
                 `).join('');
                 lucide.createIcons();
             } else {
-                loading.innerHTML = `<p class="text-slate-500">No active listings found.</p>`;
+                loading.innerHTML = `<p class="text-slate-500">You haven't listed any products yet.</p>`;
             }
         }
 
         async function deleteAsset(id) {
-            if(confirm('Are you sure you want to remove this asset from the market?')) {
+            if(confirm('Are you sure you want to delete this listing?')) {
                 const { error } = await sb.from('product_details').delete().eq('id', id);
                 if (!error) fetchAnalytics();
+                else alert("Error deleting: " + error.message);
             }
         }
 
