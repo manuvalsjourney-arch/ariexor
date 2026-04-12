@@ -1,91 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ariexo | Sign Up</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join ariexo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f0f1a; color: #e2e8f0; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .input-glass { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); }
+        /* Style for selected role */
+        input[type="radio"]:checked + label { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); color: white; }
+    </style>
 </head>
-<body class="bg-deep-charcoal text-white min-h-screen">
-  <nav class="bg-deep-charcoal border-b border-gray-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <a href="/" class="text-2xl font-bold text-electric-blue tracking-tighter">ariexo</a>
-        <div class="space-x-4">
-          <a href="/login" class="text-gray-300 hover:text-electric-blue transition-colors text-sm font-medium">Login</a>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-md">
+        <div class="glass-card rounded-[2.5rem] p-10 shadow-2xl">
+            <h1 class="text-3xl font-bold mb-2">Create Account</h1>
+            <p class="text-slate-400 mb-6 text-sm">Join the global marketplace.</p>
+
+            <form id="signupForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <input type="radio" name="userRole" id="roleBuyer" value="buyer" class="hidden" checked>
+                        <label for="roleBuyer" class="flex flex-col items-center justify-center p-4 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/5 transition-all text-slate-400">
+                            <span class="text-2xl mb-1">🛍️</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Buyer</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" name="userRole" id="roleSeller" value="seller" class="hidden">
+                        <label for="roleSeller" class="flex flex-col items-center justify-center p-4 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/5 transition-all text-slate-400">
+                            <span class="text-2xl mb-1">🚀</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Seller</span>
+                        </label>
+                    </div>
+                </div>
+
+                <input type="text" id="fullName" required placeholder="Full Name" class="input-glass w-full p-4 rounded-2xl text-white">
+                <input type="email" id="email" required placeholder="Email Address" class="input-glass w-full p-4 rounded-2xl text-white">
+                <input type="password" id="password" required placeholder="Password" class="input-glass w-full p-4 rounded-2xl text-white">
+                
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 py-4 rounded-2xl font-bold hover:bg-indigo-500 transition-all mt-4">
+                    Sign Up
+                </button>
+            </form>
         </div>
-      </div>
     </div>
-  </nav>
 
-  <main class="max-w-5xl mx-auto px-4 py-12">
-    <div class="grid gap-12 lg:grid-cols-[1fr_1fr] items-center">
-      <div>
-        <p class="text-sm uppercase tracking-[0.3em] text-electric-blue mb-4">Join the ecosystem</p>
-        <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Create your ariexo account</h1>
-        <p class="text-gray-400 text-lg max-w-xl mb-8">The premier marketplace for high-end digital assets.</p>
-      </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-      <section class="bg-gray-900/50 border border-gray-800 rounded-3xl p-8 backdrop-blur-sm">
-        <form id="signupForm" class="space-y-4">
-          <div class="grid grid-cols-2 gap-4 mb-6">
-            <label class="relative cursor-pointer">
-                <input type="radio" name="role" value="buyer" checked class="peer sr-only">
-                <div class="p-4 text-center rounded-2xl border border-gray-700 bg-gray-900 peer-checked:border-electric-blue peer-checked:ring-1 peer-checked:ring-electric-blue transition-all">
-                    <span class="block text-sm font-medium text-gray-400 peer-checked:text-white">Buyer</span>
-                </div>
-            </label>
-            <label class="relative cursor-pointer">
-                <input type="radio" name="role" value="seller" class="peer sr-only">
-                <div class="p-4 text-center rounded-2xl border border-gray-700 bg-gray-900 peer-checked:border-electric-blue peer-checked:ring-1 peer-checked:ring-electric-blue transition-all">
-                    <span class="block text-sm font-medium text-gray-400 peer-checked:text-white">Seller</span>
-                </div>
-            </label>
-          </div>
+        document.getElementById('signupForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const selectedRole = document.querySelector('input[name="userRole"]:checked').value;
+            
+            btn.innerText = "Creating account...";
+            
+            const { data, error } = await sb.auth.signUp({
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                options: { 
+                    data: { 
+                        full_name: document.getElementById('fullName').value,
+                        role: selectedRole // SAVING THE ROLE HERE
+                    } 
+                }
+            });
 
-          <input id="email" type="email" required class="w-full rounded-2xl border border-gray-700 bg-gray-900/50 px-4 py-3 text-white outline-none focus:border-electric-blue" placeholder="Email Address" />
-          <input id="password" type="password" required minlength="8" class="w-full rounded-2xl border border-gray-700 bg-gray-900/50 px-4 py-3 text-white outline-none focus:border-electric-blue" placeholder="Password (8+ chars)" />
-
-          <button type="submit" id="submitBtn" class="w-full bg-electric-blue hover:bg-blue-600 text-white font-bold rounded-2xl px-4 py-4 transition-all transform hover:scale-[1.01] mt-4">
-            Get Started
-          </button>
-        </form>
-      </section>
-    </div>
-  </main>
-
-  <script>
-    const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
-    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      btn.innerText = "Verifying...";
-      btn.disabled = true;
-
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const role = document.querySelector('input[name="role"]:checked').value;
-
-      const { data, error } = await _supabase.auth.signUp({
-        email, password, options: { data: { role: role } }
-      });
-
-      if (error) {
-        alert(error.message);
-        btn.innerText = "Get Started";
-        btn.disabled = false;
-      } else {
-        alert("Account created! Welcome to ariexo.");
-        window.location.href = "/login";
-      }
-    });
-  </script>
+            if (error) {
+                alert(error.message);
+                btn.innerText = "Sign Up";
+            } else {
+                // Save to localStorage so the website knows immediately
+                localStorage.setItem('userRole', selectedRole);
+                alert('Success! Check your email to confirm.');
+                window.location.href = 'index.html';
+            }
+        };
+    </script>
 </body>
 </html>
