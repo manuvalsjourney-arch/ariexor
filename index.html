@@ -7,47 +7,57 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <style>
         .hidden { display: none !important; }
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
-<body class="bg-deep-charcoal text-white font-['Inter']">
+<body class="bg-[#0b0b14] text-white font-['Inter']">
 
-    <nav class="fixed w-full z-50 bg-deep-charcoal/80 backdrop-blur-md border-b border-white/5">
+    <nav class="fixed w-full z-50 bg-[#0b0b14]/80 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
-                <div class="flex items-center gap-2"><span class="text-3xl font-extrabold text-electric-blue tracking-tighter">ariexo</span></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter">ariexo</span>
+                </div>
+                
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="text-sm font-medium hover:text-electric-blue transition-colors">Home</a>
-                    <a href="#products" class="text-sm font-medium hover:text-electric-blue transition-colors">Products</a>
+                    <a href="#home" class="text-sm font-medium hover:text-indigo-400 transition-colors">Home</a>
+                    <a href="#products" class="text-sm font-medium hover:text-indigo-400 transition-colors">Products</a>
                     <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
                 </div>
+
                 <div class="flex items-center gap-4" id="nav-auth">
-                    <a href="login.html" class="text-sm font-medium hover:text-electric-blue transition-colors">Login</a>
-                    <a href="signup.html" class="bg-electric-blue px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
+                    <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
+                    <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <header id="home" class="relative pt-32 pb-20 overflow-hidden text-center">
-        <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">Sell & Discover <span class="text-electric-blue">Premium</span> Products</h1>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold">Explore Marketplace</a>
-            <a href="dashboard.html" id="heroSell" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold">Start Selling</a>
-            <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold">View Analytics</a>
+    <header id="home" class="relative pt-40 pb-20 overflow-hidden text-center">
+        <div class="max-w-7xl mx-auto px-4">
+            <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter">
+                Premium <span class="text-indigo-500">Digital</span> Assets
+            </h1>
+            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+                Join the ariexo ecosystem. One account to buy or sell everything.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Explore Marketplace</a>
+                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all">Start Selling</a>
+                <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all">View Analytics</a>
+            </div>
         </div>
     </header>
 
     <section id="products" class="py-20 max-w-7xl mx-auto px-4">
-        <h2 class="text-3xl font-extrabold mb-12 text-center">Latest Products</h2>
+        <h2 class="text-3xl font-extrabold mb-12">Latest Drops</h2>
         <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
     </section>
 
     <footer class="py-12 border-t border-white/5 text-center">
-        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-gray-700 hover:text-gray-400 uppercase tracking-widest">Switch Account Type</button>
+        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Reset Account Type</button>
     </footer>
 
     <script>
@@ -56,33 +66,48 @@
         function applyRoleUI() {
             const role = localStorage.getItem('userRole');
             const sellerElements = [document.getElementById('navAnalytics'), document.getElementById('heroSell'), document.getElementById('heroAnalytics')];
-            if (role === 'buyer') sellerElements.forEach(el => el && el.classList.add('hidden'));
+            if (role === 'buyer') {
+                sellerElements.forEach(el => el && el.classList.add('hidden'));
+            }
         }
 
         async function updateNavAuth() {
             const { data: { session } } = await sb.auth.getSession();
             if (session) {
                 document.getElementById('nav-auth').innerHTML = `
-                    <span class="text-sm text-gray-400">Welcome, ${session.user.user_metadata.full_name || 'User'}</span>
-                    <button onclick="sb.auth.signOut().then(() => location.reload())" class="text-sm font-medium hover:text-red-400">Logout</button>
+                    <span class="text-sm text-slate-400 mr-2">Hi, ${session.user.user_metadata.full_name || 'User'}</span>
+                    <button onclick="handleLogout()" class="text-sm font-bold text-red-400 hover:text-red-300 transition-colors">Logout</button>
                 `;
             }
         }
 
+        async function handleLogout() {
+            await sb.auth.signOut();
+            localStorage.removeItem('userRole');
+            window.location.reload();
+        }
+
         async function loadProducts() {
-            const { data } = await sb.from('product_details').select('*');
+            const { data } = await sb.from('product_details').select('*').order('id', { ascending: false });
             if (data) {
                 document.getElementById('products-grid').innerHTML = data.map(p => `
-                    <a href="product-details.html?id=${p.id}" class="block glass-card p-6 rounded-2xl">
-                        <img src="${p.image_url}" class="w-full h-48 object-cover rounded-xl mb-4">
-                        <h3 class="text-xl font-bold">${p.title}</h3>
-                        <p class="text-electric-blue font-bold">$${p.price}</p>
+                    <a href="product-details.html?id=${p.id}" class="block group glass-card p-6 rounded-[2rem] hover:border-indigo-500/50 transition-all">
+                        <img src="${p.image_url}" class="w-full h-56 object-cover rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform">
+                        <h3 class="text-xl font-bold mb-2">${p.title}</h3>
+                        <div class="flex justify-between items-center">
+                            <span class="text-indigo-400 font-bold">$${p.price}</span>
+                            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Details →</span>
+                        </div>
                     </a>
                 `).join('');
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => { applyRoleUI(); updateNavAuth(); loadProducts(); });
+        document.addEventListener('DOMContentLoaded', () => { 
+            applyRoleUI(); 
+            updateNavAuth(); 
+            loadProducts(); 
+        });
     </script>
 </body>
 </html>
