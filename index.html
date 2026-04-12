@@ -18,115 +18,71 @@
     <nav class="fixed w-full z-50 bg-deep-charcoal/80 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
-                <div class="flex items-center gap-2">
-                    <span class="text-3xl font-extrabold text-electric-blue tracking-tighter">ariexo</span>
-                </div>
-                
+                <div class="flex items-center gap-2"><span class="text-3xl font-extrabold text-electric-blue tracking-tighter">ariexo</span></div>
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#home" class="text-sm font-medium hover:text-electric-blue transition-colors">Home</a>
                     <a href="#products" class="text-sm font-medium hover:text-electric-blue transition-colors">Products</a>
                     <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
                 </div>
-
                 <div class="flex items-center gap-4" id="nav-auth">
-                    <a href="login.html" id="loginBtn" class="text-sm font-medium hover:text-electric-blue transition-colors">Login</a>
-                    <a href="signup.html" id="signupBtn" class="bg-electric-blue hover:bg-blue-600 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
+                    <a href="login.html" class="text-sm font-medium hover:text-electric-blue transition-colors">Login</a>
+                    <a href="signup.html" class="bg-electric-blue px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <header id="home" class="relative pt-32 pb-20 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="inline-block px-4 py-1.5 mb-6 rounded-full border border-electric-blue/30 bg-electric-blue/10 text-electric-blue text-xs font-bold tracking-widest uppercase">
-                The Future of Digital Trade
-            </div>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">
-                Sell & Discover <span class="text-electric-blue">Premium</span> Digital Products
-            </h1>
-            <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-                Join the ariexo ecosystem. Find everything you need to scale your vision.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all text-center">Explore Marketplace</a>
-                
-                <a href="dashboard.html" id="heroSell" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all text-center">Start Selling</a>
-                <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all text-center">View Analytics</a>
-            </div>
+    <header id="home" class="relative pt-32 pb-20 overflow-hidden text-center">
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-8 tracking-tight">Sell & Discover <span class="text-electric-blue">Premium</span> Products</h1>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold">Explore Marketplace</a>
+            <a href="dashboard.html" id="heroSell" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold">Start Selling</a>
+            <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold">View Analytics</a>
         </div>
     </header>
 
-    <section id="products" class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-extrabold mb-12">Latest Products</h2>
-            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                </div>
-        </div>
+    <section id="products" class="py-20 max-w-7xl mx-auto px-4">
+        <h2 class="text-3xl font-extrabold mb-12 text-center">Latest Products</h2>
+        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
     </section>
 
     <footer class="py-12 border-t border-white/5 text-center">
-        <p class="text-3xl font-extrabold text-electric-blue tracking-tighter mb-4">ariexo</p>
-        <p class="text-gray-500 text-sm mb-4">© 2026 ariexo. All rights reserved.</p>
-        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-gray-700 hover:text-gray-400 uppercase tracking-widest transition-colors">Switch Account Type</button>
+        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-gray-700 hover:text-gray-400 uppercase tracking-widest">Switch Account Type</button>
     </footer>
 
     <script>
-        // 1. Role Logic - No Modal needed anymore!
+        const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
+
         function applyRoleUI() {
             const role = localStorage.getItem('userRole');
-            
-            const sellerElements = [
-                document.getElementById('navAnalytics'),
-                document.getElementById('heroSell'),
-                document.getElementById('heroAnalytics')
-            ];
+            const sellerElements = [document.getElementById('navAnalytics'), document.getElementById('heroSell'), document.getElementById('heroAnalytics')];
+            if (role === 'buyer') sellerElements.forEach(el => el && el.classList.add('hidden'));
+        }
 
-            // If the user picked "buyer" during sign-up, hide the seller tools
-            if (role === 'buyer') {
-                sellerElements.forEach(el => {
-                    if(el) el.classList.add('hidden');
-                });
-                console.log("Buyer mode active: Seller tools hidden.");
-            } else {
-                // Otherwise show them (for Sellers or guest users)
-                sellerElements.forEach(el => {
-                    if(el) el.classList.remove('hidden');
-                });
+        async function updateNavAuth() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                document.getElementById('nav-auth').innerHTML = `
+                    <span class="text-sm text-gray-400">Welcome, ${session.user.user_metadata.full_name || 'User'}</span>
+                    <button onclick="sb.auth.signOut().then(() => location.reload())" class="text-sm font-medium hover:text-red-400">Logout</button>
+                `;
             }
         }
 
-        // 2. Supabase Logic
-        const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
-        const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
         async function loadProducts() {
-            const { data, error } = await _supabase.from('product_details').select('*');
-            if (error) return;
-
-            const grid = document.getElementById('products-grid');
-            if (data && grid) {
-                grid.innerHTML = data.map(product => `
-                    <a href="product-details.html?id=${product.id}" class="block group">
-                        <div class="bg-gray-900 p-6 rounded-2xl border border-white/5 group-hover:border-electric-blue/50 transition-all h-full shadow-xl">
-                            <img src="${product.image_url}" class="w-full h-48 object-cover rounded-xl mb-4" alt="${product.title}">
-                            <h3 class="text-xl font-bold mb-2">${product.title}</h3>
-                            <div class="flex justify-between items-center">
-                                <span class="text-electric-blue font-bold">$${product.price}</span>
-                                <span class="text-xs text-gray-500">View Details →</span>
-                            </div>
-                        </div>
+            const { data } = await sb.from('product_details').select('*');
+            if (data) {
+                document.getElementById('products-grid').innerHTML = data.map(p => `
+                    <a href="product-details.html?id=${p.id}" class="block glass-card p-6 rounded-2xl">
+                        <img src="${p.image_url}" class="w-full h-48 object-cover rounded-xl mb-4">
+                        <h3 class="text-xl font-bold">${p.title}</h3>
+                        <p class="text-electric-blue font-bold">$${p.price}</p>
                     </a>
                 `).join('');
             }
         }
 
-        // Run functions on load
-        document.addEventListener('DOMContentLoaded', () => {
-            applyRoleUI();
-            loadProducts();
-        });
+        document.addEventListener('DOMContentLoaded', () => { applyRoleUI(); updateNavAuth(); loadProducts(); });
     </script>
 </body>
 </html>
