@@ -8,8 +8,27 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .hidden { display: none !important; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
 </head>
 <body class="bg-deep-charcoal text-white font-['Inter']">
+
+    <div id="roleModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl">
+        <div class="text-center p-10 bg-gray-900 rounded-[2.5rem] border border-white/10 max-w-md mx-4 shadow-2xl">
+            <h2 class="text-3xl font-extrabold mb-4 text-white tracking-tighter">Welcome to ariexo</h2>
+            <p class="text-gray-400 mb-8">Are you here to explore the marketplace or to manage your digital business?</p>
+            <div class="flex flex-col gap-4">
+                <button onclick="setRole('buyer')" class="py-4 px-6 bg-white text-black font-bold rounded-2xl hover:bg-gray-200 transition-all transform hover:scale-105">
+                    🛍️ I am a Buyer
+                </button>
+                <button onclick="setRole('seller')" class="py-4 px-6 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-all transform hover:scale-105">
+                    🚀 I am a Seller
+                </button>
+            </div>
+        </div>
+    </div>
 
     <nav class="fixed w-full z-50 bg-deep-charcoal/80 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,7 +40,7 @@
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#home" class="text-sm font-medium hover:text-electric-blue transition-colors">Home</a>
                     <a href="#products" class="text-sm font-medium hover:text-electric-blue transition-colors">Products</a>
-                    <a href="analytics.html" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
+                    <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
                 </div>
 
                 <div class="flex items-center gap-4" id="nav-auth">
@@ -46,8 +65,8 @@
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all text-center">Explore Marketplace</a>
-                <a href="dashboard.html" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all text-center">Start Selling</a>
-                <a href="analytics.html" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all text-center">View Analytics</a>
+                <a href="dashboard.html" id="heroSell" class="bg-gray-900 border border-gray-800 px-8 py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all text-center">Start Selling</a>
+                <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all text-center">View Analytics</a>
             </div>
         </div>
     </header>
@@ -62,26 +81,56 @@
 
     <footer class="py-12 border-t border-white/5 text-center">
         <p class="text-3xl font-extrabold text-electric-blue tracking-tighter mb-4">ariexo</p>
-        <p class="text-gray-500 text-sm">© 2026 ariexo. All rights reserved.</p>
+        <p class="text-gray-500 text-sm mb-4">© 2026 ariexo. All rights reserved.</p>
+        <button onclick="localStorage.removeItem('userRole'); location.reload();" class="text-[10px] text-gray-700 hover:text-gray-500 uppercase tracking-widest">Change Persona</button>
     </footer>
 
     <script>
+        // 1. Role Logic
+        function setRole(role) {
+            localStorage.setItem('userRole', role);
+            applyRoleUI();
+        }
+
+        function applyRoleUI() {
+            const role = localStorage.getItem('userRole');
+            const modal = document.getElementById('roleModal');
+            
+            if (!role) {
+                modal.classList.remove('hidden');
+                return;
+            } else {
+                modal.classList.add('hidden');
+            }
+
+            // Elements to hide for Buyers
+            const sellerElements = [
+                document.getElementById('navAnalytics'),
+                document.getElementById('heroSell'),
+                document.getElementById('heroAnalytics')
+            ];
+
+            if (role === 'buyer') {
+                sellerElements.forEach(el => {
+                    if(el) el.classList.add('hidden');
+                });
+            }
+        }
+
+        // 2. Supabase Logic
         const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
         const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function loadProducts() {
             const { data, error } = await _supabase.from('product_details').select('*');
-            if (error) {
-                console.error('Error fetching products:', error);
-                return;
-            }
+            if (error) return;
 
             const grid = document.getElementById('products-grid');
             if (data && grid) {
                 grid.innerHTML = data.map(product => `
                     <a href="product-details.html?id=${product.id}" class="block group">
-                        <div class="bg-gray-900 p-6 rounded-2xl border border-white/5 group-hover:border-electric-blue/50 transition-all h-full">
+                        <div class="bg-gray-900 p-6 rounded-2xl border border-white/5 group-hover:border-electric-blue/50 transition-all h-full shadow-xl">
                             <img src="${product.image_url}" class="w-full h-48 object-cover rounded-xl mb-4" alt="${product.title}">
                             <h3 class="text-xl font-bold mb-2">${product.title}</h3>
                             <div class="flex justify-between items-center">
@@ -94,7 +143,11 @@
             }
         }
 
-        loadProducts();
+        // Run on Load
+        document.addEventListener('DOMContentLoaded', () => {
+            applyRoleUI();
+            loadProducts();
+        });
     </script>
 </body>
 </html>
