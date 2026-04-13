@@ -7,43 +7,75 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        .hidden { display: none !important; }
+        #imageModal { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); }
+    </style>
 </head>
 <body class="bg-[#0b0b14] text-white font-['Inter'] p-6 md:p-12">
-    <div id="product-content" class="max-w-5xl mx-auto">
-        <div class="animate-pulse flex flex-col gap-8">
-            <div class="h-96 bg-slate-900 rounded-3xl w-full"></div>
-            <div class="h-10 bg-slate-900 rounded w-1/2"></div>
-        </div>
+
+    <div id="imageModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
+        <img id="modalImg" src="" class="max-w-full max-h-full rounded-lg shadow-2xl transition-transform duration-300">
     </div>
+
+    <div id="product-content" class="max-w-5xl mx-auto">
+        </div>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-        async function handlePurchase() {
+        function openModal(src) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImg');
+            img.src = src;
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Stop scrolling
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Enable scrolling
+        }
+
+        async function handlePurchase(fileUrl) {
             const { data: { session } } = await sb.auth.getSession();
             if (!session) {
-                alert("Please log in to make a purchase!");
+                alert("Please login to purchase and download!");
                 window.location.href = 'login.html';
                 return;
             }
-            alert("Redirecting to secure checkout...");
+
+            // If a file_url exists, give them the download link
+            if (fileUrl && fileUrl !== "NULL") {
+                alert("Success! Your download is ready.");
+                window.open(fileUrl, '_blank');
+            } else {
+                alert("This item is successfully purchased! (No file attached by seller yet)");
+            }
         }
 
         async function loadDetails() {
-            const id = new URLSearchParams(window.location.search).get('id');
-            const { data, error } = await sb.from('product_details').select('*').eq('id', id).single();
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            
+            const { data, error } = await sb.from('product_details').select('*').eq('id', productId).single();
             
             if (data) {
                 document.getElementById('product-content').innerHTML = `
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        <img src="${data.image_url}" class="w-full h-[500px] object-cover rounded-[2.5rem] shadow-2xl">
+                        <div class="relative group cursor-zoom-in" onclick="openModal('${data.image_url}')">
+                            <img src="${data.image_url}" class="w-full h-[500px] object-cover rounded-[2.5rem] shadow-2xl group-hover:opacity-90 transition-all">
+                            <div class="absolute bottom-6 right-6 bg-black/50 backdrop-blur-md p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize-2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                            </div>
+                        </div>
                         <div class="flex flex-col justify-center">
                             <h1 class="text-5xl font-extrabold mb-4 tracking-tighter">${data.title}</h1>
                             <p class="text-2xl text-indigo-400 font-bold mb-6">$${data.price}</p>
                             <div class="bg-white/5 p-8 rounded-3xl mb-8 border border-white/5">
                                 <p class="text-slate-400 leading-relaxed">${data.description}</p>
                             </div>
-                            <button onclick="handlePurchase()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02]">
+                            <button onclick="handlePurchase('${data.file_url}')" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02]">
                                 Purchase Asset
                             </button>
                             <a href="index.html" class="text-center mt-6 text-slate-500 hover:text-white transition-colors text-sm">← Back to Marketplace</a>
@@ -52,6 +84,7 @@
                 `;
             }
         }
+
         loadDetails();
     </script>
 </body>
