@@ -11,17 +11,33 @@
 <body class="bg-[#0b0b14] text-white flex items-center justify-center min-h-screen p-6">
     <div class="w-full max-w-xl bg-slate-900/50 p-10 rounded-[2.5rem] border border-white/5 backdrop-blur-xl">
         <h1 class="text-3xl font-bold mb-8">List New Asset</h1>
+        
         <form id="productForm" class="space-y-6">
-            <input type="text" id="title" required placeholder="Asset Title" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
-            <input type="number" id="price" required step="0.01" placeholder="Price (USD)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
-            <textarea id="description" rows="3" required placeholder="Asset Description" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none"></textarea>
+            <input type="text" id="title" required placeholder="Asset Title (e.g. Forest Green Planner)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
             
-            <div class="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors relative">
-                <p id="fileName" class="text-slate-400">Click to upload product image</p>
-                <input type="file" id="imageInput" accept="image/*" required class="absolute inset-0 opacity-0 cursor-pointer">
+            <input type="number" id="price" required step="0.01" placeholder="Price (USD)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
+            
+            <textarea id="description" rows="3" required placeholder="Asset Description" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none"></textarea>
+
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">1. Shop Preview Image</label>
+                <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-indigo-500 transition-colors relative">
+                    <p id="imageFileName" class="text-slate-400">Upload Thumbnail (PNG/JPG)</p>
+                    <input type="file" id="imageInput" accept="image/*" required class="absolute inset-0 opacity-0 cursor-pointer">
+                </div>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all">Publish Listing</button>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">2. Printable Asset (The PDF)</label>
+                <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-emerald-500 transition-colors relative">
+                    <p id="pdfFileName" class="text-slate-400">Upload Printable PDF</p>
+                    <input type="file" id="pdfInput" accept=".pdf" required class="absolute inset-0 opacity-0 cursor-pointer">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all">
+                Publish Listing
+            </button>
         </form>
     </div>
 
@@ -35,37 +51,59 @@
         }
         checkAuth();
 
+        // Show file names when selected
         document.getElementById('imageInput').onchange = (e) => {
-            if(e.target.files[0]) document.getElementById('fileName').innerText = e.target.files[0].name;
+            if(e.target.files[0]) document.getElementById('imageFileName').innerText = "🖼️ " + e.target.files[0].name;
+        };
+        document.getElementById('pdfInput').onchange = (e) => {
+            if(e.target.files[0]) document.getElementById('pdfFileName').innerText = "📄 " + e.target.files[0].name;
         };
 
         document.getElementById('productForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.disabled = true; btn.innerText = "Processing...";
+            btn.disabled = true;
+            btn.innerText = "Uploading assets...";
 
-            const { data: { user } } = await sb.auth.getUser();
-            const file = document.getElementById('imageInput').files[0];
-            const filePath = `products/${Date.now()}-${file.name}`;
+            try {
+                const { data: { user } } = await sb.auth.getUser();
+                
+                // 1. Upload Preview Image
+                const imgFile = document.getElementById('imageInput').files[0];
+                const imgPath = `previews/${Date.now()}-${imgFile.name}`;
+                const { error: imgErr } = await sb.storage.from('product-images').upload(imgPath, imgFile);
+                if (imgErr) throw imgErr;
+                const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
 
-            // Upload image
-            const { error: upErr } = await sb.storage.from('product-images').upload(filePath, file);
-            if (upErr) { alert(upErr.message); btn.disabled = false; return; }
+                // 2. Upload Printable PDF
+                const pdfFile = document.getElementById('pdfInput').files[0];
+                const pdfPath = `downloads/${Date.now()}-${pdfFile.name}`;
+                const { error: pdfErr } = await sb.storage.from('product-images').upload(pdfPath, pdfFile);
+                if (pdfErr) throw pdfErr;
+                const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
 
-            const { data: urlData } = sb.storage.from('product-images').getPublicUrl(filePath);
+                // 3. Save everything to the product_details table
+                const { error: dbError } = await sb.from('product_details').insert([{
+                    title: document.getElementById('title').value,
+                    price: parseFloat(document.getElementById('price').value),
+                    description: document.getElementById('description').value,
+                    image_url: imgData.publicUrl,
+                    file_url: pdfData.publicUrl, // Matches your new Supabase column
+                    seller_id: user.id
+                }]);
 
-            // Save product with dynamic seller_id
-            const { error } = await sb.from('product_details').insert([{
-                title: document.getElementById('title').value,
-                price: parseFloat(document.getElementById('price').value),
-                description: document.getElementById('description').value,
-                image_url: urlData.publicUrl,
-                seller_id: user.id
-            }]);
+                if (dbError) throw dbError;
 
-            if (error) alert(error.message);
-            else window.location.href = 'analytics.html';
+                window.location.href = 'analytics.html';
+
+            } catch (err) {
+                alert("Upload failed: " + err.message);
+                btn.disabled = false;
+                btn.innerText = "Publish Listing";
+            }
         };
+
+        lucide.createIcons();
     </script>
 </body>
 </html>
