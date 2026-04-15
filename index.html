@@ -14,10 +14,10 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        /* Smooth search focus effect */
         #productSearch:focus {
             box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
         }
+        html { scroll-behavior: smooth; }
     </style>
 </head>
 <body class="bg-[#0b0b14] text-white font-['Inter']">
@@ -49,6 +49,14 @@
             <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
                 Join the ariexo ecosystem. One account to buy or sell everything.
             </p>
+
+            <div class="relative max-w-xl mx-auto mb-8">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+                <input type="text" id="productSearch" 
+                       placeholder="Search products..." 
+                       class="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-indigo-500 transition-all text-lg glass-card">
+            </div>
+
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Explore Marketplace</a>
                 <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all">Start Selling</a>
@@ -58,15 +66,8 @@
     </header>
 
     <section id="products" class="py-20 max-w-7xl mx-auto px-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+        <div class="mb-12">
             <h2 class="text-3xl font-extrabold">Latest Drops</h2>
-            
-            <div class="relative w-full md:w-96">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
-                <input type="text" id="productSearch" 
-                       placeholder="Search products..." 
-                       class="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-3 outline-none focus:border-indigo-500 transition-all">
-            </div>
         </div>
 
         <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -74,6 +75,7 @@
         
         <div id="no-results" class="hidden text-center py-20">
             <p class="text-slate-500 text-xl">No products found matching your search.</p>
+            <button onclick="document.getElementById('productSearch').value=''; renderProducts(cachedProducts);" class="text-indigo-400 mt-4 underline">Clear search</button>
         </div>
     </section>
 
@@ -90,12 +92,7 @@
 
         async function loadProducts() {
             const { data, error } = await sb.from('product_details').select('*').order('id', { ascending: false });
-            
-            if (error) {
-                console.error('Error fetching products:', error);
-                return;
-            }
-
+            if (error) { console.error('Error:', error); return; }
             if (data) {
                 cachedProducts = data;
                 renderProducts(cachedProducts);
@@ -125,16 +122,20 @@
             `).join('');
         }
 
-        // Search Logic
+        // Search logic - filters and scrolls to results if needed
         document.getElementById('productSearch').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             const filtered = cachedProducts.filter(p => 
                 p.title.toLowerCase().includes(query)
             );
             renderProducts(filtered);
+            
+            // Optional: Automatically scroll down to results when user types
+            if(query.length > 1) {
+                document.getElementById('products').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         });
 
-        // Auth UI Logic
         function updateAuthUI() {
             const role = localStorage.getItem('userRole');
             const navAuth = document.getElementById('nav-auth');
@@ -144,14 +145,14 @@
 
             if (role === 'seller') {
                 navAuth.innerHTML = `<span class="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-full border border-indigo-500/20">SELLER MODE</span>`;
-                navAnalytics.classList.remove('hidden');
-                heroAnalytics.classList.remove('hidden');
-                heroSell.classList.remove('hidden');
-            } else if (role === 'buyer') {
+                navAnalytics?.classList.remove('hidden');
+                heroAnalytics?.classList.remove('hidden');
+                heroSell?.classList.remove('hidden');
+            } else {
                 navAuth.innerHTML = `<span class="text-xs font-bold bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full border border-emerald-500/20">BUYER MODE</span>`;
-                navAnalytics.classList.add('hidden');
-                heroAnalytics.classList.add('hidden');
-                heroSell.classList.add('hidden');
+                navAnalytics?.classList.add('hidden');
+                heroAnalytics?.classList.add('hidden');
+                heroSell?.classList.add('hidden');
             }
         }
 
