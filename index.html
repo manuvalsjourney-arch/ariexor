@@ -9,7 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .hidden { display: none !important; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Smooth search focus effect */
+        #productSearch:focus {
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
+        }
     </style>
 </head>
 <body class="bg-[#0b0b14] text-white font-['Inter']">
@@ -20,13 +28,11 @@
                 <div class="flex items-center gap-2">
                     <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter">ariexo</span>
                 </div>
-                
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#home" class="text-sm font-medium hover:text-indigo-400 transition-colors">Home</a>
                     <a href="#products" class="text-sm font-medium hover:text-indigo-400 transition-colors">Products</a>
                     <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
                 </div>
-
                 <div class="flex items-center gap-4" id="nav-auth">
                     <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
                     <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
@@ -52,62 +58,107 @@
     </header>
 
     <section id="products" class="py-20 max-w-7xl mx-auto px-4">
-        <h2 class="text-3xl font-extrabold mb-12">Latest Drops</h2>
-        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+            <h2 class="text-3xl font-extrabold">Latest Drops</h2>
+            
+            <div class="relative w-full md:w-96">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+                <input type="text" id="productSearch" 
+                       placeholder="Search products..." 
+                       class="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-3 outline-none focus:border-indigo-500 transition-all">
+            </div>
+        </div>
+
+        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            </div>
+        
+        <div id="no-results" class="hidden text-center py-20">
+            <p class="text-slate-500 text-xl">No products found matching your search.</p>
+        </div>
     </section>
 
     <footer class="py-12 border-t border-white/5 text-center">
-        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">Reset Account Type</button>
+        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">
+            Reset Account Type
+        </button>
     </footer>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-        function applyRoleUI() {
-            const role = localStorage.getItem('userRole');
-            const sellerElements = [document.getElementById('navAnalytics'), document.getElementById('heroSell'), document.getElementById('heroAnalytics')];
-            if (role === 'buyer') {
-                sellerElements.forEach(el => el && el.classList.add('hidden'));
-            }
-        }
-
-        async function updateNavAuth() {
-            const { data: { session } } = await sb.auth.getSession();
-            if (session) {
-                document.getElementById('nav-auth').innerHTML = `
-                    <span class="text-sm text-slate-400 mr-2">Hi, ${session.user.user_metadata.full_name || 'User'}</span>
-                    <button onclick="handleLogout()" class="text-sm font-bold text-red-400 hover:text-red-300 transition-colors">Logout</button>
-                `;
-            }
-        }
-
-        async function handleLogout() {
-            await sb.auth.signOut();
-            localStorage.removeItem('userRole');
-            window.location.reload();
-        }
+        let cachedProducts = [];
 
         async function loadProducts() {
-            const { data } = await sb.from('product_details').select('*').order('id', { ascending: false });
+            const { data, error } = await sb.from('product_details').select('*').order('id', { ascending: false });
+            
+            if (error) {
+                console.error('Error fetching products:', error);
+                return;
+            }
+
             if (data) {
-                document.getElementById('products-grid').innerHTML = data.map(p => `
-                    <a href="product-details.html?id=${p.id}" class="block group glass-card p-6 rounded-[2rem] hover:border-indigo-500/50 transition-all">
-                        <img src="${p.image_url}" class="w-full h-56 object-cover rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform">
-                        <h3 class="text-xl font-bold mb-2">${p.title}</h3>
-                        <div class="flex justify-between items-center">
-                            <span class="text-indigo-400 font-bold">$${p.price}</span>
-                            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Details →</span>
-                        </div>
-                    </a>
-                `).join('');
+                cachedProducts = data;
+                renderProducts(cachedProducts);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => { 
-            applyRoleUI(); 
-            updateNavAuth(); 
-            loadProducts(); 
+        function renderProducts(products) {
+            const grid = document.getElementById('products-grid');
+            const noResults = document.getElementById('no-results');
+
+            if (products.length === 0) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            noResults.classList.add('hidden');
+            grid.innerHTML = products.map(p => `
+                <a href="product-details.html?id=${p.id}" class="block group glass-card p-6 rounded-[2rem] hover:border-indigo-500/50 transition-all">
+                    <img src="${p.image_url}" class="w-full h-56 object-cover rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform" alt="${p.title}">
+                    <h3 class="text-xl font-bold mb-2">${p.title}</h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-indigo-400 font-bold">$${p.price}</span>
+                        <span class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Details →</span>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        // Search Logic
+        document.getElementById('productSearch').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = cachedProducts.filter(p => 
+                p.title.toLowerCase().includes(query)
+            );
+            renderProducts(filtered);
         });
+
+        // Auth UI Logic
+        function updateAuthUI() {
+            const role = localStorage.getItem('userRole');
+            const navAuth = document.getElementById('nav-auth');
+            const navAnalytics = document.getElementById('navAnalytics');
+            const heroSell = document.getElementById('heroSell');
+            const heroAnalytics = document.getElementById('heroAnalytics');
+
+            if (role === 'seller') {
+                navAuth.innerHTML = `<span class="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-full border border-indigo-500/20">SELLER MODE</span>`;
+                navAnalytics.classList.remove('hidden');
+                heroAnalytics.classList.remove('hidden');
+                heroSell.classList.remove('hidden');
+            } else if (role === 'buyer') {
+                navAuth.innerHTML = `<span class="text-xs font-bold bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full border border-emerald-500/20">BUYER MODE</span>`;
+                navAnalytics.classList.add('hidden');
+                heroAnalytics.classList.add('hidden');
+                heroSell.classList.add('hidden');
+            }
+        }
+
+        window.onload = () => {
+            loadProducts();
+            updateAuthUI();
+        };
     </script>
 </body>
 </html>
