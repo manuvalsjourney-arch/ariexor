@@ -41,7 +41,7 @@
 
     <header id="home" class="relative pt-52 pb-32 text-center">
         <div class="max-w-7xl mx-auto px-4">
-            <h1 class="text-7xl md:text-9xl font-black mb-8 tracking-tighter uppercase">Premium <span class="text-indigo-500">Digital</span> Assets</h1>
+            <h1 class="text-7xl md:text-9xl font-black mb-8 tracking-tighter uppercase leading-none">Premium <span class="text-indigo-500">Digital</span> Assets</h1>
             <div class="relative max-w-2xl mx-auto mb-12">
                 <input type="text" id="productSearch" placeholder="Search marketplace..." class="w-full bg-white/5 border border-white/10 rounded-[2rem] px-8 py-6 outline-none glass-card text-xl transition-all focus:border-indigo-500">
             </div>
@@ -55,6 +55,9 @@
     <section id="products" class="py-32 max-w-7xl mx-auto px-4">
         <h2 class="text-5xl font-black tracking-tighter mb-20 uppercase">Latest <span class="text-indigo-500">Drops</span></h2>
         <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"></div>
+        <div id="no-results" class="hidden text-center py-20">
+            <p class="text-slate-500 text-xl">No products found.</p>
+        </div>
     </section>
 
     <section id="about" class="py-40 max-w-7xl mx-auto px-4 border-t border-white/5">
@@ -77,7 +80,7 @@
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
         
-        // Both seller IDs from your database are authorized
+        // These are the IDs that have products in your table right now
         const AUTHORIZED_SELLER_IDS = ['e0bed6bb-f967-436b-9cb2-76c78a5538d5', 'eac5edf1-621a-419d-91ce-ac7bd20b00e9'];
         let cachedProducts = [];
 
@@ -87,9 +90,9 @@
                 console.error("Supabase Error:", error);
                 return;
             }
-            if (data) { 
-                cachedProducts = data; 
-                renderProducts(data); 
+            if (data) {
+                cachedProducts = data;
+                renderProducts(data);
             }
         }
 
@@ -98,4 +101,46 @@
             const role = localStorage.getItem('userRole');
 
             grid.innerHTML = products.map((p, index) => {
-                const isOwner = (role === 'seller' && AUTHORIZED_SELLER_IDS
+                const isOwner = (role === 'seller' && AUTHORIZED_SELLER_IDS.includes(p.seller_id));
+                
+                // Keep the tools inside the card layout but separated from the main link
+                const adminTools = isOwner ? `
+                    <div class="flex gap-3 mt-auto pt-6 border-t border-white/10">
+                        <a href="dashboard.html?edit=${p.id}" class="flex-1 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 py-3 rounded-xl text-[10px] uppercase font-bold text-center transition-all">Edit Listing</a>
+                        <button onclick="deleteProduct(${p.id}, '${p.seller_id}')" class="px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all">🗑️</button>
+                    </div>` : '';
+
+                return `
+                <div class="product-card glass-card p-8 rounded-[3rem] flex flex-col h-full" style="animation-delay: ${index * 0.1}s">
+                    <div class="flex-grow">
+                        <a href="product-details.html?id=${p.id}" class="block group">
+                            <img src="${p.image_url}" class="w-full h-64 object-cover rounded-[2rem] mb-8 transition-transform group-hover:scale-[1.02]">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-2xl font-black tracking-tight leading-tight">${p.title}</h3>
+                                <span class="text-indigo-400 font-black text-2xl tracking-tighter">$${p.price}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Details →</span>
+                        </a>
+                    </div>
+                    ${adminTools}
+                </div>`;
+            }).join('');
+        }
+
+        async function deleteProduct(id, ownerId) {
+            if (!AUTHORIZED_SELLER_IDS.includes(ownerId)) return;
+            if (confirm("Permanently delete this product?")) {
+                const { error } = await sb.from('product_details').delete().eq('id', id);
+                if (!error) loadProducts();
+            }
+        }
+
+        document.getElementById('productSearch').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = cachedProducts.filter(p => p.title.toLowerCase().includes(query) || p.description.toLowerCase().includes(query));
+            renderProducts(filtered);
+        });
+
+        function updateAuthUI() {
+            const role = localStorage.getItem('userRole');
+            if (role === 'seller') document.getElementById('heroSell').classList.remove('hidden');
