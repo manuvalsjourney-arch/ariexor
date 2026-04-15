@@ -13,176 +13,98 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
-        input:focus, textarea:focus { border-color: #6366f1 !important; outline: none; }
-        .nav-blur { background: rgba(11, 11, 20, 0.8); backdrop-filter: blur(12px); }
+        body { background: #0b0b14; font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="text-white min-h-screen flex items-center justify-center p-6">
 
-    <nav class="fixed w-full z-50 nav-blur border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='index.html'">ariexo</span>
-            </div>
-            
-            <div class="flex items-center gap-8">
-                <a href="index.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Marketplace</a>
-                <a href="index.html#about" class="text-sm font-medium hover:text-indigo-400 transition-colors">About</a>
-                <div class="h-6 w-[1px] bg-white/10"></div>
-                <button onclick="localStorage.clear(); window.location.href='index.html';" class="text-sm font-medium text-slate-400 hover:text-white">Logout</button>
-            </div>
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem]">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
+            <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
         </div>
-    </nav>
 
-    <main class="flex-grow pt-32 pb-20 flex items-center justify-center px-4">
-        <div class="w-full max-w-2xl glass-card p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-            <div class="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/10 blur-[100px] rounded-full"></div>
-
-            <div class="relative z-10">
-                <h1 id="pageTitle" class="text-4xl font-extrabold tracking-tighter mb-2">List New <span class="text-indigo-500">Asset</span></h1>
-                <p class="text-slate-500 text-sm mb-10 font-medium tracking-wide uppercase">Seller Management Portal</p>
-
-                <form id="productForm" class="space-y-6">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
-                        <input type="text" id="title" placeholder="e.g. Vintage Journal Bundle" 
-                               class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mt-1 transition-all" required>
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Detailed Description</label>
-                        <textarea id="description" placeholder="Describe the value of this digital good..." 
-                                  class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl h-32 mt-1 transition-all" required></textarea>
-                    </div>
-
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Price (USD)</label>
-                        <input type="number" id="price" step="0.01" placeholder="0.00" 
-                               class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl mt-1 transition-all" required>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-white/5">
-                        <div>
-                            <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Preview Image (JPG/PNG)</label>
-                            <input type="file" id="imageInput" accept="image/*" 
-                                   class="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 transition-all">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Digital File (PDF/ZIP)</label>
-                            <input type="file" id="pdfInput" accept=".pdf,.zip" 
-                                   class="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 transition-all">
-                        </div>
-                    </div>
-
-                    <div class="pt-6">
-                        <button type="submit" id="submitBtn" 
-                                class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform active:scale-95 shadow-xl shadow-indigo-500/20">
-                            Publish to Storefront
-                        </button>
-                        <p class="text-center text-[10px] text-slate-600 mt-4 uppercase tracking-[0.2em]">Verified Seller Secure Upload</p>
-                    </div>
-                </form>
+        <form id="uploadForm" class="space-y-6">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Product Title</label>
+                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" 
+                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
             </div>
-        </div>
-    </main>
 
-    <footer class="py-10 text-center text-slate-600 text-[10px] uppercase tracking-widest border-t border-white/5">
-        &copy; 2026 ariexo digital ecosystem
-    </footer>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Description</label>
+                <textarea id="description" placeholder="Describe your asset..." 
+                          class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 h-32 transition-all mt-1" required></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Price ($)</label>
+                    <input type="number" id="price" step="0.01" placeholder="9.99" 
+                           class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Category</label>
+                    <input type="text" id="category" placeholder="Planner, UI, etc." 
+                           class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Preview Image URL</label>
+                <input type="url" id="image_url" placeholder="https://example.com/image.jpg" 
+                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                <p class="text-[10px] text-slate-500 mt-2 ml-1">Tip: Use Unsplash or your Supabase Storage URL.</p>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Downloadable File URL</label>
+                <input type="url" id="file_url" placeholder="https://example.com/file.pdf" 
+                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+            </div>
+
+            <button type="submit" id="submitBtn" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-indigo-500/20">
+                Publish Product
+            </button>
+        </form>
+    </div>
 
     <script>
+        // Supabase Configuration
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
-        
-        // YOUR SPECIFIC SELLER ID FOR SECURITY
-        const MY_SELLER_ID = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5';
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const editId = urlParams.get('edit');
 
-        async function initDashboard() {
-            // Check if user is even allowed to be here
-            const role = localStorage.getItem('userRole');
-            if (role !== 'seller') {
-                alert("Restricted Area: Sellers Only.");
-                window.location.href = 'index.html';
-                return;
-            }
-
-            if (editId) {
-                const { data, error } = await sb.from('product_details').select('*').eq('id', editId).single();
-                
-                // Security check: You can only edit your own products
-                if (data && data.seller_id === MY_SELLER_ID) {
-                    document.getElementById('pageTitle').innerHTML = "Update <span class='text-indigo-500'>Listing</span>";
-                    document.getElementById('submitBtn').innerText = "Update Asset Details";
-                    document.getElementById('title').value = data.title;
-                    document.getElementById('description').value = data.description;
-                    document.getElementById('price').value = data.price;
-                } else {
-                    alert("Unauthorized Access Attempt.");
-                    window.location.href = 'index.html';
-                }
-            }
-        }
-
-        document.getElementById('productForm').onsubmit = async (e) => {
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            
+            btn.innerText = "Publishing to Marketplace...";
             btn.disabled = true;
-            btn.innerText = "Encrypting & Uploading...";
 
-            const imgFile = document.getElementById('imageInput').files[0];
-            const pdfFile = document.getElementById('pdfInput').files[0];
-            const timestamp = Date.now();
+            // Gathering data from the form
+            const newProduct = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                price: parseFloat(document.getElementById('price').value),
+                image_url: document.getElementById('image_url').value,
+                file_url: document.getElementById('file_url').value,
+                // Using your specific Seller UUID from your Supabase Table
+                seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5' 
+            };
 
-            try {
-                let payload = {
-                    title: document.getElementById('title').value,
-                    description: document.getElementById('description').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    seller_id: MY_SELLER_ID
-                };
+            // Inserting into the 'product_details' table
+            const { data, error } = await sb.from('product_details').insert([newProduct]);
 
-                // Handle Image Upload
-                if (imgFile) {
-                    const path = `previews/${timestamp}-${imgFile.name}`;
-                    const { error: uploadErr } = await sb.storage.from('product-images').upload(path, imgFile);
-                    if (uploadErr) throw uploadErr;
-                    payload.image_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-                }
-
-                // Handle Digital Asset Upload
-                if (pdfFile) {
-                    const path = `downloads/${timestamp}-${pdfFile.name}`;
-                    const { error: uploadErr } = await sb.storage.from('product-images').upload(path, pdfFile);
-                    if (uploadErr) throw uploadErr;
-                    payload.file_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-                }
-
-                if (editId) {
-                    // SECURE UPDATE
-                    const { error } = await sb.from('product_details').update(payload).eq('id', editId).eq('seller_id', MY_SELLER_ID);
-                    if (error) throw error;
-                    alert("Listing Updated Successfully.");
-                } else {
-                    // SECURE INSERT
-                    if (!imgFile || !pdfFile) throw new Error("New listings require both a preview image and a digital file.");
-                    const { error } = await sb.from('product_details').insert([payload]);
-                    if (error) throw error;
-                    alert("Listing Published Successfully.");
-                }
-
-                window.location.href = 'index.html';
-
-            } catch (err) {
-                alert("Operational Error: " + err.message);
+            if (error) {
+                alert("Upload failed: " + error.message);
+                btn.innerText = "Publish Product";
                 btn.disabled = false;
-                btn.innerText = editId ? "Update Asset Details" : "Publish to Storefront";
+            } else {
+                alert("Success! Your product is now live on ariexo.");
+                // Redirecting back to index to see the new product
+                window.location.href = 'index.html';
             }
-        };
-
-        window.onload = initDashboard;
+        });
     </script>
 </body>
 </html>
