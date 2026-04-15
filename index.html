@@ -9,14 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .hidden { display: none !important; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        #productSearch:focus {
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        #productSearch:focus { box-shadow: 0 0 20px rgba(79, 70, 229, 0.2); }
         html { scroll-behavior: smooth; }
         .nav-blur { background: rgba(11, 11, 20, 0.8); backdrop-filter: blur(12px); }
         .share-btn:hover { background: #4f46e5 !important; color: white !important; }
@@ -26,137 +20,116 @@
 
     <nav class="fixed w-full z-50 nav-blur border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='#home'">ariexo</span>
-            </div>
-            
+            <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='#home'">ariexo</span>
             <div class="hidden md:flex items-center space-x-8">
-                <a href="#home" class="text-sm font-medium hover:text-indigo-400 transition-colors">Home</a>
-                <a href="#products" class="text-sm font-medium hover:text-indigo-400 transition-colors">Products</a>
-                <a href="#about" class="text-sm font-medium hover:text-indigo-400 transition-colors">About</a>
-                <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors hidden">Analytics</a>
+                <a href="#home" class="text-sm font-medium hover:text-indigo-400">Home</a>
+                <a href="#products" class="text-sm font-medium hover:text-indigo-400">Products</a>
+                <a href="#about" class="text-sm font-medium hover:text-indigo-400">About</a>
+                <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hidden">Analytics</a>
             </div>
-
             <div class="flex items-center gap-4" id="nav-auth">
-                <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
-                <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
+                <a href="login.html" class="text-sm font-medium">Login</a>
+                <a href="signup.html" class="bg-indigo-600 px-6 py-2.5 rounded-full text-sm font-bold">Sign Up</a>
             </div>
         </div>
     </nav>
 
-    <header id="home" class="relative pt-48 pb-24 overflow-hidden text-center">
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-indigo-600/10 blur-[120px] rounded-full -z-10"></div>
-        
+    <header id="home" class="pt-48 pb-24 text-center">
         <div class="max-w-7xl mx-auto px-4">
-            <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter">
-                Premium <span class="text-indigo-500">Digital</span> Assets
-            </h1>
-            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
-                The world's most curated ecosystem for high-quality digital goods. One account to buy, sell, and scale.
-            </p>
-
+            <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter">Premium <span class="text-indigo-500">Digital</span> Assets</h1>
             <div class="relative max-w-xl mx-auto mb-10">
                 <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
-                <input type="text" id="productSearch" 
-                       placeholder="Search marketplace..." 
-                       class="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-indigo-500 transition-all text-lg glass-card">
+                <input type="text" id="productSearch" placeholder="Search marketplace..." class="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-indigo-500 transition-all text-lg glass-card">
             </div>
-
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#products" class="bg-white text-black px-10 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all transform hover:scale-[1.02]">Explore Assets</a>
-                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-10 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all hidden">Start Selling</a>
+                <a href="#products" class="bg-white text-black px-10 py-4 rounded-2xl font-bold">Explore Assets</a>
+                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-10 py-4 rounded-2xl font-bold hidden">Start Selling</a>
             </div>
         </div>
     </header>
 
     <section id="products" class="py-24 max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-end mb-16">
-            <div>
-                <h2 class="text-4xl font-extrabold tracking-tighter">Latest Drops</h2>
-                <p class="text-slate-500 mt-2">Verified premium assets added recently.</p>
-            </div>
-        </div>
-
+        <h2 class="text-4xl font-extrabold mb-12 tracking-tighter">Latest Drops</h2>
         <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
-        
-        <div id="no-results" class="hidden text-center py-32">
-            <p class="text-slate-500 text-xl font-medium">No matches found for your search.</p>
-            <button onclick="document.getElementById('productSearch').value=''; renderProducts(cachedProducts);" class="text-indigo-400 mt-4 underline font-bold">Show all products</button>
-        </div>
+        <div id="no-results" class="hidden text-center py-32"><p class="text-slate-500">No products found.</p></div>
     </section>
 
     <section id="about" class="py-32 max-w-7xl mx-auto px-4 border-t border-white/5">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
-                <h2 class="text-5xl font-extrabold mb-8 tracking-tighter">
-                    Empowering <span class="text-indigo-500">Creators</span> <br>Everywhere.
-                </h2>
-                <p class="text-slate-400 text-lg leading-relaxed mb-10">
-                    ariexo is a boutique digital marketplace designed for modern artisans. We remove the complexity of digital sales, allowing you to focus on your craft while we handle the distribution.
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div class="flex items-start gap-4">
-                        <div class="bg-indigo-500/10 p-2 rounded-lg text-indigo-400">✓</div>
-                        <div>
-                            <h4 class="font-bold">Instant Access</h4>
-                            <p class="text-xs text-slate-500 mt-1">Download your assets the second your purchase completes.</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-4">
-                        <div class="bg-indigo-500/10 p-2 rounded-lg text-indigo-400">✓</div>
-                        <div>
-                            <h4 class="font-bold">Creator Focused</h4>
-                            <p class="text-xs text-slate-500 mt-1">Industry-leading tools to manage your portfolio effortlessly.</p>
-                        </div>
-                    </div>
-                </div>
+                <h2 class="text-5xl font-extrabold mb-8 text-indigo-500 tracking-tighter">Empowering Creators.</h2>
+                <p class="text-slate-400 text-lg">ariexo is a boutique marketplace for modern digital artisans.</p>
             </div>
-            
-            <div class="glass-card p-10 rounded-[3rem] relative overflow-hidden group">
-                <div class="absolute -top-32 -right-32 w-80 h-80 bg-indigo-600/15 blur-[120px] rounded-full"></div>
-                <h3 class="text-3xl font-bold mb-6 tracking-tight">Our Mission</h3>
-                <p class="text-slate-400 leading-relaxed italic text-lg">
-                    "To bridge the gap between creative supply and professional demand by providing a seamless, lightning-fast platform for premium digital goods."
-                </p>
-                <div class="mt-12 pt-10 border-t border-white/5 flex justify-between">
-                    <div>
-                        <div class="text-3xl font-bold">100%</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Digital Focus</div>
-                    </div>
-                    <div>
-                        <div class="text-3xl font-bold">24/7</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Global Support</div>
-                    </div>
-                    <div>
-                        <div class="text-3xl font-bold">Secure</div>
-                        <div class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Encryption</div>
-                    </div>
-                </div>
+            <div class="glass-card p-10 rounded-[3rem]">
+                <h3 class="text-3xl font-bold mb-6">Our Mission</h3>
+                <p class="text-slate-400 italic">"Providing a seamless platform for premium digital goods."</p>
             </div>
         </div>
     </section>
 
-    <footer class="py-16 border-t border-white/5 text-center">
-        <span class="text-2xl font-extrabold text-white tracking-tighter opacity-20 block mb-6 uppercase">ariexo</span>
-        <p class="text-slate-600 text-[10px] uppercase tracking-[0.3em] font-bold">
-            &copy; 2026 ariexo ecosystem. all rights reserved.
-        </p>
+    <footer class="py-16 text-center border-t border-white/5">
+        <p class="text-slate-600 text-xs font-bold uppercase tracking-widest">&copy; 2026 ariexo ecosystem</p>
     </footer>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
-        
-        // YOUR SPECIFIC SELLER ID
         const MY_SELLER_ID = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5';
         let cachedProducts = [];
 
         async function loadProducts() {
             const { data, error } = await sb.from('product_details').select('*').order('id', { ascending: false });
-            if (error) return console.error('Fetch Error:', error);
-            if (data) {
-                cachedProducts = data;
-                renderProducts(cachedProducts);
+            if (data) { cachedProducts = data; renderProducts(data); }
+        }
+
+        function renderProducts(products) {
+            const grid = document.getElementById('products-grid');
+            const role = localStorage.getItem('userRole');
+            
+            grid.innerHTML = products.map(p => {
+                const isOwner = (role === 'seller' && p.seller_id === MY_SELLER_ID);
+                const adminTools = isOwner ? `
+                    <div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
+                        <a href="dashboard.html?edit=${p.id}" class="flex-1 bg-indigo-600/10 text-indigo-400 py-2 rounded-xl text-xs font-bold text-center">Edit Item</a>
+                        <button onclick="deleteProduct(${p.id}, '${p.seller_id}')" class="px-3 bg-red-500/10 text-red-500 rounded-xl text-xs font-bold">Delete</button>
+                    </div>` : '';
+
+                return `
+                <div class="glass-card p-6 rounded-[2.5rem] relative group">
+                    <a href="product-details.html?id=${p.id}">
+                        <img src="${p.image_url}" class="w-full h-64 object-cover rounded-[1.8rem] mb-6">
+                        <h3 class="text-xl font-bold mb-2">${p.title}</h3>
+                        <span class="text-indigo-400 font-extrabold text-xl">$${p.price}</span>
+                    </a>
+                    ${adminTools}
+                </div>`;
+            }).join('');
+        }
+
+        async function deleteProduct(id, ownerId) {
+            if (ownerId !== MY_SELLER_ID) return;
+            if (confirm("Permanently delete?")) {
+                await sb.from('product_details').delete().eq('id', id).eq('seller_id', MY_SELLER_ID);
+                loadProducts();
             }
         }
 
-        function
+        function updateAuthUI() {
+            const role = localStorage.getItem('userRole');
+            if (role) {
+                document.getElementById('nav-auth').innerHTML = `<button onclick="localStorage.clear(); location.reload();" class="text-sm text-slate-400">Logout</button>`;
+                if (role === 'seller') {
+                    document.getElementById('navAnalytics').classList.remove('hidden');
+                    document.getElementById('heroSell').classList.remove('hidden');
+                }
+            }
+        }
+
+        document.getElementById('productSearch').addEventListener('input', (e) => {
+            const filtered = cachedProducts.filter(p => p.title.toLowerCase().includes(e.target.value.toLowerCase()));
+            renderProducts(filtered);
+        });
+
+        window.onload = () => { loadProducts(); updateAuthUI(); };
+    </script>
+</body>
+</html>
