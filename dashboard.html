@@ -8,11 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         body { background: #0b0b14; font-family: 'Inter', sans-serif; }
     </style>
 </head>
@@ -24,97 +20,84 @@
             <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
         </div>
 
-        <form id="uploadForm" class="space-y-6">
+        <form id="productForm" class="space-y-6">
             <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Product Title</label>
-                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" 
-                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
+                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
             </div>
 
             <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Description</label>
-                <textarea id="description" placeholder="Describe your asset..." 
-                          class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 h-32 transition-all mt-1" required></textarea>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
+                <textarea id="description" placeholder="Describe your asset..." class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 h-32 transition-all mt-1" required></textarea>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Price ($)</label>
+                <input type="number" id="price" step="0.01" placeholder="9.99" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Price ($)</label>
-                    <input type="number" id="price" step="0.01" placeholder="9.99" 
-                           class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Preview Image</label>
+                    <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Category</label>
-                    <input type="text" id="category" placeholder="Planner, UI, etc." 
-                           class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1">
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Digital File (PDF/ZIP)</label>
+                    <input type="file" id="pdfInput" accept=".pdf,.zip" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
                 </div>
             </div>
 
-            <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Preview Image URL</label>
-                <input type="url" id="image_url" placeholder="https://example.com/image.jpg" 
-                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
-                <p class="text-[10px] text-slate-500 mt-2 ml-1">Tip: Use Unsplash or your Supabase Storage URL.</p>
-            </div>
-
-            <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Downloadable File URL</label>
-                <input type="url" id="file_url" placeholder="https://example.com/file.pdf" 
-                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
-            </div>
-
-            <button type="submit" id="submitBtn" 
-                    class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-indigo-500/20">
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-indigo-500/20">
                 Publish Product
             </button>
         </form>
     </div>
 
     <script>
-       const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
+        const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-document.getElementById('productForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    btn.innerText = "Uploading Files...";
-    btn.disabled = true;
+        document.getElementById('productForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Processing & Uploading...";
+            btn.disabled = true;
 
-    const imgFile = document.getElementById('imageInput').files[0];
-    const pdfFile = document.getElementById('pdfInput').files[0];
-    const time = Date.now();
+            const imgFile = document.getElementById('imageInput').files[0];
+            const pdfFile = document.getElementById('pdfInput').files[0];
+            const time = Date.now();
 
-    try {
-        // 1. Upload the Image to Storage
-        const imgPath = `previews/${time}-${imgFile.name}`;
-        await sb.storage.from('product-images').upload(imgPath, imgFile);
-        const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
+            try {
+                // 1. Upload Image to Storage
+                const imgPath = `previews/${time}-${imgFile.name}`;
+                await sb.storage.from('product-images').upload(imgPath, imgFile);
+                const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
 
-        // 2. Upload the PDF to Storage
-        const pdfPath = `downloads/${time}-${pdfFile.name}`;
-        await sb.storage.from('product-images').upload(pdfPath, pdfFile);
-        const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
+                // 2. Upload PDF/File to Storage
+                const pdfPath = `downloads/${time}-${pdfFile.name}`;
+                await sb.storage.from('product-images').upload(pdfPath, pdfFile);
+                const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
 
-        // 3. Create the Database Row Automatically
-        const { error } = await sb.from('product_details').insert([{
-            title: document.getElementById('title').value,
-            description: document.getElementById('description').value,
-            price: parseFloat(document.getElementById('price').value),
-            image_url: imgData.publicUrl,
-            file_url: pdfData.publicUrl,
-            seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'
-        }]);
+                // 3. Create the Row in product_details
+                const { error } = await sb.from('product_details').insert([{
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    price: parseFloat(document.getElementById('price').value),
+                    image_url: imgData.publicUrl,
+                    file_url: pdfData.publicUrl,
+                    seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'
+                }]);
 
-        if (error) throw error;
+                if (error) throw error;
 
-        alert("Success! Product is live.");
-        window.location.href = 'index.html';
+                alert("Boom! Your product is live.");
+                window.location.href = 'index.html';
 
-    } catch (err) {
-        alert("Error: " + err.message);
-        btn.innerText = "Publish Listing";
-        btn.disabled = false;
-    }
-};
+            } catch (err) {
+                alert("Upload failed: " + err.message);
+                btn.innerText = "Publish Product";
+                btn.disabled = false;
+            }
+        };
     </script>
 </body>
 </html>
