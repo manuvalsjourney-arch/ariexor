@@ -9,127 +9,306 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .hidden { display: none !important; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        #productSearch:focus { box-shadow: 0 0 20px rgba(79, 70, 229, 0.2); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-blur {
+            background: rgba(11, 11, 20, 0.8);
+            backdrop-filter: blur(12px);
+        }
+        #productSearch:focus {
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
         html { scroll-behavior: smooth; }
-        .nav-blur { background: rgba(11, 11, 20, 0.8); backdrop-filter: blur(12px); }
         .share-btn:hover { background: #4f46e5 !important; color: white !important; }
+        
+        /* Smooth fade-in for product cards */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .product-card { animation: fadeIn 0.5s ease forwards; }
     </style>
 </head>
-<body class="bg-[#0b0b14] text-white font-['Inter']">
+<body class="bg-[#0b0b14] text-white font-['Inter'] antialiased">
 
     <nav class="fixed w-full z-50 nav-blur border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
-            <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='#home'">ariexo</span>
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="#home" class="text-sm font-medium hover:text-indigo-400">Home</a>
-                <a href="#products" class="text-sm font-medium hover:text-indigo-400">Products</a>
-                <a href="#about" class="text-sm font-medium hover:text-indigo-400">About</a>
-                <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hidden">Analytics</a>
+            <div class="flex items-center gap-2">
+                <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='#home'">ariexo</span>
             </div>
-            <div class="flex items-center gap-4" id="nav-auth">
-                <a href="login.html" class="text-sm font-medium">Login</a>
-                <a href="signup.html" class="bg-indigo-600 px-6 py-2.5 rounded-full text-sm font-bold">Sign Up</a>
+            
+            <div class="hidden md:flex items-center space-x-10">
+                <a href="#home" class="text-sm font-semibold hover:text-indigo-400 transition-colors uppercase tracking-widest">Home</a>
+                <a href="#products" class="text-sm font-semibold hover:text-indigo-400 transition-colors uppercase tracking-widest">Marketplace</a>
+                <a href="#about" class="text-sm font-semibold hover:text-indigo-400 transition-colors uppercase tracking-widest">Our Mission</a>
+                <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors hidden">Analytics</a>
+            </div>
+
+            <div class="flex items-center gap-6" id="nav-auth">
+                <a href="login.html" class="text-sm font-bold hover:text-indigo-400 transition-colors">Login</a>
+                <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-7 py-3 rounded-full text-sm font-extrabold transition-all transform hover:scale-105 shadow-lg shadow-indigo-600/20">Sign Up</a>
             </div>
         </div>
     </nav>
 
-    <header id="home" class="pt-48 pb-24 text-center">
+    <header id="home" class="relative pt-52 pb-32 overflow-hidden text-center">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[500px] bg-indigo-600/10 blur-[130px] rounded-full -z-10"></div>
+        
         <div class="max-w-7xl mx-auto px-4">
-            <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter">Premium <span class="text-indigo-500">Digital</span> Assets</h1>
-            <div class="relative max-w-xl mx-auto mb-10">
-                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
-                <input type="text" id="productSearch" placeholder="Search marketplace..." class="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-indigo-500 transition-all text-lg glass-card">
+            <h1 class="text-7xl md:text-9xl font-black mb-8 tracking-tighter leading-none">
+                PREMIUM <span class="text-indigo-500">DIGITAL</span><br>ASSETS
+            </h1>
+            <p class="text-slate-400 text-lg md:text-2xl max-w-3xl mx-auto mb-14 leading-relaxed font-light">
+                The world's most curated ecosystem for high-quality digital goods. Sell your work or upgrade your workflow.
+            </p>
+
+            <div class="relative max-w-2xl mx-auto mb-12">
+                <span class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 text-xl">🔍</span>
+                <input type="text" id="productSearch" 
+                       placeholder="Search marketplace for journals, planners, kits..." 
+                       class="w-full bg-white/5 border border-white/10 rounded-[2rem] pl-16 pr-8 py-6 outline-none transition-all text-xl glass-card">
             </div>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#products" class="bg-white text-black px-10 py-4 rounded-2xl font-bold">Explore Assets</a>
-                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-10 py-4 rounded-2xl font-bold hidden">Start Selling</a>
+
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <a href="#products" class="bg-white text-black px-12 py-5 rounded-2xl font-black text-lg hover:bg-gray-200 transition-all transform hover:scale-105 shadow-xl">Browse Catalog</a>
+                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-12 py-5 rounded-2xl font-black text-lg hover:bg-slate-800 transition-all hidden">List Your Product</a>
             </div>
         </div>
     </header>
 
-    <section id="products" class="py-24 max-w-7xl mx-auto px-4">
-        <h2 class="text-4xl font-extrabold mb-12 tracking-tighter">Latest Drops</h2>
-        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
-        <div id="no-results" class="hidden text-center py-32"><p class="text-slate-500">No products found.</p></div>
+    <section id="products" class="py-32 max-w-7xl mx-auto px-4">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-4">
+            <div>
+                <h2 class="text-5xl font-black tracking-tighter">LATEST <span class="text-indigo-500">DROPS</span></h2>
+                <p class="text-slate-500 mt-3 text-lg">Every asset is verified for quality and security.</p>
+            </div>
+            <div class="bg-white/5 border border-white/10 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest text-slate-400">
+                Sorted by: Newest First
+            </div>
+        </div>
+
+        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+            </div>
+        
+        <div id="no-results" class="hidden text-center py-40">
+            <p class="text-slate-500 text-2xl font-medium">We couldn't find any products matching that search.</p>
+            <button onclick="document.getElementById('productSearch').value=''; loadProducts();" class="text-indigo-400 mt-6 underline font-bold text-lg">Clear Filters</button>
+        </div>
     </section>
 
-    <section id="about" class="py-32 max-w-7xl mx-auto px-4 border-t border-white/5">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <section id="about" class="py-40 max-w-7xl mx-auto px-4 border-t border-white/5">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
             <div>
-                <h2 class="text-5xl font-extrabold mb-8 text-indigo-500 tracking-tighter">Empowering Creators.</h2>
-                <p class="text-slate-400 text-lg">ariexo is a boutique marketplace for modern digital artisans.</p>
+                <h2 class="text-6xl font-black mb-10 tracking-tighter leading-tight">
+                    EMPOWERING <br><span class="text-indigo-500">CREATORS</span> WORLDWIDE.
+                </h2>
+                <p class="text-slate-400 text-xl leading-relaxed mb-12">
+                    ariexo is a boutique marketplace designed for modern artisans. We handle the distribution and security so you can focus on building your next masterpiece.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div class="flex items-start gap-5">
+                        <div class="bg-indigo-500/10 p-3 rounded-2xl text-indigo-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-extrabold text-lg">Instant Access</h4>
+                            <p class="text-sm text-slate-500 mt-1">Files delivered instantly via secure links.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-5">
+                        <div class="bg-indigo-500/10 p-3 rounded-2xl text-indigo-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-extrabold text-lg">Creator Suite</h4>
+                            <p class="text-sm text-slate-500 mt-1">Manage, edit, and track your listings with ease.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="glass-card p-10 rounded-[3rem]">
-                <h3 class="text-3xl font-bold mb-6">Our Mission</h3>
-                <p class="text-slate-400 italic">"Providing a seamless platform for premium digital goods."</p>
+            
+            <div class="glass-card p-12 rounded-[4rem] relative overflow-hidden group">
+                <div class="absolute -top-40 -right-40 w-[400px] h-[400px] bg-indigo-600/10 blur-[140px] rounded-full"></div>
+                <h3 class="text-4xl font-black mb-8 tracking-tighter">OUR MISSION</h3>
+                <p class="text-slate-400 leading-relaxed italic text-xl font-light">
+                    "To redefine the digital economy by connecting visionary creators with professional demand through a high-speed, secure storefront."
+                </p>
+                <div class="mt-16 pt-12 border-t border-white/5 flex justify-between items-center">
+                    <div class="text-center">
+                        <div class="text-4xl font-black text-white">100%</div>
+                        <div class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Verified Assets</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-black text-white">24/7</div>
+                        <div class="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Global Access</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <footer class="py-16 text-center border-t border-white/5">
-        <p class="text-slate-600 text-xs font-bold uppercase tracking-widest">&copy; 2026 ariexo ecosystem</p>
+    <footer class="py-24 border-t border-white/5 text-center">
+        <span class="text-5xl font-black text-white tracking-tighter opacity-10 block mb-8 uppercase select-none">ariexo ecosystem</span>
+        <div class="flex justify-center gap-8 mb-10 text-slate-500 text-sm font-bold uppercase tracking-widest">
+            <a href="#" class="hover:text-white">Privacy</a>
+            <a href="#" class="hover:text-white">Terms</a>
+            <a href="#" class="hover:text-white">Support</a>
+        </div>
+        <p class="text-slate-600 text-[10px] uppercase tracking-[0.5em] font-black">
+            &copy; 2026 ariexo group. all rights reserved.
+        </p>
     </footer>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
-        const MY_SELLER_ID = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5';
+        
+        // SECURITY: These IDs are permitted to see Edit/Delete buttons
+        const AUTHORIZED_SELLER_IDS = [
+            'e0bed6bb-f967-436b-9cb2-76c78a5538d5', 
+            'eac5edf1-621a-419d-91ce-ac7bd20b00e9'
+        ];
+        
         let cachedProducts = [];
 
+        // 1. Initial Load
         async function loadProducts() {
             const { data, error } = await sb.from('product_details').select('*').order('id', { ascending: false });
-            if (data) { cachedProducts = data; renderProducts(data); }
-        }
-
-        function renderProducts(products) {
-            const grid = document.getElementById('products-grid');
-            const role = localStorage.getItem('userRole');
-            
-            grid.innerHTML = products.map(p => {
-                const isOwner = (role === 'seller' && p.seller_id === MY_SELLER_ID);
-                const adminTools = isOwner ? `
-                    <div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
-                        <a href="dashboard.html?edit=${p.id}" class="flex-1 bg-indigo-600/10 text-indigo-400 py-2 rounded-xl text-xs font-bold text-center">Edit Item</a>
-                        <button onclick="deleteProduct(${p.id}, '${p.seller_id}')" class="px-3 bg-red-500/10 text-red-500 rounded-xl text-xs font-bold">Delete</button>
-                    </div>` : '';
-
-                return `
-                <div class="glass-card p-6 rounded-[2.5rem] relative group">
-                    <a href="product-details.html?id=${p.id}">
-                        <img src="${p.image_url}" class="w-full h-64 object-cover rounded-[1.8rem] mb-6">
-                        <h3 class="text-xl font-bold mb-2">${p.title}</h3>
-                        <span class="text-indigo-400 font-extrabold text-xl">$${p.price}</span>
-                    </a>
-                    ${adminTools}
-                </div>`;
-            }).join('');
-        }
-
-        async function deleteProduct(id, ownerId) {
-            if (ownerId !== MY_SELLER_ID) return;
-            if (confirm("Permanently delete?")) {
-                await sb.from('product_details').delete().eq('id', id).eq('seller_id', MY_SELLER_ID);
-                loadProducts();
+            if (error) return console.error('Database Error:', error);
+            if (data) {
+                cachedProducts = data;
+                renderProducts(cachedProducts);
             }
         }
 
-        function updateAuthUI() {
+        // 2. Main Rendering Engine
+        function renderProducts(products) {
+            const grid = document.getElementById('products-grid');
+            const noResults = document.getElementById('no-results');
             const role = localStorage.getItem('userRole');
-            if (role) {
-                document.getElementById('nav-auth').innerHTML = `<button onclick="localStorage.clear(); location.reload();" class="text-sm text-slate-400">Logout</button>`;
-                if (role === 'seller') {
-                    document.getElementById('navAnalytics').classList.remove('hidden');
-                    document.getElementById('heroSell').classList.remove('hidden');
+
+            if (products.length === 0) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+            noResults.classList.add('hidden');
+
+            grid.innerHTML = products.map((p, index) => {
+                // Determine Ownership Tools
+                const isOwner = (role === 'seller' && AUTHORIZED_SELLER_IDS.includes(p.seller_id));
+                const adminTools = isOwner ? `
+                    <div class="flex gap-3 mt-8 pt-8 border-t border-white/10">
+                        <a href="dashboard.html?edit=${p.id}" class="flex-1 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 py-4 rounded-[1.2rem] text-[11px] uppercase tracking-[0.2em] font-black text-center transition-all">Edit Listing</a>
+                        <button onclick="deleteProduct(${p.id}, '${p.seller_id}')" class="px-5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-[1.2rem] transition-all text-xs font-black">🗑️</button>
+                    </div>` : '';
+
+                return `
+                <div class="product-card relative group" style="animation-delay: ${index * 0.1}s">
+                    <button onclick="shareProduct(event, '${p.title}', '${p.id}')" 
+                            class="share-btn absolute top-5 right-5 z-20 p-4 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 transition-all text-white hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    </button>
+
+                    <a href="product-details.html?id=${p.id}" class="block glass-card p-8 rounded-[3rem] hover:border-indigo-500/50 transition-all transform hover:translate-y-[-8px] shadow-2xl">
+                        <div class="overflow-hidden rounded-[2rem] mb-8 relative">
+                            <img src="${p.image_url}" class="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-110" alt="${p.title}">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-2xl font-black tracking-tight leading-tight max-w-[70%]">${p.title}</h3>
+                            <span class="text-indigo-400 font-black text-2xl tracking-tighter">$${p.price}</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-slate-500">
+                             <span class="text-[10px] uppercase font-bold tracking-[0.2em]">View Listing Details</span>
+                             <span class="text-lg">→</span>
+                        </div>
+                    </a>
+                    ${adminTools}
+                </div>
+                `;
+            }).join('');
+        }
+
+        // 3. Security-First Deletion
+        async function deleteProduct(id, ownerId) {
+            if (!AUTHORIZED_SELLER_IDS.includes(ownerId)) {
+                return alert("Security Exception: You do not have permission to delete this asset.");
+            }
+            
+            if (confirm("SYSTEM ACTION: Delete this product permanently? This will remove all files from storage.")) {
+                const { error } = await sb.from('product_details').delete().eq('id', id);
+                if (!error) {
+                    loadProducts();
+                } else {
+                    alert("System Error: Unable to complete deletion.");
                 }
             }
         }
 
+        // 4. Social Sharing
+        async function shareProduct(e, title, id) {
+            e.preventDefault();
+            const shareData = {
+                title: title,
+                text: `Premium asset discovered on ariexo: ${title}`,
+                url: `${window.location.origin}/product-details.html?id=${id}`
+            };
+            try {
+                if (navigator.share) await navigator.share(shareData);
+                else {
+                    await navigator.clipboard.writeText(shareData.url);
+                    alert('Listing URL copied to clipboard.');
+                }
+            } catch (err) { console.error('Share failure:', err); }
+        }
+
+        // 5. Search Engine
         document.getElementById('productSearch').addEventListener('input', (e) => {
-            const filtered = cachedProducts.filter(p => p.title.toLowerCase().includes(e.target.value.toLowerCase()));
+            const query = e.target.value.toLowerCase();
+            const filtered = cachedProducts.filter(p => p.title.toLowerCase().includes(query) || p.description.toLowerCase().includes(query));
             renderProducts(filtered);
         });
 
-        window.onload = () => { loadProducts(); updateAuthUI(); };
+        // 6. Auth & UX Updates
+        function updateAuthUI() {
+            const role = localStorage.getItem('userRole');
+            const navAuth = document.getElementById('nav-auth');
+            const navAnalytics = document.getElementById('navAnalytics');
+            const heroSell = document.getElementById('heroSell');
+
+            if (role) {
+                const badgeColor = role === 'seller' ? 'text-indigo-400 border-indigo-500/30 bg-indigo-500/5' : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5';
+                
+                navAuth.innerHTML = `
+                    <div class="flex items-center gap-8">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[9px] font-black ${badgeColor} px-3 py-1 rounded-full border uppercase tracking-widest">
+                                ${role} Mode
+                            </span>
+                        </div>
+                        <button onclick="localStorage.clear(); location.reload();" class="text-sm font-bold text-slate-500 hover:text-white transition-colors">
+                            Sign Out
+                        </button>
+                    </div>
+                `;
+
+                if (role === 'seller') {
+                    navAnalytics?.classList.remove('hidden');
+                    heroSell?.classList.remove('hidden');
+                }
+            }
+        }
+
+        window.onload = () => {
+            loadProducts();
+            updateAuthUI();
+        };
     </script>
 </body>
 </html>
