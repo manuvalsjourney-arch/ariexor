@@ -26,13 +26,15 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-2">
-                    <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter">ariexo</span>
+                    <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='#home'">ariexo</span>
                 </div>
+                
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#home" class="text-sm font-medium hover:text-indigo-400 transition-colors">Home</a>
                     <a href="#products" class="text-sm font-medium hover:text-indigo-400 transition-colors">Products</a>
-                    <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors">Analytics</a>
+                    <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors hidden">Analytics</a>
                 </div>
+
                 <div class="flex items-center gap-4" id="nav-auth">
                     <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
                     <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
@@ -59,8 +61,8 @@
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Explore Marketplace</a>
-                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all">Start Selling</a>
-                <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all">View Analytics</a>
+                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all hidden">Start Selling</a>
+                <a href="analytics.html" id="heroAnalytics" class="bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 px-8 py-4 rounded-2xl font-bold hover:bg-indigo-600/30 transition-all hidden">View Analytics</a>
             </div>
         </div>
     </header>
@@ -79,16 +81,20 @@
         </div>
     </section>
 
-    <footer class="py-12 border-t border-white/5 text-center">
-        <button onclick="localStorage.removeItem('userRole'); window.location.href='signup.html';" class="text-[10px] text-slate-600 hover:text-slate-400 uppercase tracking-widest transition-colors">
-            Reset Account Type
-        </button>
+    <footer class="py-12 border-t border-white/5 text-center text-slate-600 text-xs">
+        &copy; 2026 ariexo. All rights reserved.
     </footer>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
         let cachedProducts = [];
+
+        // 1. Logout Function
+        function logout() {
+            localStorage.removeItem('userRole');
+            window.location.reload(); // Refresh to update UI
+        }
 
         async function loadProducts() {
             const { data, error } = await sb.from('product_details').select('*').order('id', { ascending: false });
@@ -102,13 +108,11 @@
         function renderProducts(products) {
             const grid = document.getElementById('products-grid');
             const noResults = document.getElementById('no-results');
-
             if (products.length === 0) {
                 grid.innerHTML = '';
                 noResults.classList.remove('hidden');
                 return;
             }
-
             noResults.classList.add('hidden');
             grid.innerHTML = products.map(p => `
                 <a href="product-details.html?id=${p.id}" class="block group glass-card p-6 rounded-[2rem] hover:border-indigo-500/50 transition-all">
@@ -122,20 +126,17 @@
             `).join('');
         }
 
-        // Search logic - filters and scrolls to results if needed
+        // Search logic
         document.getElementById('productSearch').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            const filtered = cachedProducts.filter(p => 
-                p.title.toLowerCase().includes(query)
-            );
+            const filtered = cachedProducts.filter(p => p.title.toLowerCase().includes(query));
             renderProducts(filtered);
-            
-            // Optional: Automatically scroll down to results when user types
             if(query.length > 1) {
                 document.getElementById('products').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
 
+        // 2. Updated Auth UI Logic with Logout Button
         function updateAuthUI() {
             const role = localStorage.getItem('userRole');
             const navAuth = document.getElementById('nav-auth');
@@ -143,16 +144,34 @@
             const heroSell = document.getElementById('heroSell');
             const heroAnalytics = document.getElementById('heroAnalytics');
 
-            if (role === 'seller') {
-                navAuth.innerHTML = `<span class="text-xs font-bold bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-full border border-indigo-500/20">SELLER MODE</span>`;
-                navAnalytics?.classList.remove('hidden');
-                heroAnalytics?.classList.remove('hidden');
-                heroSell?.classList.remove('hidden');
+            if (role) {
+                // Determine color based on role
+                const themeClass = role === 'seller' ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/10' : 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
+                
+                // Show role badge AND Logout button
+                navAuth.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <span class="text-[10px] font-bold ${themeClass} px-3 py-1 rounded-full border tracking-widest uppercase">
+                            ${role}
+                        </span>
+                        <button onclick="logout()" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                `;
+
+                // Toggle visibility for seller-only links
+                if (role === 'seller') {
+                    navAnalytics?.classList.remove('hidden');
+                    heroAnalytics?.classList.remove('hidden');
+                    heroSell?.classList.remove('hidden');
+                }
             } else {
-                navAuth.innerHTML = `<span class="text-xs font-bold bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full border border-emerald-500/20">BUYER MODE</span>`;
-                navAnalytics?.classList.add('hidden');
-                heroAnalytics?.classList.add('hidden');
-                heroSell?.classList.add('hidden');
+                // If logged out, show Login/Signup
+                navAuth.innerHTML = `
+                    <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
+                    <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
+                `;
             }
         }
 
