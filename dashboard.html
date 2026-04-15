@@ -3,107 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product | ariexo</title>
+    <title>Seller Dashboard | ariexo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        body { background: #0b0b14; font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body class="bg-[#0b0b14] text-white flex items-center justify-center min-h-screen p-6">
-    <div class="w-full max-w-xl bg-slate-900/50 p-10 rounded-[2.5rem] border border-white/5 backdrop-blur-xl">
-        <h1 class="text-3xl font-bold mb-8">List New Asset</h1>
-        
-        <form id="productForm" class="space-y-6">
-            <input type="text" id="title" required placeholder="Asset Title (e.g. Forest Green Planner)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
-            
-            <input type="number" id="price" required step="0.01" placeholder="Price (USD)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
-            
-            <textarea id="description" rows="3" required placeholder="Asset Description" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none"></textarea>
+<body class="text-white min-h-screen flex items-center justify-center p-6">
 
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">1. Shop Preview Image</label>
-                <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-indigo-500 transition-colors relative">
-                    <p id="imageFileName" class="text-slate-400">Upload Thumbnail (PNG/JPG)</p>
-                    <input type="file" id="imageInput" accept="image/*" required class="absolute inset-0 opacity-0 cursor-pointer">
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem]">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
+            <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
+        </div>
+
+        <form id="uploadForm" class="space-y-6">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Product Title</label>
+                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" 
+                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Description</label>
+                <textarea id="description" placeholder="Describe your asset..." 
+                          class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 h-32 transition-all mt-1" required></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Price ($)</label>
+                    <input type="number" id="price" step="0.01" placeholder="9.99" 
+                           class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Category</label>
+                    <input type="text" id="category" placeholder="Planner, UI, etc." 
+                           class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1">
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">2. Printable Asset (The PDF)</label>
-                <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-emerald-500 transition-colors relative">
-                    <p id="pdfFileName" class="text-slate-400">Upload Printable PDF</p>
-                    <input type="file" id="pdfInput" accept=".pdf" required class="absolute inset-0 opacity-0 cursor-pointer">
-                </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Preview Image URL</label>
+                <input type="url" id="image_url" placeholder="https://example.com/image.jpg" 
+                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                <p class="text-[10px] text-slate-500 mt-2 ml-1">Tip: Use Unsplash or your Supabase Storage URL.</p>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all">
-                Publish Listing
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Downloadable File URL</label>
+                <input type="url" id="file_url" placeholder="https://example.com/file.pdf" 
+                       class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+            </div>
+
+            <button type="submit" id="submitBtn" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-indigo-500/20">
+                Publish Product
             </button>
         </form>
     </div>
 
     <script>
+        // Supabase Configuration
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-        // Check login on load
-        async function checkAuth() {
-            const { data: { session } } = await sb.auth.getSession();
-            if (!session) window.location.href = 'login.html';
-        }
-        checkAuth();
-
-        // Show file names when selected
-        document.getElementById('imageInput').onchange = (e) => {
-            if(e.target.files[0]) document.getElementById('imageFileName').innerText = "🖼️ " + e.target.files[0].name;
-        };
-        document.getElementById('pdfInput').onchange = (e) => {
-            if(e.target.files[0]) document.getElementById('pdfFileName').innerText = "📄 " + e.target.files[0].name;
-        };
-
-        document.getElementById('productForm').onsubmit = async (e) => {
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            
+            btn.innerText = "Publishing to Marketplace...";
             btn.disabled = true;
-            btn.innerText = "Uploading assets...";
 
-            try {
-                const { data: { user } } = await sb.auth.getUser();
-                
-                // 1. Upload Preview Image
-                const imgFile = document.getElementById('imageInput').files[0];
-                const imgPath = `previews/${Date.now()}-${imgFile.name}`;
-                const { error: imgErr } = await sb.storage.from('product-images').upload(imgPath, imgFile);
-                if (imgErr) throw imgErr;
-                const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
+            // Gathering data from the form
+            const newProduct = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                price: parseFloat(document.getElementById('price').value),
+                image_url: document.getElementById('image_url').value,
+                file_url: document.getElementById('file_url').value,
+                // Using your specific Seller UUID from your Supabase Table
+                seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5' 
+            };
 
-                // 2. Upload Printable PDF
-                const pdfFile = document.getElementById('pdfInput').files[0];
-                const pdfPath = `downloads/${Date.now()}-${pdfFile.name}`;
-                const { error: pdfErr } = await sb.storage.from('product-images').upload(pdfPath, pdfFile);
-                if (pdfErr) throw pdfErr;
-                const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
+            // Inserting into the 'product_details' table
+            const { data, error } = await sb.from('product_details').insert([newProduct]);
 
-                // 3. Save everything to the product_details table
-                const { error: dbError } = await sb.from('product_details').insert([{
-                    title: document.getElementById('title').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    description: document.getElementById('description').value,
-                    image_url: imgData.publicUrl,
-                    file_url: pdfData.publicUrl, // Matches your new Supabase column
-                    seller_id: user.id
-                }]);
-
-                if (dbError) throw dbError;
-
-                window.location.href = 'analytics.html';
-
-            } catch (err) {
-                alert("Upload failed: " + err.message);
+            if (error) {
+                alert("Upload failed: " + error.message);
+                btn.innerText = "Publish Product";
                 btn.disabled = false;
-                btn.innerText = "Publish Listing";
+            } else {
+                alert("Success! Your product is now live on ariexo.");
+                // Redirecting back to index to see the new product
+                window.location.href = 'index.html';
             }
-        };
-
-        lucide.createIcons();
+        });
     </script>
 </body>
 </html>
