@@ -71,40 +71,50 @@
     </div>
 
     <script>
-        // Supabase Configuration
-        const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
+       const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            
-            btn.innerText = "Publishing to Marketplace...";
-            btn.disabled = true;
+document.getElementById('productForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.innerText = "Uploading Files...";
+    btn.disabled = true;
 
-            // Gathering data from the form
-            const newProduct = {
-                title: document.getElementById('title').value,
-                description: document.getElementById('description').value,
-                price: parseFloat(document.getElementById('price').value),
-                image_url: document.getElementById('image_url').value,
-                file_url: document.getElementById('file_url').value,
-                // Using your specific Seller UUID from your Supabase Table
-                seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5' 
-            };
+    const imgFile = document.getElementById('imageInput').files[0];
+    const pdfFile = document.getElementById('pdfInput').files[0];
+    const time = Date.now();
 
-            // Inserting into the 'product_details' table
-            const { data, error } = await sb.from('product_details').insert([newProduct]);
+    try {
+        // 1. Upload the Image to Storage
+        const imgPath = `previews/${time}-${imgFile.name}`;
+        await sb.storage.from('product-images').upload(imgPath, imgFile);
+        const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
 
-            if (error) {
-                alert("Upload failed: " + error.message);
-                btn.innerText = "Publish Product";
-                btn.disabled = false;
-            } else {
-                alert("Success! Your product is now live on ariexo.");
-                // Redirecting back to index to see the new product
-                window.location.href = 'index.html';
-            }
-        });
+        // 2. Upload the PDF to Storage
+        const pdfPath = `downloads/${time}-${pdfFile.name}`;
+        await sb.storage.from('product-images').upload(pdfPath, pdfFile);
+        const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
+
+        // 3. Create the Database Row Automatically
+        const { error } = await sb.from('product_details').insert([{
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            price: parseFloat(document.getElementById('price').value),
+            image_url: imgData.publicUrl,
+            file_url: pdfData.publicUrl,
+            seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'
+        }]);
+
+        if (error) throw error;
+
+        alert("Success! Product is live.");
+        window.location.href = 'index.html';
+
+    } catch (err) {
+        alert("Error: " + err.message);
+        btn.innerText = "Publish Listing";
+        btn.disabled = false;
+    }
+};
     </script>
 </body>
 </html>
