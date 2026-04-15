@@ -3,164 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ariexo | Premium Digital Marketplace</title>
+    <title>Seller Dashboard | ariexo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .hidden { display: none !important; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        #productSearch:focus {
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
-        }
-        html { scroll-behavior: smooth; }
-        .share-btn:hover { background: #4f46e5 !important; color: white !important; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
+        input:focus, textarea:focus { border-color: #6366f1 !important; }
     </style>
 </head>
-<body class="bg-[#0b0b14] text-white font-['Inter']">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-    <nav class="fixed w-full z-50 bg-[#0b0b14]/80 backdrop-blur-md border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <div class="flex items-center gap-2">
-                    <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='#home'">ariexo</span>
-                </div>
-                
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="text-sm font-medium hover:text-indigo-400 transition-colors">Home</a>
-                    <a href="#products" class="text-sm font-medium hover:text-indigo-400 transition-colors">Products</a>
-                    <a href="#about" class="text-sm font-medium hover:text-indigo-400 transition-colors">About</a>
-                    <a href="analytics.html" id="navAnalytics" class="text-sm font-bold text-indigo-400 hover:text-white transition-colors hidden">Analytics</a>
-                </div>
-
-                <div class="flex items-center gap-4" id="nav-auth">
-                    <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
-                    <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
-                </div>
-            </div>
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem] shadow-2xl">
+        <div class="flex justify-between items-center mb-8">
+            <h1 id="pageTitle" class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
+            <a href="index.html" class="text-slate-500 hover:text-white text-sm transition-all">✕ Close</a>
         </div>
-    </nav>
 
-    <header id="home" class="relative pt-40 pb-20 overflow-hidden text-center">
-        <div class="max-w-7xl mx-auto px-4">
-            <h1 class="text-6xl md:text-8xl font-extrabold mb-8 tracking-tighter">
-                Premium <span class="text-indigo-500">Digital</span> Assets
-            </h1>
-            
-            <div class="relative max-w-xl mx-auto mb-8">
-                <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
-                <input type="text" id="productSearch" 
-                       placeholder="Search products..." 
-                       class="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-indigo-500 transition-all text-lg glass-card">
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all">Explore Marketplace</a>
-                <a href="dashboard.html" id="heroSell" class="bg-slate-900 border border-slate-800 px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all hidden">Start Selling</a>
-            </div>
-        </div>
-    </header>
-
-    <section id="products" class="py-20 max-w-7xl mx-auto px-4">
-        <h2 class="text-3xl font-extrabold mb-12">Latest Drops</h2>
-        <div id="products-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
-        <div id="no-results" class="hidden text-center py-20">
-            <p class="text-slate-500 text-xl">No products found.</p>
-        </div>
-    </section>
-
-    <section id="about" class="py-24 max-w-7xl mx-auto px-4 border-t border-white/5">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        <form id="productForm" class="space-y-6">
             <div>
-                <h2 class="text-4xl font-extrabold mb-6 tracking-tighter text-indigo-500">Empowering Creators Worldwide.</h2>
-                <p class="text-slate-400 text-lg mb-6">ariexo is a curated marketplace designed for the modern digital artisan.</p>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
+                <input type="text" id="title" placeholder="e.g. Minimalist UI Kit" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none mt-1 transition-all" required>
             </div>
-            <div class="glass-card p-8 rounded-[2.5rem]">
-                <h3 class="text-2xl font-bold mb-4">Our Mission</h3>
-                <p class="text-slate-400 italic">"Providing a seamless, lightning-fast platform for digital goods."</p>
-            </div>
-        </div>
-    </section>
 
-    <footer class="py-12 border-t border-white/5 text-center text-slate-600 text-xs">
-        &copy; 2026 ariexo. All rights reserved.
-    </footer>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
+                <textarea id="description" placeholder="What's included in this asset?" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none h-32 mt-1 transition-all" required></textarea>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Price ($)</label>
+                <input type="number" id="price" step="0.01" placeholder="9.99" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none mt-1 transition-all" required>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
+                <div>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Preview Image</label>
+                    <input type="file" id="imageInput" accept="image/*" class="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20">
+                    <p id="imgStatus" class="text-[9px] text-slate-600 mt-1 italic"></p>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Digital Asset (PDF/ZIP)</label>
+                    <input type="file" id="pdfInput" accept=".pdf,.zip" class="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20">
+                    <p id="fileStatus" class="text-[9px] text-slate-600 mt-1 italic"></p>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform active:scale-95 shadow-lg shadow-indigo-500/20">
+                    Publish Product
+                </button>
+            </div>
+        </form>
+    </div>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
-        let cachedProducts = [];
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
 
-        function logout() {
-            localStorage.clear();
-            window.location.reload(); 
-        }
-
-        async function shareProduct(e, title, id) {
-            e.preventDefault();
-            const shareData = { title, text: `Check this on ariexo: ${title}`, url: `${window.location.origin}/product-details.html?id=${id}` };
-            try { await navigator.share(shareData); } catch { navigator.clipboard.writeText(shareData.url); alert('Link copied!'); }
-        }
-
-        async function deleteProduct(id) {
-            if (confirm("Delete this product permanently?")) {
-                const { error } = await sb.from('product_details').delete().eq('id', id);
-                if (!error) loadProducts();
-                else alert("Error deleting product.");
-            }
-        }
-
-        async function loadProducts() {
-            const { data } = await sb.from('product_details').select('*').order('id', { ascending: false });
-            if (data) { cachedProducts = data; renderProducts(data); }
-        }
-
-        function renderProducts(products) {
-            const grid = document.getElementById('products-grid');
-            const role = localStorage.getItem('userRole');
-            
-            grid.innerHTML = products.map(p => {
-                // ADDED: Seller specific buttons (Edit/Delete)
-                let adminTools = (role === 'seller') ? `
-                    <div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
-                        <a href="dashboard.html?edit=${p.id}" class="flex-1 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 py-2 rounded-xl text-xs font-bold text-center transition-all">Edit Item</a>
-                        <button onclick="deleteProduct(${p.id})" class="px-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all text-xs">Delete</button>
-                    </div>` : '';
-
-                return `
-                <div class="relative group glass-card p-6 rounded-[2rem]">
-                    <button onclick="shareProduct(event, '${p.title}', '${p.id}')" class="share-btn absolute top-4 right-4 z-10 p-3 bg-white/10 rounded-full text-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
-                    <a href="product-details.html?id=${p.id}">
-                        <img src="${p.image_url}" class="w-full h-56 object-cover rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform">
-                        <h3 class="text-xl font-bold mb-2">${p.title}</h3>
-                        <div class="flex justify-between items-center text-indigo-400 font-bold">$${p.price}</div>
-                    </a>
-                    ${adminTools}
-                </div>`;
-            }).join('');
-        }
-
-        document.getElementById('productSearch').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            renderProducts(cachedProducts.filter(p => p.title.toLowerCase().includes(query)));
-        });
-
-        function updateAuthUI() {
-            const role = localStorage.getItem('userRole');
-            if (role) {
-                const theme = role === 'seller' ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/10' : 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
-                document.getElementById('nav-auth').innerHTML = `<div class="flex items-center gap-4"><span class="text-[10px] font-bold ${theme} px-3 py-1 rounded-full border uppercase tracking-widest">${role}</span><button onclick="logout()" class="text-sm text-slate-400 hover:text-white">Logout</button></div>`;
-                if (role === 'seller') {
-                    document.getElementById('navAnalytics')?.classList.remove('hidden');
-                    document.getElementById('heroSell')?.classList.remove('hidden');
+        // Check if we are in Edit Mode
+        async function checkMode() {
+            if (editId) {
+                document.getElementById('pageTitle').innerText = "Edit Product";
+                document.getElementById('submitBtn').innerText = "Update Details";
+                
+                const { data, error } = await sb.from('product_details').select('*').eq('id', editId).single();
+                if (data) {
+                    document.getElementById('title').value = data.title;
+                    document.getElementById('description').value = data.description;
+                    document.getElementById('price').value = data.price;
+                    document.getElementById('imgStatus').innerText = "Current image will be kept unless you upload a new one.";
+                    document.getElementById('fileStatus').innerText = "Current file will be kept unless you upload a new one.";
                 }
             }
         }
 
-        window.onload = () => { loadProducts(); updateAuthUI(); };
+        document.getElementById('productForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Processing Assets...";
+            btn.disabled = true;
+
+            const imgFile = document.getElementById('imageInput').files[0];
+            const pdfFile = document.getElementById('pdfInput').files[0];
+            const time = Date.now();
+
+            try {
+                let updateData = {
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    price: parseFloat(document.getElementById('price').value)
+                };
+
+                // Upload Image only if selected
+                if (imgFile) {
+                    const path = `previews/${time}-${imgFile.name}`;
+                    await sb.storage.from('product-images').upload(path, imgFile);
+                    updateData.image_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+                }
+
+                // Upload Asset only if selected
+                if (pdfFile) {
+                    const path = `downloads/${time}-${pdfFile.name}`;
+                    await sb.storage.from('product-images').upload(path, pdfFile);
+                    updateData.file_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+                }
+
+                if (editId) {
+                    // Update Database
+                    const { error } = await sb.from('product_details').update(updateData).eq('id', editId);
+                    if (error) throw error;
+                } else {
+                    // Insert New Row
+                    updateData.seller_id = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5';
+                    if (!imgFile || !pdfFile) throw new Error("Please upload both an image and a digital file.");
+                    
+                    const { error } = await sb.from('product_details').insert([updateData]);
+                    if (error) throw error;
+                }
+
+                window.location.href = 'index.html';
+
+            } catch (err) {
+                alert("Error: " + err.message);
+                btn.innerText = editId ? "Update Details" : "Publish Product";
+                btn.disabled = false;
+            }
+        };
+
+        window.onload = checkMode;
     </script>
 </body>
 </html>
