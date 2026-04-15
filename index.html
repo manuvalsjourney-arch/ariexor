@@ -1,86 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ariexo | Premium Digital Marketplace</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ariexo | Premium Digital Marketplace</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-<style>
-.hidden { display: none !important; }
+    <style>
+        .hidden { display: none !important; }
 
-/* 🔥 Animated Background */
-body {
-    background: linear-gradient(270deg, #0b0b14, #111827, #0b0b14);
-    background-size: 600% 600%;
-    animation: gradientMove 12s ease infinite;
-}
+        /* 🔥 Animated Background */
+        body {
+            background: linear-gradient(270deg, #0b0b14, #111827, #0b0b14);
+            background-size: 600% 600%;
+            animation: gradientMove 12s ease infinite;
+        }
 
-@keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-/* ✨ Glass Cards */
-.glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.4s ease;
-}
+        /* ✨ Glass Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.4s ease;
+        }
 
-.glass-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-}
+        .glass-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
 
-/* ✨ Glow Text */
-.glow-text {
-    text-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
-}
+        /* ✨ Glow Text */
+        .glow-text {
+            text-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
+        }
 
-/* 🔍 Search Focus */
-#productSearch:focus {
-    box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);
-    border-color: #6366f1;
-}
+        /* 🔍 Search Focus */
+        #productSearch:focus {
+            box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);
+            border-color: #6366f1;
+        }
 
-/* 🎯 Button Hover */
-button, a {
-    transition: all 0.3s ease;
-}
+        /* 🚀 Fade-in Animation */
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
 
-/* 🚀 Fade-in Animation */
-.fade-in {
-    animation: fadeInUp 0.8s ease forwards;
-}
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.share-btn:hover { 
-    background: #4f46e5 !important; 
-    color: white !important; 
-}
-</style>
+        .share-btn:hover { 
+            background: #4f46e5 !important; 
+            color: white !important; 
+        }
+    </style>
 </head>
 
 <body class="text-white font-['Inter']">
 
-<!-- NAV -->
 <nav class="fixed w-full z-50 bg-[#0b0b14]/80 backdrop-blur-md border-b border-white/5">
     <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-20">
         
@@ -96,7 +84,7 @@ button, a {
         </div>
 
         <div class="flex gap-4" id="nav-auth">
-            <a href="login.html">Login</a>
+            <a href="login.html" class="self-center">Login</a>
             <a href="signup.html" class="bg-indigo-600 px-6 py-2.5 rounded-full font-bold hover:bg-indigo-500 hover:scale-105">
                 Sign Up
             </a>
@@ -104,7 +92,6 @@ button, a {
     </div>
 </nav>
 
-<!-- HERO -->
 <header id="home" class="pt-40 pb-20 text-center fade-in">
     <h1 class="text-6xl md:text-8xl font-extrabold mb-8 glow-text">
         Premium <span class="text-indigo-500">Digital</span> Assets
@@ -114,7 +101,6 @@ button, a {
         Join the ariexo ecosystem. One account to buy or sell everything.
     </p>
 
-    <!-- SEARCH -->
     <div class="relative max-w-xl mx-auto mb-8">
         <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
         <input type="text" id="productSearch"
@@ -128,18 +114,17 @@ button, a {
         </a>
 
         <a href="dashboard.html" id="heroSell"
-           class="bg-slate-900 border px-8 py-4 rounded-2xl hidden hover:scale-105">
+           class="bg-slate-900 border border-white/10 px-8 py-4 rounded-2xl hidden hover:scale-105">
             Start Selling
         </a>
 
         <a href="analytics.html" id="heroAnalytics"
-           class="bg-indigo-600/20 border text-indigo-400 px-8 py-4 rounded-2xl hidden hover:scale-105">
+           class="bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 px-8 py-4 rounded-2xl hidden hover:scale-105">
             View Analytics
         </a>
     </div>
 </header>
 
-<!-- PRODUCTS -->
 <section id="products" class="py-20 max-w-7xl mx-auto px-4">
     <h2 class="text-3xl font-extrabold mb-12">Latest Drops</h2>
 
@@ -155,67 +140,110 @@ button, a {
 </footer>
 
 <script>
+// --- CONFIGURATION ---
+// Replace 'YOUR-KEY' with your actual Supabase Anon Key
 const sb = supabase.createClient(
-'https://qtewpjdnnjgvfgllgryy.supabase.co',
-'YOUR-KEY'
+    'https://qtewpjdnnjgvfgllgryy.supabase.co', 
+    'YOUR-KEY' 
 );
 
 let cachedProducts = [];
 
+// --- AUTH LOGIC ---
 function logout() {
     localStorage.removeItem('userRole');
-    location.href = 'index.html';
+    location.reload(); // Refresh to reset UI
 }
 
-async function shareProduct(e, title, id) {
-    e.preventDefault();
-    const url = `${window.location.origin}/product-details.html?id=${id}`;
+function updateAuthUI() {
+    const role = localStorage.getItem('userRole');
+    
+    if (role) {
+        // 1. Update Navigation Buttons
+        document.getElementById('nav-auth').innerHTML = `
+            <button onclick="logout()" class="hover:text-indigo-400 font-medium">Logout</button>
+        `;
 
-    if (navigator.share) {
-        await navigator.share({ title, url });
-    } else {
-        navigator.clipboard.writeText(url);
-        alert('Link copied!');
+        // 2. Reveal Seller Features if role is 'seller'
+        if (role === 'seller') {
+            document.getElementById('navAnalytics').classList.remove('hidden');
+            document.getElementById('heroSell').classList.remove('hidden');
+            document.getElementById('heroAnalytics').classList.remove('hidden');
+        }
     }
 }
 
+// --- PRODUCT LOGIC ---
 async function loadProducts() {
-    const { data } = await sb.from('product_details')
-        .select('*')
-        .order('id', { ascending: false });
+    try {
+        const { data, error } = await sb.from('product_details')
+            .select('*')
+            .order('id', { ascending: false });
 
-    cachedProducts = data;
-    renderProducts(data);
+        if (error) throw error;
+
+        cachedProducts = data || [];
+        renderProducts(cachedProducts);
+    } catch (err) {
+        console.error("Error loading products:", err.message);
+    }
 }
 
 function renderProducts(products) {
     const grid = document.getElementById('products-grid');
+    const noResults = document.getElementById('no-results');
 
+    if (products.length === 0) {
+        grid.innerHTML = '';
+        noResults.classList.remove('hidden');
+        return;
+    }
+
+    noResults.classList.add('hidden');
     grid.innerHTML = products.map(p => `
         <div class="relative group fade-in">
-            
             <button onclick="shareProduct(event,'${p.title}','${p.id}')"
-                class="share-btn absolute top-4 right-4 p-3 bg-white/10 rounded-full">
+                class="share-btn absolute top-4 right-4 p-3 bg-white/10 rounded-full z-10 backdrop-blur-md">
                 🔗
             </button>
 
             <a href="product-details.html?id=${p.id}" 
-               class="block glass-card p-6 rounded-[2rem]">
+               class="block glass-card p-6 rounded-[2rem] h-full">
 
-                <img src="${p.image_url}" 
-                     class="w-full h-56 object-cover rounded-2xl mb-4 group-hover:scale-105 transition">
+                <div class="overflow-hidden rounded-2xl mb-4">
+                    <img src="${p.image_url}" 
+                         class="w-full h-56 object-cover group-hover:scale-110 transition duration-500">
+                </div>
 
-                <h3 class="text-xl font-bold">${p.title}</h3>
+                <h3 class="text-xl font-bold mb-2">${p.title}</h3>
 
-                <div class="flex justify-between mt-2">
-                    <span class="text-indigo-400 font-bold">$${p.price}</span>
-                    <span class="text-xs text-slate-500">Details →</span>
+                <div class="flex justify-between items-center mt-auto">
+                    <span class="text-indigo-400 font-bold text-lg">$${p.price}</span>
+                    <span class="text-xs text-slate-500 uppercase tracking-widest">Details →</span>
                 </div>
             </a>
         </div>
     `).join('');
 }
 
+// --- UTILITIES ---
+async function shareProduct(e, title, id) {
+    e.preventDefault();
+    const url = `${window.location.origin}/product-details.html?id=${id}`;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({ title, url });
+        } catch (err) {
+            console.log("Sharing failed", err);
+        }
+    } else {
+        navigator.clipboard.writeText(url);
+        alert('Link copied to clipboard!');
+    }
+}
+
+// --- INITIALIZATION ---
 document.getElementById('productSearch').addEventListener('input', e => {
     const q = e.target.value.toLowerCase();
     const filtered = cachedProducts.filter(p => 
@@ -223,15 +251,6 @@ document.getElementById('productSearch').addEventListener('input', e => {
     );
     renderProducts(filtered);
 });
-
-function updateAuthUI() {
-    const role = localStorage.getItem('userRole');
-    if (!role) return;
-
-    document.getElementById('nav-auth').innerHTML = `
-        <button onclick="logout()">Logout</button>
-    `;
-}
 
 window.onload = () => {
     loadProducts();
