@@ -90,10 +90,10 @@
 
         let cachedProducts = [];
 
-        // 1. Logout Function
+        // 1. Updated Logout Function
         function logout() {
-            localStorage.removeItem('userRole');
-            window.location.reload(); // Refresh to update UI
+            localStorage.removeItem('userRole'); // Remove the session
+            window.location.href = 'index.html'; // Redirect to home
         }
 
         async function loadProducts() {
@@ -136,7 +136,7 @@
             }
         });
 
-        // 2. Updated Auth UI Logic with Logout Button
+        // 2. Auth UI Logic - Displays Logout when role is detected
         function updateAuthUI() {
             const role = localStorage.getItem('userRole');
             const navAuth = document.getElementById('nav-auth');
@@ -145,10 +145,8 @@
             const heroAnalytics = document.getElementById('heroAnalytics');
 
             if (role) {
-                // Determine color based on role
                 const themeClass = role === 'seller' ? 'text-indigo-400 border-indigo-500/20 bg-indigo-500/10' : 'text-emerald-400 border-emerald-500/20 bg-emerald-500/10';
                 
-                // Show role badge AND Logout button
                 navAuth.innerHTML = `
                     <div class="flex items-center gap-4">
                         <span class="text-[10px] font-bold ${themeClass} px-3 py-1 rounded-full border tracking-widest uppercase">
@@ -160,14 +158,12 @@
                     </div>
                 `;
 
-                // Toggle visibility for seller-only links
                 if (role === 'seller') {
                     navAnalytics?.classList.remove('hidden');
                     heroAnalytics?.classList.remove('hidden');
                     heroSell?.classList.remove('hidden');
                 }
             } else {
-                // If logged out, show Login/Signup
                 navAuth.innerHTML = `
                     <a href="login.html" class="text-sm font-medium hover:text-indigo-400 transition-colors">Login</a>
                     <a href="signup.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-full text-sm font-bold transition-all transform hover:scale-105">Sign Up</a>
@@ -175,6 +171,7 @@
             }
         }
 
+        // Ensure functions run on load
         window.onload = () => {
             loadProducts();
             updateAuthUI();
