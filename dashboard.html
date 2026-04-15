@@ -3,40 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product | ariexo</title>
+    <title>Seller Dashboard | ariexo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { background: #0b0b14; font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body class="bg-[#0b0b14] text-white flex items-center justify-center min-h-screen p-6">
-    <div class="w-full max-w-xl bg-slate-900/50 p-10 rounded-[2.5rem] border border-white/5 backdrop-blur-xl">
-        <h1 class="text-3xl font-bold mb-8">List New Asset</h1>
-        
+<body class="text-white min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem]">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
+            <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
+        </div>
+
         <form id="productForm" class="space-y-6">
-            <input type="text" id="title" required placeholder="Asset Title (e.g. Forest Green Planner)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
-            
-            <input type="number" id="price" required step="0.01" placeholder="Price (USD)" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none">
-            
-            <textarea id="description" rows="3" required placeholder="Asset Description" class="w-full bg-black/40 p-4 rounded-xl border border-white/10 focus:border-indigo-500 outline-none"></textarea>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
+                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+            </div>
 
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">1. Shop Preview Image</label>
-                <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-indigo-500 transition-colors relative">
-                    <p id="imageFileName" class="text-slate-400">Upload Thumbnail (PNG/JPG)</p>
-                    <input type="file" id="imageInput" accept="image/*" required class="absolute inset-0 opacity-0 cursor-pointer">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
+                <textarea id="description" placeholder="Describe your asset..." class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 h-32 transition-all mt-1" required></textarea>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Price ($)</label>
+                <input type="number" id="price" step="0.01" placeholder="9.99" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Preview Image</label>
+                    <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Digital File (PDF/ZIP)</label>
+                    <input type="file" id="pdfInput" accept=".pdf,.zip" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">2. Printable Asset (The PDF)</label>
-                <div class="border-2 border-dashed border-white/10 rounded-2xl p-6 text-center cursor-pointer hover:border-emerald-500 transition-colors relative">
-                    <p id="pdfFileName" class="text-slate-400">Upload Printable PDF</p>
-                    <input type="file" id="pdfInput" accept=".pdf" required class="absolute inset-0 opacity-0 cursor-pointer">
-                </div>
-            </div>
-
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition-all">
-                Publish Listing
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-indigo-500/20">
+                Publish Product
             </button>
         </form>
     </div>
@@ -44,66 +56,48 @@
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-        // Check login on load
-        async function checkAuth() {
-            const { data: { session } } = await sb.auth.getSession();
-            if (!session) window.location.href = 'login.html';
-        }
-        checkAuth();
-
-        // Show file names when selected
-        document.getElementById('imageInput').onchange = (e) => {
-            if(e.target.files[0]) document.getElementById('imageFileName').innerText = "🖼️ " + e.target.files[0].name;
-        };
-        document.getElementById('pdfInput').onchange = (e) => {
-            if(e.target.files[0]) document.getElementById('pdfFileName').innerText = "📄 " + e.target.files[0].name;
-        };
-
         document.getElementById('productForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
+            btn.innerText = "Processing & Uploading...";
             btn.disabled = true;
-            btn.innerText = "Uploading assets...";
+
+            const imgFile = document.getElementById('imageInput').files[0];
+            const pdfFile = document.getElementById('pdfInput').files[0];
+            const time = Date.now();
 
             try {
-                const { data: { user } } = await sb.auth.getUser();
-                
-                // 1. Upload Preview Image
-                const imgFile = document.getElementById('imageInput').files[0];
-                const imgPath = `previews/${Date.now()}-${imgFile.name}`;
-                const { error: imgErr } = await sb.storage.from('product-images').upload(imgPath, imgFile);
-                if (imgErr) throw imgErr;
+                // 1. Upload Image to Storage
+                const imgPath = `previews/${time}-${imgFile.name}`;
+                await sb.storage.from('product-images').upload(imgPath, imgFile);
                 const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
 
-                // 2. Upload Printable PDF
-                const pdfFile = document.getElementById('pdfInput').files[0];
-                const pdfPath = `downloads/${Date.now()}-${pdfFile.name}`;
-                const { error: pdfErr } = await sb.storage.from('product-images').upload(pdfPath, pdfFile);
-                if (pdfErr) throw pdfErr;
+                // 2. Upload PDF/File to Storage
+                const pdfPath = `downloads/${time}-${pdfFile.name}`;
+                await sb.storage.from('product-images').upload(pdfPath, pdfFile);
                 const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
 
-                // 3. Save everything to the product_details table
-                const { error: dbError } = await sb.from('product_details').insert([{
+                // 3. Create the Row in product_details
+                const { error } = await sb.from('product_details').insert([{
                     title: document.getElementById('title').value,
-                    price: parseFloat(document.getElementById('price').value),
                     description: document.getElementById('description').value,
+                    price: parseFloat(document.getElementById('price').value),
                     image_url: imgData.publicUrl,
-                    file_url: pdfData.publicUrl, // Matches your new Supabase column
-                    seller_id: user.id
+                    file_url: pdfData.publicUrl,
+                    seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'
                 }]);
 
-                if (dbError) throw dbError;
+                if (error) throw error;
 
-                window.location.href = 'analytics.html';
+                alert("Boom! Your product is live.");
+                window.location.href = 'index.html';
 
             } catch (err) {
                 alert("Upload failed: " + err.message);
+                btn.innerText = "Publish Product";
                 btn.disabled = false;
-                btn.innerText = "Publish Listing";
             }
         };
-
-        lucide.createIcons();
     </script>
 </body>
 </html>
