@@ -3,80 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seller Dashboard | ariexo</title>
+    <title>Dashboard | ariexo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
-        input:focus, textarea:focus { border-color: #6366f1 !important; }
+        body { background: #0b0b14; color: white; font-family: 'Inter'; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
 
-    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem] shadow-2xl">
-        <div class="flex justify-between items-center mb-8">
-            <h1 id="pageTitle" class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
-            <a href="index.html" class="text-slate-500 hover:text-white text-sm transition-all">✕ Close</a>
-        </div>
-
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem]">
+        <h1 id="pageTitle" class="text-3xl font-extrabold mb-8 text-indigo-500">List New Product</h1>
         <form id="productForm" class="space-y-6">
-            <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
-                <input type="text" id="title" placeholder="e.g. Minimalist UI Kit" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none mt-1 transition-all" required>
+            <input type="text" id="title" placeholder="Title" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none" required>
+            <textarea id="description" placeholder="Description" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none h-32" required></textarea>
+            <input type="number" id="price" step="0.01" placeholder="Price ($)" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none" required>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <input type="file" id="imageInput" accept="image/*" class="text-xs">
+                <input type="file" id="pdfInput" accept=".pdf,.zip" class="text-xs">
             </div>
 
-            <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
-                <textarea id="description" placeholder="What's included in this asset?" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none h-32 mt-1 transition-all" required></textarea>
-            </div>
-
-            <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Price ($)</label>
-                <input type="number" id="price" step="0.01" placeholder="9.99" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none mt-1 transition-all" required>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5">
-                <div>
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Preview Image</label>
-                    <input type="file" id="imageInput" accept="image/*" class="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20">
-                    <p id="imgStatus" class="text-[9px] text-slate-600 mt-1 italic"></p>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Digital Asset (PDF/ZIP)</label>
-                    <input type="file" id="pdfInput" accept=".pdf,.zip" class="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20">
-                    <p id="fileStatus" class="text-[9px] text-slate-600 mt-1 italic"></p>
-                </div>
-            </div>
-
-            <div class="pt-4">
-                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform active:scale-95 shadow-lg shadow-indigo-500/20">
-                    Publish Product
-                </button>
-            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 py-5 rounded-2xl font-bold">Publish Product</button>
         </form>
     </div>
 
     <script>
         const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
-        
+        const MY_SELLER_ID = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5';
         const urlParams = new URLSearchParams(window.location.search);
         const editId = urlParams.get('edit');
 
-        // Check if we are in Edit Mode
-        async function checkMode() {
+        async function init() {
             if (editId) {
-                document.getElementById('pageTitle').innerText = "Edit Product";
-                document.getElementById('submitBtn').innerText = "Update Details";
-                
-                const { data, error } = await sb.from('product_details').select('*').eq('id', editId).single();
-                if (data) {
+                const { data } = await sb.from('product_details').select('*').eq('id', editId).single();
+                if (data && data.seller_id === MY_SELLER_ID) {
+                    document.getElementById('pageTitle').innerText = "Edit Product";
+                    document.getElementById('submitBtn').innerText = "Update";
                     document.getElementById('title').value = data.title;
                     document.getElementById('description').value = data.description;
                     document.getElementById('price').value = data.price;
-                    document.getElementById('imgStatus').innerText = "Current image will be kept unless you upload a new one.";
-                    document.getElementById('fileStatus').innerText = "Current file will be kept unless you upload a new one.";
+                } else if (data) {
+                    alert("Unauthorized"); window.location.href = 'index.html';
                 }
             }
         }
@@ -84,57 +54,39 @@
         document.getElementById('productForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.innerText = "Processing Assets...";
-            btn.disabled = true;
+            btn.disabled = true; btn.innerText = "Processing...";
 
             const imgFile = document.getElementById('imageInput').files[0];
             const pdfFile = document.getElementById('pdfInput').files[0];
-            const time = Date.now();
+            let payload = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                price: parseFloat(document.getElementById('price').value)
+            };
 
             try {
-                let updateData = {
-                    title: document.getElementById('title').value,
-                    description: document.getElementById('description').value,
-                    price: parseFloat(document.getElementById('price').value)
-                };
-
-                // Upload Image only if selected
                 if (imgFile) {
-                    const path = `previews/${time}-${imgFile.name}`;
+                    const path = `previews/${Date.now()}-${imgFile.name}`;
                     await sb.storage.from('product-images').upload(path, imgFile);
-                    updateData.image_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+                    payload.image_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
                 }
-
-                // Upload Asset only if selected
                 if (pdfFile) {
-                    const path = `downloads/${time}-${pdfFile.name}`;
+                    const path = `downloads/${Date.now()}-${pdfFile.name}`;
                     await sb.storage.from('product-images').upload(path, pdfFile);
-                    updateData.file_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+                    payload.file_url = sb.storage.from('product-images').getPublicUrl(path).data.publicUrl;
                 }
 
                 if (editId) {
-                    // Update Database
-                    const { error } = await sb.from('product_details').update(updateData).eq('id', editId);
-                    if (error) throw error;
+                    await sb.from('product_details').update(payload).eq('id', editId).eq('seller_id', MY_SELLER_ID);
                 } else {
-                    // Insert New Row
-                    updateData.seller_id = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5';
-                    if (!imgFile || !pdfFile) throw new Error("Please upload both an image and a digital file.");
-                    
-                    const { error } = await sb.from('product_details').insert([updateData]);
-                    if (error) throw error;
+                    payload.seller_id = MY_SELLER_ID;
+                    await sb.from('product_details').insert([payload]);
                 }
-
                 window.location.href = 'index.html';
-
-            } catch (err) {
-                alert("Error: " + err.message);
-                btn.innerText = editId ? "Update Details" : "Publish Product";
-                btn.disabled = false;
-            }
+            } catch (err) { alert(err.message); btn.disabled = false; }
         };
 
-        window.onload = checkMode;
+        window.onload = init;
     </script>
 </body>
 </html>
