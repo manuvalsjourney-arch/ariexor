@@ -4,176 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seller Analytics | ariexo</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: #0b0b14; 
-            color: #e2e8f0; 
-            min-height: 100vh;
-        }
-        /* ✨ Glass Effect */
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.03); 
-            backdrop-filter: blur(15px); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-        }
-        /* ✨ Text Gradient */
-        .stat-value { 
-            background: linear-gradient(to right, #fff, #94a3b8); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-        }
+        body { font-family: 'Inter', sans-serif; background: #0b0b14; color: #e2e8f0; min-height: 100vh; }
+        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .stat-value { background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hidden { display: none !important; }
-        
-        /* Smooth Transitions */
         tr { transition: all 0.2s ease; }
     </style>
 </head>
-
 <body class="p-6 lg:p-12">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight">Analytics</h1>
+                <p class="text-slate-500 text-xs uppercase tracking-[0.2em] font-bold mt-1">Performance Overview</p>
+            </div>
+            <div class="flex gap-3">
+                <a href="index.html" class="glass-card px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition"> ← Marketplace </a>
+                <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/20 transition"> + Add Product </a>
+            </div>
+        </header>
 
-<div class="max-w-7xl mx-auto">
-
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-        <div>
-            <h1 class="text-4xl font-extrabold tracking-tight">Analytics</h1>
-            <p class="text-slate-500 text-xs uppercase tracking-[0.2em] font-bold mt-1">Performance Overview</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+            <div class="glass-card p-6 rounded-3xl">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Total Assets</p>
+                <h2 id="totalItems" class="text-3xl font-bold stat-value">0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-3xl">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Inventory Value</p>
+                <h2 id="totalValue" class="text-3xl font-bold stat-value">$0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-3xl">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Avg. Price</p>
+                <h2 id="avgPrice" class="text-3xl font-bold stat-value">$0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-3xl">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Est. Revenue</p>
+                <h2 id="revenue" class="text-3xl font-bold stat-value">$0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-3xl border-indigo-500/20">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Top Asset</p>
+                <h2 id="topProduct" class="text-sm font-bold truncate text-white">-</h2>
+            </div>
         </div>
 
-        <div class="flex gap-3">
-            <a href="index.html" class="glass-card px-5 py-2.5 rounded-xl text-sm hover:bg-white/5 transition">
-                ← Marketplace
-            </a>
-            <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-indigo-500/20 transition">
-                + Add Product
-            </a>
-        </div>
-    </header>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-        <div class="glass-card p-6 rounded-3xl">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Total Assets</p>
-            <h2 id="totalItems" class="text-3xl font-bold stat-value">0</h2>
-        </div>
-
-        <div class="glass-card p-6 rounded-3xl">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Inventory Value</p>
-            <h2 id="totalValue" class="text-3xl font-bold stat-value">$0</h2>
-        </div>
-
-        <div class="glass-card p-6 rounded-3xl">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Avg. Price</p>
-            <h2 id="avgPrice" class="text-3xl font-bold stat-value">$0</h2>
-        </div>
-
-        <div class="glass-card p-6 rounded-3xl">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Est. Revenue</p>
-            <h2 id="revenue" class="text-3xl font-bold stat-value">$0</h2>
-        </div>
-
-        <div class="glass-card p-6 rounded-3xl border-indigo-500/20">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Top Asset</p>
-            <h2 id="topProduct" class="text-sm font-bold truncate text-white">-</h2>
-        </div>
-    </div>
-
-    <div class="glass-card rounded-[2rem] overflow-hidden border-white/5">
-        <div class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
-            <h3 class="font-bold text-lg">My Listings</h3>
-            <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full font-black tracking-tighter">LIVE DATA</span>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="text-[10px] uppercase tracking-widest text-slate-500 bg-white/[0.02]">
-                    <tr>
-                        <th class="px-8 py-5 font-bold">Product Details</th>
-                        <th class="px-8 py-5 font-bold">Tier</th>
-                        <th class="px-8 py-5 font-bold">Price</th>
-                        <th class="px-8 py-5 font-bold text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="inventoryList" class="divide-y divide-white/5">
-                    </tbody>
-            </table>
-        </div>
-
-        <div id="loading" class="p-20 text-center">
-            <div class="inline-block animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mb-4"></div>
-            <p class="text-slate-500 font-medium">Synchronizing with marketplace...</p>
+        <div class="glass-card rounded-[2rem] overflow-hidden border-white/5">
+            <div class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.01]">
+                <h3 class="font-bold text-lg">My Listings</h3>
+                <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full font-black tracking-tighter">LIVE DATA</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="text-[10px] uppercase tracking-widest text-slate-500 bg-white/[0.02]">
+                        <tr>
+                            <th class="px-8 py-5 font-bold">Product Details</th>
+                            <th class="px-8 py-5 font-bold">Tier</th>
+                            <th class="px-8 py-5 font-bold">Price</th>
+                            <th class="px-8 py-5 font-bold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryList" class="divide-y divide-white/5"></tbody>
+                </table>
+            </div>
+            <div id="loading" class="p-20 text-center">
+                <div class="inline-block animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mb-4"></div>
+                <p class="text-slate-500 font-medium">Synchronizing with marketplace...</p>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    // Configuration
-    const sb = supabase.createClient(
-        'https://qtewpjdnnjgvfgllgryy.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU' // ⚠️ Ensure you put your real Anon Key here
-    );
+    <script>
+        const sb = supabase.createClient(
+            'https://qtewpjdnnjgvfgllgryy.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
+        );
 
-    async function fetchAnalytics() {
-        const loading = document.getElementById('loading');
-        const list = document.getElementById('inventoryList');
+        async function fetchAnalytics() {
+            const loading = document.getElementById('loading');
+            const list = document.getElementById('inventoryList');
 
-        try {
-            // 1. Get Current User
-            const { data: { user }, error: userError } = await sb.auth.getUser();
+            try {
+                const { data: { user } } = await sb.auth.getUser();
+                if (!user) {
+                    loading.innerHTML = `<p class="text-slate-400">Access Denied. Please <a href="login.html" class="text-indigo-400 underline font-bold">Login</a>.</p>`;
+                    return;
+                }
 
-            if (!user) {
-                loading.innerHTML = `
-                    <p class="text-slate-400">Access Denied. Please <a href="login.html" class="text-indigo-400 underline font-bold">Login</a>.</p>
-                `;
-                return;
-            }
+                const { data, error } = await sb.from('product_details').select('*').eq('seller_id', user.id).order('id', { ascending: false });
+                if (error) throw error;
 
-            // 2. Fetch User's Products
-            const { data, error } = await sb
-                .from('product_details')
-                .select('*')
-                .eq('seller_id', user.id)
-                .order('id', { ascending: false });
+                if (data && data.length > 0) {
+                    loading.classList.add('hidden');
+                    const total = data.reduce((s, i) => s + Number(i.price || 0), 0);
+                    const avg = total / data.length;
+                    const top = data.reduce((a, b) => Number(a.price) > Number(b.price) ? a : b);
 
-            if (error) throw error;
+                    document.getElementById('totalItems').innerText = data.length;
+                    document.getElementById('totalValue').innerText = `$${total.toLocaleString()}`;
+                    document.getElementById('avgPrice').innerText = `$${avg.toFixed(2)}`;
+                    document.getElementById('revenue').innerText = `$${(total * 0.95).toFixed(2)}`;
+                    document.getElementById('topProduct').innerText = top.title;
 
-            if (data && data.length > 0) {
-                loading.classList.add('hidden');
+                    list.innerHTML = data.map(item => {
+                        const price = Number(item.price);
+                        let badgeClass = price > 100 ? "bg-purple-500/10 text-purple-400" : (price < 15 ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400");
+                        let status = price > 100 ? "Premium" : (price < 15 ? "Budget" : "Standard");
 
-                // --- CALCULATE STATS ---
-                const total = data.reduce((s, i) => s + Number(i.price || 0), 0);
-                const avg = total / data.length;
-                const top = data.reduce((a, b) => Number(a.price) > Number(b.price) ? a : b);
-
-                document.getElementById('totalItems').innerText = data.length;
-                document.getElementById('totalValue').innerText = `$${total.toLocaleString()}`;
-                document.getElementById('avgPrice').innerText = `$${avg.toFixed(2)}`;
-                document.getElementById('revenue').innerText = `$${(total * 0.95).toFixed(2)}`; // Assuming 5% fee
-                document.getElementById('topProduct').innerText = top.title;
-
-                // --- RENDER TABLE ---
-                list.innerHTML = data.map(item => {
-                    const price = Number(item.price);
-                    
-                    // Logic for Badge Styling
-                    let badgeClass = "bg-emerald-500/10 text-emerald-400";
-                    let status = "Standard";
-                    
-                    if (price > 100) {
-                        badgeClass = "bg-purple-500/10 text-purple-400";
-                        status = "Premium";
-                    } else if (price < 15) {
-                        badgeClass = "bg-amber-500/10 text-amber-400";
-                        status = "Budget";
-                    }
-
-                    return `
+                        return `
                         <tr class="hover:bg-white/[0.03]">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
@@ -185,60 +126,43 @@
                                 </div>
                             </td>
                             <td class="px-8 py-6">
-                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-md ${badgeClass}">
-                                    ${status}
-                                </span>
+                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-md ${badgeClass}">${status}</span>
                             </td>
-                            <td class="px-8 py-6 font-mono font-bold text-indigo-400">
-                                $${price.toLocaleString()}
-                            </td>
+                            <td class="px-8 py-6 font-mono font-bold text-indigo-400">$${price.toLocaleString()}</td>
                             <td class="px-8 py-6 text-right">
                                 <div class="flex justify-end gap-2">
                                     <a href="product-details.html?id=${item.id}" class="p-2 hover:bg-white/10 rounded-lg transition" title="View">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </a>
+                                    <a href="dashboard.html?edit=${item.id}" class="p-2 hover:bg-blue-500/10 text-blue-400 rounded-lg transition" title="Edit">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </a>
                                     <button onclick="deleteAsset(${item.id})" class="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition" title="Delete">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                // Refresh Lucide Icons
-                lucide.createIcons();
-
-            } else {
-                loading.innerHTML = `
-                    <div class="py-10">
-                        <p class="text-slate-500 mb-6 font-medium">You haven't listed any products yet.</p>
-                        <a href="dashboard.html" class="bg-white text-black px-8 py-3 rounded-2xl font-bold hover:bg-gray-200 transition">
-                            Create First Listing
-                        </a>
-                    </div>
-                `;
-            }
-        } catch (err) {
-            console.error(err);
-            loading.innerHTML = `<p class="text-red-400 font-bold">Error loading analytics: ${err.message}</p>`;
-        }
-    }
-
-    async function deleteAsset(id) {
-        if (confirm('Permanently remove this asset from the marketplace?')) {
-            const { error } = await sb.from('product_details').delete().eq('id', id);
-            if (!error) {
-                fetchAnalytics();
-            } else {
-                alert("Action failed: " + error.message);
+                        </tr>`;
+                    }).join('');
+                    lucide.createIcons();
+                } else {
+                    loading.innerHTML = `<div class="py-10 text-center"><p class="text-slate-500 mb-6 font-medium">No products listed.</p><a href="dashboard.html" class="bg-white text-black px-8 py-3 rounded-2xl font-bold hover:bg-gray-200 transition">Create First Listing</a></div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                loading.innerHTML = `<p class="text-red-400 font-bold">Error loading analytics: ${err.message}</p>`;
             }
         }
-    }
 
-    // Initialize
-    window.onload = fetchAnalytics;
-</script>
+        async function deleteAsset(id) {
+            if (confirm('Permanently remove this asset?')) {
+                const { error } = await sb.from('product_details').delete().eq('id', id);
+                if (!error) fetchAnalytics();
+                else alert("Action failed: " + error.message);
+            }
+        }
 
+        window.onload = fetchAnalytics;
+    </script>
 </body>
 </html>
