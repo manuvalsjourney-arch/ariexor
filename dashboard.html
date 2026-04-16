@@ -52,52 +52,103 @@
             </button>
         </form>
     </div>
+<script>
+    const sb = supabase.createClient(
+        'https://qtewpjdnnjgvfgllgryy.supabase.co', 
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
+    );
 
-    <script>
-        const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
+    // 1. Identify if we are Editing or Creating
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    const form = document.getElementById('productForm');
+    const btn = document.getElementById('submitBtn');
+    const titleHeader = document.querySelector('h1');
 
-        document.getElementById('productForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "Processing & Uploading...";
-            btn.disabled = true;
+    // 2. If Edit ID exists, fetch and fill the form
+    if (editId) {
+        loadProductData(editId);
+    }
 
-            const imgFile = document.getElementById('imageInput').files[0];
-            const pdfFile = document.getElementById('pdfInput').files[0];
-            const time = Date.now();
+    async function loadProductData(id) {
+        titleHeader.innerText = "Edit Product Asset";
+        btn.innerText = "Save Changes";
+        
+        const { data, error } = await sb
+            .from('product_details')
+            .select('*')
+            .eq('id', id)
+            .single();
 
-            try {
-                // 1. Upload Image to Storage
+        if (data) {
+            document.getElementById('title').value = data.title;
+            document.getElementById('description').value = data.description;
+            document.getElementById('price').value = data.price;
+            
+            // Image and PDF inputs stay empty (user only uploads if they want to change them)
+            document.getElementById('imageInput').required = false;
+            document.getElementById('pdfInput').required = false;
+        }
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        const imgFile = document.getElementById('imageInput').files[0];
+        const pdfFile = document.getElementById('pdfInput').files[0];
+        const time = Date.now();
+
+        try {
+            let updatePayload = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                price: parseFloat(document.getElementById('price').value)
+            };
+
+            // 3. Handle Optional File Uploads during Edit
+            if (imgFile) {
                 const imgPath = `previews/${time}-${imgFile.name}`;
                 await sb.storage.from('product-images').upload(imgPath, imgFile);
                 const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
+                updatePayload.image_url = imgData.publicUrl;
+            }
 
-                // 2. Upload PDF/File to Storage
+            if (pdfFile) {
                 const pdfPath = `downloads/${time}-${pdfFile.name}`;
                 await sb.storage.from('product-images').upload(pdfPath, pdfFile);
                 const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
-
-                // 3. Create the Row in product_details
-                const { error } = await sb.from('product_details').insert([{
-                    title: document.getElementById('title').value,
-                    description: document.getElementById('description').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    image_url: imgData.publicUrl,
-                    file_url: pdfData.publicUrl,
-                    seller_id: 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'
-                }]);
-
-                if (error) throw error;
-
-                alert("Boom! Your product is live.");
-                window.location.href = 'index.html';
-
-            } catch (err) {
-                alert("Upload failed: " + err.message);
-                btn.innerText = "Publish Product";
-                btn.disabled = false;
+                updatePayload.file_url = pdfData.publicUrl;
             }
-        };
-    </script>
+
+            if (editId) {
+                // --- UPDATE EXISTING ---
+                const { error } = await sb
+                    .from('product_details')
+                    .update(updatePayload)
+                    .eq('id', editId);
+                
+                if (error) throw error;
+                alert("Changes saved successfully!");
+            } else {
+                // --- CREATE NEW ---
+                updatePayload.seller_id = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'; 
+                const { error } = await sb.from('product_details').insert([updatePayload]);
+                
+                if (error) throw error;
+                alert("Boom! Your product is live.");
+            }
+
+            window.location.href = 'analytics.html';
+
+        } catch (err) {
+            alert("Action failed: " + err.message);
+            btn.innerText = editId ? "Save Changes" : "Publish Product";
+            btn.disabled = false;
+        }
+    };
+</script>
+    
 </body>
 </html>
