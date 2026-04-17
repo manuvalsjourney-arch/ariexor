@@ -3,10 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details | ariexo</title>
+    
+    <title id="dynamic-title">Product Details | ariexo</title>
+    <link rel="icon" type="image/png" href="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/your-logo-file.png">
+
+    <meta name="description" id="meta-desc" content="Premium digital asset on ariexo marketplace.">
+    <meta property="og:type" content="product">
+    <meta property="og:title" id="og-title" content="Product Details | ariexo">
+    <meta property="og:description" id="og-desc" content="Check out this unique digital tool on ariexo.">
+    <meta property="og:image" id="og-image" content="">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
@@ -14,8 +24,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
-        
-        /* Modal Animation */
         #imageModal { transition: opacity 0.3s ease; }
         #modalImage { transition: transform 0.3s ease; }
     </style>
@@ -136,35 +144,45 @@
             }, 300);
         }
 
-        async function loadProductDetails() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
+      async function loadProductDetails() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
 
-            if (!productId) {
-                window.location.href = 'index.html';
-                return;
-            }
+    if (!productId) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-            const { data, error } = await sb
-                .from('product_details')
-                .select('*')
-                .eq('id', productId)
-                .single();
+    const { data, error } = await sb
+        .from('product_details')
+        .select('*')
+        .eq('id', productId)
+        .single();
 
-            if (error || !data) {
-                console.error("Product not found");
-                document.getElementById('productTitle').innerText = "Product Not Found";
-                return;
-            }
+    if (error || !data) {
+        console.error("Product not found");
+        document.getElementById('productTitle').innerText = "Product Not Found";
+        return;
+    }
 
-            // Update Page Elements
-            document.title = `${data.title} | ariexo`;
-            document.getElementById('productImage').src = data.image_url;
-            document.getElementById('productTitle').innerText = data.title;
-            document.getElementById('productPrice').innerText = `$${data.price}`;
-            document.getElementById('productDescription').innerText = data.description;
-            document.getElementById('downloadBtn').href = data.file_url;
-        }
+    // --- NEW: UPDATE SEO DYNAMICALLY ---
+    const pageTitle = `${data.title} | ariexo`;
+    document.title = pageTitle; // Updates browser tab
+    
+    // Update Meta Tags for Search Engines & Social Sharing
+    // Note: Make sure these IDs (meta-desc, og-title, etc.) exist in your <head>
+    if(document.getElementById('meta-desc')) document.getElementById('meta-desc').setAttribute("content", data.description.substring(0, 160));
+    if(document.getElementById('og-title')) document.getElementById('og-title').setAttribute("content", pageTitle);
+    if(document.getElementById('og-desc')) document.getElementById('og-desc').setAttribute("content", data.description.substring(0, 100));
+    if(document.getElementById('og-image')) document.getElementById('og-image').setAttribute("content", data.image_url);
+
+    // --- EXISTING: UPDATE PAGE ELEMENTS ---
+    document.getElementById('productImage').src = data.image_url;
+    document.getElementById('productTitle').innerText = data.title;
+    document.getElementById('productPrice').innerText = `$${data.price}`;
+    document.getElementById('productDescription').innerText = data.description;
+    document.getElementById('downloadBtn').href = data.file_url;
+}
 
         window.onload = loadProductDetails;
     </script>
