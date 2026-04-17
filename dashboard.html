@@ -42,8 +42,8 @@
                     <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Digital File (PDF/ZIP)</label>
-                    <input type="file" id="pdfInput" accept=".pdf,.zip" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Asset (PDF, ZIP, PRPROJ, etc.)</label>
+                    <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
                 </div>
             </div>
 
@@ -52,20 +52,20 @@
             </button>
         </form>
     </div>
+
 <script>
+    // Supabase config
     const sb = supabase.createClient(
         'https://qtewpjdnnjgvfgllgryy.supabase.co', 
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
     );
 
-    // 1. Identify if we are Editing or Creating
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
     const form = document.getElementById('productForm');
     const btn = document.getElementById('submitBtn');
     const titleHeader = document.querySelector('h1');
 
-    // 2. If Edit ID exists, fetch and fill the form
     if (editId) {
         loadProductData(editId);
     }
@@ -84,8 +84,6 @@
             document.getElementById('title').value = data.title;
             document.getElementById('description').value = data.description;
             document.getElementById('price').value = data.price;
-            
-            // Image and PDF inputs stay empty (user only uploads if they want to change them)
             document.getElementById('imageInput').required = false;
             document.getElementById('pdfInput').required = false;
         }
@@ -107,7 +105,6 @@
                 price: parseFloat(document.getElementById('price').value)
             };
 
-            // 3. Handle Optional File Uploads during Edit
             if (imgFile) {
                 const imgPath = `previews/${time}-${imgFile.name}`;
                 await sb.storage.from('product-images').upload(imgPath, imgFile);
@@ -123,7 +120,6 @@
             }
 
             if (editId) {
-                // --- UPDATE EXISTING ---
                 const { error } = await sb
                     .from('product_details')
                     .update(updatePayload)
@@ -132,7 +128,6 @@
                 if (error) throw error;
                 alert("Changes saved successfully!");
             } else {
-                // --- CREATE NEW ---
                 updatePayload.seller_id = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'; 
                 const { error } = await sb.from('product_details').insert([updatePayload]);
                 
@@ -149,6 +144,5 @@
         }
     };
 </script>
-    
 </body>
 </html>
