@@ -112,13 +112,18 @@
                 updatePayload.image_url = imgData.publicUrl;
             }
 
-            if (pdfFile) {
-                const pdfPath = `downloads/${time}-${pdfFile.name}`;
-                await sb.storage.from('product-images').upload(pdfPath, pdfFile);
-                const { data: pdfData } = sb.storage.from('product-images').getPublicUrl(pdfPath);
-                updatePayload.file_url = pdfData.publicUrl;
-            }
-
+          if (pdfFile) {
+    // Keep the path logic the same
+    const pdfPath = `downloads/${time}-${pdfFile.name}`;
+    
+    // CHANGE: Use 'user-products' bucket instead of 'product-images'
+    await sb.storage.from('user-products').upload(pdfPath, pdfFile);
+    
+    // CHANGE: Get the URL from 'user-products'
+    const { data: pdfData } = sb.storage.from('user-products').getPublicUrl(pdfPath);
+    
+    updatePayload.file_url = pdfData.publicUrl;
+}
             if (editId) {
                 const { error } = await sb
                     .from('product_details')
