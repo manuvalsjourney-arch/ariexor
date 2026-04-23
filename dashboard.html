@@ -19,7 +19,32 @@
             <h1 class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
             <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
         </div>
+<div class="space-y-4 mb-6 border-t border-white/5 pt-6">
+    <div class="flex items-start space-x-3">
+        <div class="flex items-center h-5">
+            <input id="legal-terms" name="legal-terms" type="checkbox" required
+                class="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer">
+        </div>
+        <div class="text-xs">
+            <label for="legal-terms" class="font-medium text-slate-300">I agree to the 
+                <a href="#" class="text-indigo-400 hover:text-indigo-300 underline">Terms of Service</a> and 
+                <a href="#" class="text-indigo-400 hover:text-indigo-300 underline">Privacy Policy</a>.
+            </label>
+            <p class="text-slate-500 mt-1">I confirm that I own the full rights to this asset and it does not contain malicious code.</p>
+        </div>
+    </div>
 
+    <div class="flex items-start space-x-3">
+        <div class="flex items-center h-5">
+            <input id="refund-policy" name="refund-policy" type="checkbox" required
+                class="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer">
+        </div>
+        <div class="text-xs">
+            <label for="refund-policy" class="font-medium text-slate-300">Acknowledge Refund Policy</label>
+            <p class="text-slate-500 mt-1">I understand that due to the digital nature of this product, all sales are final as per the <a href="#" class="text-indigo-400 hover:text-indigo-300 underline">Refund Policy</a>.</p>
+        </div>
+    </div>
+</div>
         <form id="productForm" class="space-y-6">
             <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
