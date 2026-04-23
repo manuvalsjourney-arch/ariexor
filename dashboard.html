@@ -12,39 +12,14 @@
         body { background: #0b0b14; font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="text-white min-h-screen flex items-center justify-center p-6">
+<body class="text-white min-h-screen flex flex-col items-center justify-center p-6">
 
-    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem]">
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem] mb-8">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
             <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
         </div>
-<div class="space-y-4 mb-6 border-t border-white/5 pt-6">
-    <div class="flex items-start space-x-3">
-        <div class="flex items-center h-5">
-            <input id="legal-terms" name="legal-terms" type="checkbox" required
-                class="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer">
-        </div>
-        <div class="text-xs">
-            <label for="legal-terms" class="font-medium text-slate-300">I agree to the 
-                <a href="#" class="text-indigo-400 hover:text-indigo-300 underline">Terms of Service</a> and 
-                <a href="#" class="text-indigo-400 hover:text-indigo-300 underline">Privacy Policy</a>.
-            </label>
-            <p class="text-slate-500 mt-1">I confirm that I own the full rights to this asset and it does not contain malicious code.</p>
-        </div>
-    </div>
 
-    <div class="flex items-start space-x-3">
-        <div class="flex items-center h-5">
-            <input id="refund-policy" name="refund-policy" type="checkbox" required
-                class="w-4 h-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer">
-        </div>
-        <div class="text-xs">
-            <label for="refund-policy" class="font-medium text-slate-300">Acknowledge Refund Policy</label>
-            <p class="text-slate-500 mt-1">I understand that due to the digital nature of this product, all sales are final as per the <a href="#" class="text-indigo-400 hover:text-indigo-300 underline">Refund Policy</a>.</p>
-        </div>
-    </div>
-</div>
         <form id="productForm" class="space-y-6">
             <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
@@ -67,8 +42,26 @@
                     <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
                 </div>
                 <div>
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Asset (PDF, ZIP, PRPROJ, etc.)</label>
+                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Asset (ZIP, PRPROJ, etc.)</label>
                     <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
+                </div>
+            </div>
+
+            <div class="space-y-4 py-4 border-t border-white/5">
+                <div class="flex items-start space-x-3">
+                    <input id="legal-terms" type="checkbox" required class="mt-1 h-4 w-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                    <div class="text-xs">
+                        <label for="legal-terms" class="font-medium text-slate-300">I agree to the <a href="#" class="text-indigo-400 underline">Terms</a> & <a href="#" class="text-indigo-400 underline">Privacy Policy</a></label>
+                        <p class="text-slate-500 mt-0.5">I confirm I own the rights to this asset.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start space-x-3">
+                    <input id="refund-policy" type="checkbox" required class="mt-1 h-4 w-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                    <div class="text-xs">
+                        <label for="refund-policy" class="font-medium text-slate-300">Acknowledge Refund Policy</label>
+                        <p class="text-slate-500 mt-0.5">I understand that all digital sales are final.</p>
+                    </div>
                 </div>
             </div>
 
@@ -77,6 +70,15 @@
             </button>
         </form>
     </div>
+
+    <footer class="w-full max-w-2xl flex justify-between items-center px-4 text-[10px] text-slate-500 uppercase tracking-widest">
+        <span>&copy; 2026 ariexo</span>
+        <div class="flex space-x-4">
+            <a href="#" class="hover:text-white transition-colors">Privacy</a>
+            <a href="#" class="hover:text-white transition-colors">Terms</a>
+            <a href="#" class="hover:text-white transition-colors">Refunds</a>
+        </div>
+    </footer>
 
 <script>
     // Supabase config
@@ -135,25 +137,19 @@
                 await sb.storage.from('product-images').upload(imgPath, imgFile);
                 const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
                 
-                // --- AI MODERATION START ---
-                // We send the new image URL to your Google Vision function
                 const { data: moderation, error: modError } = await sb.functions.invoke('moderate-image', {
                     body: { image_url: imgData.publicUrl }
                 });
 
-                if (modError) {
-                    console.error("Moderation failed to run, but continuing...");
-                } else if (moderation && moderation.moderation) {
-                    // Check if Google says it's LIKELY or VERY_LIKELY to be bad
+                if (!modError && moderation && moderation.moderation) {
                     const m = moderation.moderation;
                     if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
-                        alert("🚨 Upload blocked: This image violates our safety guidelines (Adult/Violence content detected).");
+                        alert("🚨 Upload blocked: This image violates our safety guidelines.");
                         btn.innerText = "Publish Product";
                         btn.disabled = false;
-                        return; // Stop everything here!
+                        return;
                     }
                 }
-                // --- AI MODERATION END ---
 
                 updatePayload.image_url = imgData.publicUrl;
             }
@@ -166,17 +162,12 @@
             }
 
             if (editId) {
-                const { error } = await sb
-                    .from('product_details')
-                    .update(updatePayload)
-                    .eq('id', editId);
-                
+                const { error } = await sb.from('product_details').update(updatePayload).eq('id', editId);
                 if (error) throw error;
                 alert("Changes saved successfully!");
             } else {
                 updatePayload.seller_id = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'; 
                 const { error } = await sb.from('product_details').insert([updatePayload]);
-                
                 if (error) throw error;
                 alert("Boom! Your product is live.");
             }
