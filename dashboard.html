@@ -109,21 +109,37 @@
                 const imgPath = `previews/${time}-${imgFile.name}`;
                 await sb.storage.from('product-images').upload(imgPath, imgFile);
                 const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
+                
+                // --- AI MODERATION START ---
+                // We send the new image URL to your Google Vision function
+                const { data: moderation, error: modError } = await sb.functions.invoke('moderate-image', {
+                    body: { image_url: imgData.publicUrl }
+                });
+
+                if (modError) {
+                    console.error("Moderation failed to run, but continuing...");
+                } else if (moderation && moderation.moderation) {
+                    // Check if Google says it's LIKELY or VERY_LIKELY to be bad
+                    const m = moderation.moderation;
+                    if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
+                        alert("🚨 Upload blocked: This image violates our safety guidelines (Adult/Violence content detected).");
+                        btn.innerText = "Publish Product";
+                        btn.disabled = false;
+                        return; // Stop everything here!
+                    }
+                }
+                // --- AI MODERATION END ---
+
                 updatePayload.image_url = imgData.publicUrl;
             }
 
-          if (pdfFile) {
-    // Keep the path logic the same
-    const pdfPath = `downloads/${time}-${pdfFile.name}`;
-    
-    // CHANGE: Use 'user-products' bucket instead of 'product-images'
-    await sb.storage.from('user-products').upload(pdfPath, pdfFile);
-    
-    // CHANGE: Get the URL from 'user-products'
-    const { data: pdfData } = sb.storage.from('user-products').getPublicUrl(pdfPath);
-    
-    updatePayload.file_url = pdfData.publicUrl;
-}
+            if (pdfFile) {
+                const pdfPath = `downloads/${time}-${pdfFile.name}`;
+                await sb.storage.from('user-products').upload(pdfPath, pdfFile);
+                const { data: pdfData } = sb.storage.from('user-products').getPublicUrl(pdfPath);
+                updatePayload.file_url = pdfData.publicUrl;
+            }
+
             if (editId) {
                 const { error } = await sb
                     .from('product_details')
