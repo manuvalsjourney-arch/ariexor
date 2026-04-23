@@ -2,25 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Legal Center | ariexo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Policies | ariexo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        body { background: #0b0b14; color: white; font-family: 'Inter', sans-serif; }
+        body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
     </style>
 </head>
-<body class="p-10 flex flex-col items-center">
-    <div class="max-w-3xl w-full glass-card p-10 rounded-[2.5rem]">
-        <a href="dashboard.html" class="text-indigo-400 text-sm">← Back to Dashboard</a>
+<body class="p-6 min-h-screen flex flex-col items-center">
+    <div class="w-full max-w-3xl glass-card p-10 rounded-[2.5rem] my-10">
+        <a href="dashboard.html" class="text-indigo-400 hover:text-white text-sm transition-colors uppercase tracking-widest font-bold">← Dashboard</a>
         
-        <h1 class="text-3xl font-bold mt-6 mb-4 text-indigo-500">Terms of Service</h1>
-        <p class="text-slate-400 mb-8">By selling on ariexo, you agree that you own the intellectual property to all assets uploaded. Malicious code or stolen content will result in an immediate ban.</p>
+        <div class="mt-10 space-y-12">
+            <section id="terms">
+                <h2 class="text-2xl font-extrabold text-indigo-500 mb-4 tracking-tight">Terms of Service</h2>
+                <div class="text-slate-400 text-sm leading-relaxed space-y-3">
+                    <p>By listing products on ariexo, you grant the platform a non-exclusive license to host and distribute your content.</p>
+                    <p><strong>Ownership:</strong> You must own 100% of the rights to the files you upload. Stolen content, "nulled" scripts, or pirated assets will result in permanent account termination.</p>
+                    <p><strong>Safety:</strong> Files must not contain malware, viruses, or hidden tracking scripts.</p>
+                </div>
+            </section>
 
-        <h1 class="text-3xl font-bold mb-4 text-indigo-500">Refund Policy</h1>
-        <p class="text-slate-400 mb-8">Because our products are digital assets delivered instantly, we generally do not offer refunds once a file has been downloaded. If an asset is corrupted, contact support within 24 hours.</p>
+            <section id="refunds">
+                <h2 class="text-2xl font-extrabold text-indigo-500 mb-4 tracking-tight">Refund Policy</h2>
+                <div class="text-slate-400 text-sm leading-relaxed">
+                    <p>Due to the irreversible nature of digital downloads, **all sales are final**. Refunds are only issued if the asset is proven to be corrupted or significantly different from the preview description. Refund requests must be submitted via support within 24 hours of purchase.</p>
+                </div>
+            </section>
 
-        <h1 class="text-3xl font-bold mb-4 text-indigo-500">Privacy Policy</h1>
-        <p class="text-slate-400">We only collect your email and seller ID to process payments and secure your account. We never sell your data to third parties.</p>
+            <section id="privacy">
+                <h2 class="text-2xl font-extrabold text-indigo-500 mb-4 tracking-tight">Privacy Policy</h2>
+                <div class="text-slate-400 text-sm leading-relaxed">
+                    <p>We collect your email and seller identity for payment processing and security only. We do not sell your personal data to third parties. Your uploaded assets are stored securely on Supabase cloud infrastructure.</p>
+                </div>
+            </section>
+        </div>
     </div>
 </body>
 </html>
