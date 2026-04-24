@@ -63,63 +63,8 @@
     </a>
     <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
 </div>
-
 <script>
-    const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-    async function loadProductDetails() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-
-        if (!productId) {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        const { data, error } = await sb
-            .from('product_details')
-            .select('*')
-            .eq('id', productId)
-            .single();
-
-        if (error || !data) {
-            document.getElementById('productTitle').innerText = "Product Not Found";
-            return;
-        }
-
-        // UPDATE UI CONTENT
-        document.title = `${data.title} | ariexo`;
-        document.getElementById('productImage').src = data.image_url;
-        document.getElementById('productTitle').innerText = data.title;
-        document.getElementById('productPrice').innerText = `$${data.price}`;
-        document.getElementById('productDescription').innerText = data.description;
-
-        // THE 404 FIX: Point directly to the bucket root
-        const cleanFileName = data.file_url.split('/').pop(); 
-        const finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${cleanFileName}`;
-        
-        const btn = document.getElementById('downloadBtn');
-        btn.href = finalUrl;
-        btn.setAttribute('download', cleanFileName); // Forces download
-    }
-
-    // Modal helpers
-    function openModal() {
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImage');
-        modalImg.src = document.getElementById('productImage').src;
-        modal.classList.replace('hidden', 'flex');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('imageModal');
-        modal.classList.replace('flex', 'hidden');
-        document.body.style.overflow = 'auto';
-    }
-
-    window.onload = loadProductDetails;
-</script>
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
     async function loadProductDetails() {
