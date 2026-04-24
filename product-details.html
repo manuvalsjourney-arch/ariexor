@@ -109,82 +109,76 @@
             </div>
         </div>
     </section>
+<script>
+    const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-    <script>
-        const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
+    // --- NEW: PRODUCT LOADING & 404 FIX ---
+    async function loadProductDetails() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
 
-        // Modal Logic
-        function openModal() {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            const productImg = document.getElementById('productImage');
-            
-            modalImg.src = productImg.src;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            // Animation trigger
-            setTimeout(() => {
-                modalImg.classList.remove('scale-95', 'opacity-0');
-                modalImg.classList.add('scale-100', 'opacity-100');
-            }, 10);
-            
-            document.body.style.overflow = 'hidden'; // Stop scrolling
+        if (!productId) {
+            window.location.href = 'index.html';
+            return;
         }
 
-        function closeModal() {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            
-            modalImg.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                document.body.style.overflow = 'auto';
-            }, 300);
+        const { data, error } = await sb
+            .from('product_details')
+            .select('*')
+            .eq('id', productId)
+            .single();
+
+        if (error || !data) {
+            document.getElementById('productTitle').innerText = "Product Not Found";
+            return;
         }
 
-      async function loadProductDetails() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
+        // --- SEO UPDATES ---
+        document.title = `${data.title} | ariexo`;
+        document.getElementById('productImage').src = data.image_url;
+        document.getElementById('productTitle').innerText = data.title;
+        document.getElementById('productPrice').innerText = `$${data.price}`;
+        document.getElementById('productDescription').innerText = data.description;
 
-    if (!productId) {
-        window.location.href = 'index.html';
-        return;
+        // --- THE 404 FIX ---
+        // This ensures that even if your DB has "downloads/" in the text, 
+        // it points to the correct Public Bucket URL.
+        const cleanFileName = data.file_url.split('/').pop(); 
+        const finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${cleanFileName}`;
+        
+        const btn = document.getElementById('downloadBtn');
+        btn.href = finalUrl;
+        btn.setAttribute('download', cleanFileName); // Forces download instead of opening tab
+        
+        // Add a "Processing" state to the button
+        btn.addEventListener('click', () => {
+            btn.innerText = "Preparing Download...";
+            setTimeout(() => { btn.innerText = "Purchase Asset"; }, 3000);
+        });
     }
 
-    const { data, error } = await sb
-        .from('product_details')
-        .select('*')
-        .eq('id', productId)
-        .single();
-
-    if (error || !data) {
-        console.error("Product not found");
-        document.getElementById('productTitle').innerText = "Product Not Found";
-        return;
+    // --- MODAL LOGIC ---
+    function openModal() {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.src = document.getElementById('productImage').src;
+        modal.classList.replace('hidden', 'flex');
+        setTimeout(() => modalImg.classList.remove('scale-95', 'opacity-0'), 10);
+        document.body.style.overflow = 'hidden';
     }
 
-    // --- NEW: UPDATE SEO DYNAMICALLY ---
-    const pageTitle = `${data.title} | ariexo`;
-    document.title = pageTitle; // Updates browser tab
-    
-    // Update Meta Tags for Search Engines & Social Sharing
-    // Note: Make sure these IDs (meta-desc, og-title, etc.) exist in your <head>
-    if(document.getElementById('meta-desc')) document.getElementById('meta-desc').setAttribute("content", data.description.substring(0, 160));
-    if(document.getElementById('og-title')) document.getElementById('og-title').setAttribute("content", pageTitle);
-    if(document.getElementById('og-desc')) document.getElementById('og-desc').setAttribute("content", data.description.substring(0, 100));
-    if(document.getElementById('og-image')) document.getElementById('og-image').setAttribute("content", data.image_url);
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.replace('flex', 'hidden');
+            document.body.style.overflow = 'auto';
+        }, 300);
+    }
 
-    // --- EXISTING: UPDATE PAGE ELEMENTS ---
-    document.getElementById('productImage').src = data.image_url;
-    document.getElementById('productTitle').innerText = data.title;
-    document.getElementById('productPrice').innerText = `$${data.price}`;
-    document.getElementById('productDescription').innerText = data.description;
-    document.getElementById('downloadBtn').href = data.file_url;
-}
-
-        window.onload = loadProductDetails;
-    </script>
+    window.onload = loadProductDetails;
+</script>
+  
 </body>
 </html>
