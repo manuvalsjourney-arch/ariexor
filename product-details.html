@@ -70,67 +70,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
 
-        if (!productId) {
-            window.location.href = 'index.html';
-            return;
-        }
-
         const { data, error } = await sb
             .from('product_details')
             .select('*')
             .eq('id', productId)
             .single();
 
-        if (error || !data) {
-            document.getElementById('productTitle').innerText = "Product Not Found";
-            return;
+        if (data) {
+            // Update Text
+            document.title = `${data.title} | ariexo`;
+            document.getElementById('productImage').src = data.image_url;
+            document.getElementById('productTitle').innerText = data.title;
+            document.getElementById('productPrice').innerText = `$${data.price}`;
+            document.getElementById('productDescription').innerText = data.description;
+
+            // FIX: This forces the link to look only for the filename in your public bucket
+            const btn = document.getElementById('downloadBtn');
+            const fileName = data.file_url.split('/').pop(); 
+            btn.href = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
+            btn.setAttribute('download', fileName);
         }
-
-        // --- CONTENT UPDATE ---
-        document.title = `${data.title} | ariexo`;
-        document.getElementById('productImage').src = data.image_url;
-        document.getElementById('productTitle').innerText = data.title;
-        document.getElementById('productPrice').innerText = `$${data.price}`;
-        document.getElementById('productDescription').innerText = data.description;
-
-        // --- THE 404 REPAIR ---
-        const btn = document.getElementById('downloadBtn');
-        
-        // This extracts ONLY the filename, even if the DB has a full URL or folders
-        const rawPath = data.file_url;
-        const fileName = rawPath.split('/').pop(); 
-        
-        // This builds the direct link to your Public Bucket
-        const finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
-        
-        btn.href = finalUrl;
-        btn.setAttribute('download', fileName); 
-
-        // Visual feedback for the user
-        btn.addEventListener('click', () => {
-            const originalText = "Purchase Asset";
-            btn.innerText = "Preparing Download...";
-            setTimeout(() => { btn.innerText = originalText; }, 3000);
-        });
     }
 
-    // Modal Logic
     function openModal() {
-        const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImage');
-        modalImg.src = document.getElementById('productImage').src;
-        modal.classList.replace('hidden', 'flex');
-        document.body.style.overflow = 'hidden';
+        document.getElementById('imageModal').classList.replace('hidden', 'flex');
+        document.getElementById('modalImage').src = document.getElementById('productImage').src;
     }
 
     function closeModal() {
-        const modal = document.getElementById('imageModal');
-        modal.classList.replace('flex', 'hidden');
-        document.body.style.overflow = 'auto';
+        document.getElementById('imageModal').classList.replace('flex', 'hidden');
     }
 
     window.onload = loadProductDetails;
 </script>
-
-</body>
-</html>
+            </body>                
+            </html>
