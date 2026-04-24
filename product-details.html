@@ -64,7 +64,6 @@
     <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
 </div>
 <script>
-
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
     async function loadProductDetails() {
@@ -87,28 +86,43 @@
             return;
         }
 
-        // CONTENT UPDATE
+        // --- UI UPDATES ---
         document.title = `${data.title} | ariexo`;
         document.getElementById('productImage').src = data.image_url;
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // DOWNLOAD FIX (Keeps it working)
-        const cleanFileName = data.file_url.split('/').pop(); 
-        const finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${cleanFileName}`;
-        
+        // --- THE 404 FIX ---
         const btn = document.getElementById('downloadBtn');
+        let finalUrl = data.file_url;
+
+        // If the URL in DB is just a filename (like id 18), we add the bucket path.
+        // If it's already a full URL (like id 20), we use it as is.
+        if (!finalUrl.startsWith('http')) {
+            finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${finalUrl}`;
+        }
+        
         btn.href = finalUrl;
-        btn.setAttribute('download', cleanFileName); 
+        btn.setAttribute('download', data.title); 
     }
 
-    // Standard Modal Logic
-    function openModal() { /* ... your modal code ... */ }
-    function closeModal() { /* ... your modal code ... */ }
+    // Modal Logic
+    function openModal() {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        modalImg.src = document.getElementById('productImage').src;
+        modal.classList.replace('hidden', 'flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('imageModal');
+        modal.classList.replace('flex', 'hidden');
+        document.body.style.overflow = 'auto';
+    }
 
     window.onload = loadProductDetails;
 </script>
-  
 </body>
 </html>
