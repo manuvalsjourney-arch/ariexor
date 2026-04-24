@@ -86,25 +86,32 @@
             return;
         }
 
-        // --- UI UPDATES ---
+        // --- CONTENT UPDATE ---
         document.title = `${data.title} | ariexo`;
         document.getElementById('productImage').src = data.image_url;
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // --- THE 404 FIX ---
+        // --- THE 404 REPAIR ---
         const btn = document.getElementById('downloadBtn');
-        let finalUrl = data.file_url;
-
-        // If the URL in DB is just a filename (like id 18), we add the bucket path.
-        // If it's already a full URL (like id 20), we use it as is.
-        if (!finalUrl.startsWith('http')) {
-            finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${finalUrl}`;
-        }
+        
+        // This extracts ONLY the filename, even if the DB has a full URL or folders
+        const rawPath = data.file_url;
+        const fileName = rawPath.split('/').pop(); 
+        
+        // This builds the direct link to your Public Bucket
+        const finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
         
         btn.href = finalUrl;
-        btn.setAttribute('download', data.title); 
+        btn.setAttribute('download', fileName); 
+
+        // Visual feedback for the user
+        btn.addEventListener('click', () => {
+            const originalText = "Purchase Asset";
+            btn.innerText = "Preparing Download...";
+            setTimeout(() => { btn.innerText = originalText; }, 3000);
+        });
     }
 
     // Modal Logic
@@ -124,5 +131,6 @@
 
     window.onload = loadProductDetails;
 </script>
+
 </body>
 </html>
