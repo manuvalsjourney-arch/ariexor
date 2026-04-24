@@ -56,14 +56,20 @@
                 <div class="glass-card p-6 rounded-3xl">
                     <p id="productDescription" class="text-slate-400 leading-relaxed italic">Fetching asset details...</p>
                 </div>
+<div class="flex flex-col gap-4">
+    <a id="downloadBtn" href="#" target="_blank" class="bg-indigo-600 hover:bg-indigo-500 text-center py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] shadow-xl shadow-indigo-500/20">
+        Purchase Asset
+    </a>
+    
+    <button onclick="shareAsset()" class="bg-white/5 border border-white/10 hover:bg-white/10 text-center py-4 rounded-2xl font-medium text-sm transition-all flex items-center justify-center gap-2">
+        <span>🔗</span> Share this Asset
+    </button>
 
-                <div class="flex flex-col gap-4">
-                    <a id="downloadBtn" href="#" target="_blank" class="bg-indigo-600 hover:bg-indigo-500 text-center py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] shadow-xl shadow-indigo-500/20">
-                        Purchase Asset
-                    </a>
-                    <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
-                </div>
-            </div>
+    <div class="flex items-center justify-center gap-2 mt-2">
+        <span class="text-emerald-500 text-lg">✓</span>
+        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Verified Ariexo Digital Asset</p>
+    </div>
+</div>
         </div>
     </main>
 
