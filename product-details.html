@@ -65,12 +65,15 @@
         <span>🔗</span> Share this Asset
     </button>
 
+    <button id="deleteBtn" class="mt-4 text-red-500/50 hover:text-red-500 text-[10px] uppercase tracking-[0.2em] font-bold transition-all">
+        🗑️ Remove Listing
+    </button>
+
     <div class="flex items-center justify-center gap-2 mt-2">
         <span class="text-emerald-500 text-lg">✓</span>
         <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Verified Ariexo Digital Asset</p>
     </div>
 </div>
-        </div>
     </main>
 
     <div id="imageModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/95 p-4 md:p-10 cursor-zoom-out" onclick="closeModal()">
@@ -118,7 +121,6 @@
 <script>
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-    // --- NEW: PRODUCT LOADING & 404 FIX ---
     async function loadProductDetails() {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -139,28 +141,78 @@
             return;
         }
 
-        // --- SEO UPDATES ---
+        // --- CONTENT & SEO ---
         document.title = `${data.title} | ariexo`;
         document.getElementById('productImage').src = data.image_url;
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // --- THE 404 FIX ---
-        // This ensures that even if your DB has "downloads/" in the text, 
-        // it points to the correct Public Bucket URL.
+        // --- DOWNLOAD LOGIC ---
         const cleanFileName = data.file_url.split('/').pop(); 
         const finalUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${cleanFileName}`;
         
         const btn = document.getElementById('downloadBtn');
         btn.href = finalUrl;
-        btn.setAttribute('download', cleanFileName); // Forces download instead of opening tab
+        btn.setAttribute('download', cleanFileName); 
         
-        // Add a "Processing" state to the button
         btn.addEventListener('click', () => {
             btn.innerText = "Preparing Download...";
             setTimeout(() => { btn.innerText = "Purchase Asset"; }, 3000);
         });
+
+        // Store for share function
+        window.currentProductTitle = data.title;
+    }
+
+    // --- DELETE LOGIC ---
+    async function deleteProduct() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+        
+        if (!confirm("Are you sure? This will permanently remove this asset from Ariexo.")) return;
+
+        const btn = document.getElementById('deleteBtn');
+        btn.innerText = "DELETING...";
+        btn.disabled = true;
+
+        try {
+            // 1. Get filename to clean storage
+            const { data: product } = await sb.from('product_details').select('file_url').eq('id', productId).single();
+            const fileName = product.file_url.split('/').pop();
+
+            // 2. Delete DB record
+            const { error: dbError } = await sb.from('product_details').delete().eq('id', productId);
+            if (dbError) throw dbError;
+
+            // 3. Delete from Storage
+            await sb.storage.from('user-products').remove([fileName]);
+
+            alert("Asset removed successfully.");
+            window.location.href = 'index.html';
+
+        } catch (err) {
+            console.error("Delete failed:", err.message);
+            alert("Error: Could not delete product.");
+            btn.innerText = "🗑️ Remove Listing";
+            btn.disabled = false;
+        }
+    }
+
+    // --- SHARE LOGIC ---
+    async function shareAsset() {
+        const shareData = {
+            title: window.currentProductTitle || 'Ariexo Asset',
+            url: window.location.href
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+            }
+        } catch (err) { console.log(err); }
     }
 
     // --- MODAL LOGIC ---
@@ -183,7 +235,9 @@
         }, 300);
     }
 
+    // Event Listeners
     window.onload = loadProductDetails;
+    document.getElementById('deleteBtn').addEventListener('click', deleteProduct);
 </script>
   
 </body>
