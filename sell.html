@@ -18,45 +18,17 @@
     </div>
 </div>
 async function handlePublish() {
-    const btn = document.getElementById('publishBtn');
-    const title = document.getElementById('title').value;
-    const price = document.getElementById('price').value;
-    const desc = document.getElementById('description').value;
-    const imgFile = document.getElementById('imageFile').files[0];
-    const astFile = document.getElementById('assetFile').files[0];
+    // 1. Create the filename once
+    const fileName = `${Date.now()}-${astFile.name}`;
 
-    if (!imgFile || !astFile) return alert("Please select both files!");
+    // 2. Upload to Storage using that name
+    await sb.storage.from('user-products').upload(fileName, astFile);
 
-    btn.innerText = "Uploading to Ariexo...";
-    btn.disabled = true;
-
-    try {
-        // 1. Upload Main Asset
-        const assetPath = `${Date.now()}-${astFile.name}`;
-        await sb.storage.from('user-products').upload(assetPath, astFile);
-
-        // 2. Upload Preview Image
-        const imgPath = `previews/${Date.now()}-${imgFile.name}`;
-        await sb.storage.from('product-images').upload(imgPath, imgFile);
-        const imgFullUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/${imgPath}`;
-
-        // 3. Create Database Entry Automatically
-        const { error } = await sb.from('product_details').insert([{
-            title: title,
-            price: price,
-            description: desc,
-            image_url: imgFullUrl,
-            file_url: assetPath // Our fixed product-details.html will handle this!
-        }]);
-
-        if (error) throw error;
-
-        alert("Asset is live!");
-        window.location.href = 'index.html';
-
-    } catch (err) {
-        alert("Upload failed: " + err.message);
-        btn.innerText = "Publish Permanently";
-        btn.disabled = false;
-    }
+    // 3. Insert into Database using THAT SAME name
+    const { error } = await sb.from('product_details').insert([{
+        title: title,
+        file_url: fileName, // <--- This ensures they match perfectly!
+        price: price,
+        description: desc
+    }]);
 }
