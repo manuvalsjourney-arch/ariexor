@@ -1,40 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sell on Ariexo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body class="bg-[#050505] text-white">
 
-    <div class="max-w-xl mx-auto p-8 glass-card rounded-3xl mt-20">
-        <h2 class="text-3xl font-bold mb-6 text-indigo-500">List Your Asset</h2>
-        
-        <div class="space-y-4">
-            <input type="text" id="title" placeholder="Product Name" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-indigo-500">
-            <input type="number" id="price" placeholder="Price ($)" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-indigo-500">
-            <textarea id="description" placeholder="Description" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl h-32 outline-none focus:border-indigo-500"></textarea>
-            
-            <label class="block text-sm text-slate-400 font-medium">Preview Image (JPEG/PNG)</label>
-            <input type="file" id="imageFile" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
-
-            <label class="block text-sm text-slate-400 font-medium">Main Asset (HTML/ZIP)</label>
-            <input type="file" id="assetFile" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
-
-            <button onclick="handlePublish()" id="publishBtn" class="w-full bg-indigo-600 py-4 rounded-xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20">
-                Publish Permanently
-            </button>
-        </div>
-    </div>
-
-    <script>
-        // Initialize Supabase (Use your actual credentials from your auth.js)
-        const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
-        const sb = supabase.createClient(supabaseUrl, supabaseKey);
 <!DOCTYPE html>
 <html lang="en">
 <head>
