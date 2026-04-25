@@ -35,57 +35,53 @@
         const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
+async function handlePublish() {
+    const btn = document.getElementById('publishBtn');
+    const title = document.getElementById('title').value;
+    const price = document.getElementById('price').value;
+    const desc = document.getElementById('description').value;
+    const imgFile = document.getElementById('imageFile').files[0];
+    const astFile = document.getElementById('assetFile').files[0];
 
-        async function handlePublish() {
-            const btn = document.getElementById('publishBtn');
-            const title = document.getElementById('title').value;
-            const price = document.getElementById('price').value;
-            const desc = document.getElementById('description').value;
-            const imgFile = document.getElementById('imageFile').files[0];
-            const astFile = document.getElementById('assetFile').files[0];
+    if (!title || !price || !astFile || !imgFile) {
+        return alert("Please fill all fields and select both files.");
+    }
 
-            if (!title || !price || !astFile || !imgFile) {
-                return alert("Please fill all fields and select both files.");
-            }
+    btn.innerText = "Publishing...";
+    btn.disabled = true;
 
-            btn.innerText = "Uploading to Ariexo...";
-            btn.disabled = true;
+    try {
+        const assetName = `${Date.now()}-${astFile.name}`;
+        const imageName = `${Date.now()}-${imgFile.name}`;
 
-            try {
-                // 1. Create a unique filename for the asset
-                const assetFileName = `${Date.now()}-${astFile.name}`;
-                const imageFileName = `${Date.now()}-${imgFile.name}`;
+        // 1. Upload both files
+        await sb.storage.from('user-products').upload(assetName, astFile);
+        await sb.storage.from('product-images').upload(imageName, imgFile);
 
-                // 2. Upload Asset to 'user-products' bucket
-                await sb.storage.from('user-products').upload(assetFileName, astFile);
+        // 2. GET THE FULL PUBLIC URLS (This is the fix!)
+        const { data: imgUrlData } = sb.storage.from('product-images').getPublicUrl(imageName);
+        const { data: astUrlData } = sb.storage.from('user-products').getPublicUrl(assetName);
 
-                // 3. Upload Image to 'product-images' bucket
-                await sb.storage.from('product-images').upload(imageFileName, imgFile);
-                
-                // Get the Public URL for the image
-                const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imageFileName);
+        // 3. Insert the FULL URLs into the database
+        const { error } = await sb.from('product_details').insert([{
+            title: title,
+            price: parseFloat(price),
+            description: desc,
+            image_url: imgUrlData.publicUrl, // Saves the full https:// link
+            file_url: astUrlData.publicUrl    // Saves the full https:// link
+        }]);
 
-                // 4. Insert everything into the Database
-                const { error } = await sb.from('product_details').insert([{
-                    title: title,
-                    price: parseFloat(price),
-                    description: desc,
-                    image_url: imgData.publicUrl,
-                    file_url: assetFileName // Match the name in storage exactly
-                }]);
+        if (error) throw error;
+        alert("Published successfully!");
+        window.location.href = 'index.html';
 
-                if (error) throw error;
-
-                alert("Successfully Published!");
-                window.location.href = 'index.html';
-
-            } catch (err) {
-                console.error(err);
-                alert("Error: " + err.message);
-                btn.innerText = "Publish Permanently";
-                btn.disabled = false;
-            }
-        }
+    } catch (err) {
+        alert("Error: " + err.message);
+        btn.innerText = "Publish Permanently";
+        btn.disabled = false;
+    }
+}
+      
     </script>
 </body>
 </html>
