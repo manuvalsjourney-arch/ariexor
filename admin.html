@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Repair Tool | ariexo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#0a0a0a] text-white min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-xl w-full p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">
+                Product Repair Tool
+            </h1>
+            <p class="text-slate-400 mt-2 text-sm">Use this to fix 404 errors by re-syncing Database and Storage.</p>
+        </div>
+
+        <div class="space-y-6">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Product ID</label>
+                <input type="number" id="repairId" placeholder="e.g. 24" 
+                    class="w-full bg-black/40 border border-white/10 p-4 rounded-xl focus:border-red-500 outline-none transition-all">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">New Preview Image</label>
+                <input type="file" id="repairImg" accept="image/*"
+                    class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20 cursor-pointer">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">New Asset File (HTML)</label>
+                <input type="file" id="repairAst" accept=".html"
+                    class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-500/10 file:text-orange-500 hover:file:bg-orange-500/20 cursor-pointer">
+            </div>
+
+            <button onclick="triggerRepair()" id="repairBtn"
+                class="w-full bg-gradient-to-r from-red-600 to-orange-600 py-4 rounded-xl font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-red-600/20">
+                Fix Product Now
+            </button>
+            
+            <p id="statusMsg" class="text-center text-sm font-medium h
