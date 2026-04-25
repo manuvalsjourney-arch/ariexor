@@ -1,34 +1,91 @@
-<div class="max-w-xl mx-auto p-8 glass-card rounded-3xl mt-20">
-    <h2 class="text-3xl font-bold mb-6 text-indigo-500">List Your Asset</h2>
-    
-    <div class="space-y-4">
-        <input type="text" id="title" placeholder="Product Name" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl">
-        <input type="number" id="price" placeholder="Price ($)" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl">
-        <textarea id="description" placeholder="Description" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl h-32"></textarea>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell on Ariexo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-[#050505] text-white">
+
+    <div class="max-w-xl mx-auto p-8 glass-card rounded-3xl mt-20">
+        <h2 class="text-3xl font-bold mb-6 text-indigo-500">List Your Asset</h2>
         
-        <label class="block text-sm text-slate-400">Preview Image</label>
-        <input type="file" id="imageFile" accept="image/*" class="w-full text-sm text-slate-500">
+        <div class="space-y-4">
+            <input type="text" id="title" placeholder="Product Name" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-indigo-500">
+            <input type="number" id="price" placeholder="Price ($)" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-indigo-500">
+            <textarea id="description" placeholder="Description" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl h-32 outline-none focus:border-indigo-500"></textarea>
+            
+            <label class="block text-sm text-slate-400 font-medium">Preview Image (JPEG/PNG)</label>
+            <input type="file" id="imageFile" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
 
-        <label class="block text-sm text-slate-400">Main Asset (HTML/ZIP)</label>
-        <input type="file" id="assetFile" class="w-full text-sm text-slate-500">
+            <label class="block text-sm text-slate-400 font-medium">Main Asset (HTML/ZIP)</label>
+            <input type="file" id="assetFile" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
 
-        <button onclick="handlePublish()" id="publishBtn" class="w-full bg-indigo-600 py-4 rounded-xl font-bold hover:bg-indigo-500 transition-all">
-            Publish Permanently
-        </button>
+            <button onclick="handlePublish()" id="publishBtn" class="w-full bg-indigo-600 py-4 rounded-xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20">
+                Publish Permanently
+            </button>
+        </div>
     </div>
-</div>
-async function handlePublish() {
-    // 1. Create the filename once
-    const fileName = `${Date.now()}-${astFile.name}`;
 
-    // 2. Upload to Storage using that name
-    await sb.storage.from('user-products').upload(fileName, astFile);
+    <script>
+        // Initialize Supabase (Use your actual credentials from your auth.js)
+        const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
+        const supabaseKey = 'YOUR_PUBLIC_ANON_KEY'; 
+        const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 3. Insert into Database using THAT SAME name
-    const { error } = await sb.from('product_details').insert([{
-        title: title,
-        file_url: fileName, // <--- This ensures they match perfectly!
-        price: price,
-        description: desc
-    }]);
-}
+        async function handlePublish() {
+            const btn = document.getElementById('publishBtn');
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            const desc = document.getElementById('description').value;
+            const imgFile = document.getElementById('imageFile').files[0];
+            const astFile = document.getElementById('assetFile').files[0];
+
+            if (!title || !price || !astFile || !imgFile) {
+                return alert("Please fill all fields and select both files.");
+            }
+
+            btn.innerText = "Uploading to Ariexo...";
+            btn.disabled = true;
+
+            try {
+                // 1. Create a unique filename for the asset
+                const assetFileName = `${Date.now()}-${astFile.name}`;
+                const imageFileName = `${Date.now()}-${imgFile.name}`;
+
+                // 2. Upload Asset to 'user-products' bucket
+                await sb.storage.from('user-products').upload(assetFileName, astFile);
+
+                // 3. Upload Image to 'product-images' bucket
+                await sb.storage.from('product-images').upload(imageFileName, imgFile);
+                
+                // Get the Public URL for the image
+                const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imageFileName);
+
+                // 4. Insert everything into the Database
+                const { error } = await sb.from('product_details').insert([{
+                    title: title,
+                    price: parseFloat(price),
+                    description: desc,
+                    image_url: imgData.publicUrl,
+                    file_url: assetFileName // Match the name in storage exactly
+                }]);
+
+                if (error) throw error;
+
+                alert("Successfully Published!");
+                window.location.href = 'index.html';
+
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+                btn.innerText = "Publish Permanently";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
