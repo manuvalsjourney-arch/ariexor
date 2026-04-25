@@ -1,0 +1,62 @@
+<div class="max-w-xl mx-auto p-8 glass-card rounded-3xl mt-20">
+    <h2 class="text-3xl font-bold mb-6 text-indigo-500">List Your Asset</h2>
+    
+    <div class="space-y-4">
+        <input type="text" id="title" placeholder="Product Name" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl">
+        <input type="number" id="price" placeholder="Price ($)" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl">
+        <textarea id="description" placeholder="Description" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl h-32"></textarea>
+        
+        <label class="block text-sm text-slate-400">Preview Image</label>
+        <input type="file" id="imageFile" accept="image/*" class="w-full text-sm text-slate-500">
+
+        <label class="block text-sm text-slate-400">Main Asset (HTML/ZIP)</label>
+        <input type="file" id="assetFile" class="w-full text-sm text-slate-500">
+
+        <button onclick="handlePublish()" id="publishBtn" class="w-full bg-indigo-600 py-4 rounded-xl font-bold hover:bg-indigo-500 transition-all">
+            Publish Permanently
+        </button>
+    </div>
+</div>
+async function handlePublish() {
+    const btn = document.getElementById('publishBtn');
+    const title = document.getElementById('title').value;
+    const price = document.getElementById('price').value;
+    const desc = document.getElementById('description').value;
+    const imgFile = document.getElementById('imageFile').files[0];
+    const astFile = document.getElementById('assetFile').files[0];
+
+    if (!imgFile || !astFile) return alert("Please select both files!");
+
+    btn.innerText = "Uploading to Ariexo...";
+    btn.disabled = true;
+
+    try {
+        // 1. Upload Main Asset
+        const assetPath = `${Date.now()}-${astFile.name}`;
+        await sb.storage.from('user-products').upload(assetPath, astFile);
+
+        // 2. Upload Preview Image
+        const imgPath = `previews/${Date.now()}-${imgFile.name}`;
+        await sb.storage.from('product-images').upload(imgPath, imgFile);
+        const imgFullUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/${imgPath}`;
+
+        // 3. Create Database Entry Automatically
+        const { error } = await sb.from('product_details').insert([{
+            title: title,
+            price: price,
+            description: desc,
+            image_url: imgFullUrl,
+            file_url: assetPath // Our fixed product-details.html will handle this!
+        }]);
+
+        if (error) throw error;
+
+        alert("Asset is live!");
+        window.location.href = 'index.html';
+
+    } catch (err) {
+        alert("Upload failed: " + err.message);
+        btn.innerText = "Publish Permanently";
+        btn.disabled = false;
+    }
+}
