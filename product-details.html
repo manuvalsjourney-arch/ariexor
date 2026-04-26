@@ -78,22 +78,22 @@ async function loadProductDetails() {
         .single();
 
     if (data) {
-        // 1. Update Text & Images
+        // 1. Update UI Elements
         document.getElementById('productImage').src = data.image_url;
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // 2. The Final Button Logic (No more fetch check!)
+        // 2. Direct Link Logic (Fixes the Alert)
         const btn = document.getElementById('downloadBtn');
         
         btn.onclick = (e) => {
             e.preventDefault();
             if (data.file_url) {
-                // This opens your Google Drive link immediately
+                // This opens Google Drive directly in a new tab
                 window.open(data.file_url, '_blank');
             } else {
-                alert("Download link not found in database.");
+                alert("Download link not found.");
             }
         };
     }
