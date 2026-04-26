@@ -65,41 +65,45 @@
 </div>
 <script>
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
+async function loadProductDetails() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
 
-    async function loadProductDetails() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
+    const { data, error } = await sb
+        .from('product_details')
+        .select('*')
+        .eq('id', productId)
+        .single();
 
-        const { data, error } = await sb
-            .from('product_details')
-            .select('*')
-            .eq('id', productId)
-            .single();
+    if (data) {
+        // 1. Update UI Elements
+        document.title = `${data.title} | ariexo`;
+        document.getElementById('productImage').src = data.image_url;
+        document.getElementById('productTitle').innerText = data.title;
+        document.getElementById('productPrice').innerText = `$${data.price}`;
+        document.getElementById('productDescription').innerText = data.description;
 
-        if (data) {
-            // Update Text
-            document.title = `${data.title} | ariexo`;
-            document.getElementById('productImage').src = data.image_url;
-            document.getElementById('productTitle').innerText = data.title;
-            document.getElementById('productPrice').innerText = `$${data.price}`;
-            document.getElementById('productDescription').innerText = data.description;
+        // 2. Setup the Download Button
+        const btn = document.getElementById('downloadBtn');
+        const fileName = data.file_url.split('/').pop(); 
+        const publicUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
+        
+        btn.href = publicUrl;
+        btn.setAttribute('download', fileName);
+        
+        // 3. Remove target="_blank" to stop the new tab from opening
+        btn.removeAttribute('target');
 
-            // FIX: This forces the link to look only for the filename in your public bucket
-            const btn = document.getElementById('downloadBtn');
-            const fileName = data.file_url.split('/').pop(); 
-            btn.href = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
-            btn.setAttribute('download', fileName);
-        }
+        // 4. Force Download Logic (Safety for ZIP files)
+        btn.onclick = (e) => {
+            if (fileName.endsWith('.zip')) {
+                // If it's a zip, we let the default download happen without a new tab
+                console.log("Downloading ZIP package...");
+            }
+        };
     }
-
-    function openModal() {
-        document.getElementById('imageModal').classList.replace('hidden', 'flex');
-        document.getElementById('modalImage').src = document.getElementById('productImage').src;
-    }
-
-    function closeModal() {
-        document.getElementById('imageModal').classList.replace('flex', 'hidden');
-    }
+}
+   
 
     window.onload = loadProductDetails;
 </script>
