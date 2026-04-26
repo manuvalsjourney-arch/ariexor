@@ -47,57 +47,95 @@
             </div>
         </div>
     </main>
-
     <script>
-        const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function downloadAsset(file_url, assetName) {
-            try {
-                const response = await fetch(file_url);
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = assetName || 'asset.zip';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            } catch (err) {
-                alert("Download failed. Please check the file link.");
-            }
-        }
-
-        async function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-
-            if (!id) return;
-
-            const { data, error } = await supabase
-                .from('product_details')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (error || !data) {
-                document.getElementById('productTitle').innerText = "Not Found";
-                return;
-            }
-
-            // CRITICAL FIX: The IDs below now match your HTML exactly
-            document.getElementById('productTitle').innerText = data.title;
-            document.getElementById('productPrice').innerText = `$${data.price}`;
-            document.getElementById('productDescription').innerText = data.description;
-            document.getElementById('productImage').src = data.image_url;
-
-            document.getElementById('downloadBtn').onclick = () => {
-                downloadAsset(data.file_url, `${data.title}.zip`);
-            };
-        }
-
-        window.onload = init;
-    </script>
+  const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE"; // <-- placeholder
+  function createSupabaseClient() {
+    if (!window.supabase) throw new Error("Supabase SDK not found. Load @supabase/supabase-js v2.");
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  function getIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+  }
+  function setNotFound() {
+    alert("Product Not Found");
+    const loadingLike = document.getElementById("loading") || document.body;
+    loadingLike.textContent = "Product Not Found";
+    const titleEl = document.getElementById("productTitle");
+    const priceEl = document.getElementById("productPrice");
+    const descEl = document.getElementById("productDescription");
+    const imgEl = document.getElementById("productImage");
+    if (titleEl) titleEl.innerText = "";
+    if (priceEl) priceEl.innerText = "";
+    if (descEl) descEl.innerText = "";
+    if (imgEl) imgEl.src = "";
+  }
+  // ZIP Only: Blob fetch + hidden <a> click
+  async function downloadAsset(fileUrl, fileName = "download.zip") {
+    try {
+      if (!fileUrl) throw new Error("Missing file_url.");
+      const res = await fetch(fileUrl, { method: "GET" });
+      if (!res.ok) throw new Error(`Download failed: ${res.status} ${res.statusText}`);
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = fileName;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("downloadAsset error:", err);
+      alert(err?.message || "Could not download the ZIP file.");
+    }
+  }
+  async function initProductDetails() {
+    try {
+      const id = getIdFromUrl();
+      if (!id) return setNotFound();
+      const supabase = createSupabaseClient();
+      // Fetch full row
+      const { data, error } = await supabase
+        .from("product_details")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error || !data) {
+        console.error("product fetch error:", error);
+        return setNotFound();
+      }
+      const productTitleEl = document.getElementById("productTitle");
+      const productPriceEl = document.getElementById("productPrice");
+      const productDescriptionEl = document.getElementById("productDescription");
+      const productImageEl = document.getElementById("productImage");
+      const downloadBtnEl = document.getElementById("downloadBtn");
+      const title = data.title ?? "";
+      const price = data.price ?? "";
+      const description = data.description ?? "";
+      const imageUrl = data.image_url ?? "";
+      const fileUrl = data.file_url ?? "";
+      if (productTitleEl) productTitleEl.innerText = title;
+      if (productPriceEl) productPriceEl.innerText = price;
+      if (productDescriptionEl) productDescriptionEl.innerText = description;
+      if (productImageEl) productImageEl.src = imageUrl;
+      if (downloadBtnEl) {
+        downloadBtnEl.disabled = false;
+        downloadBtnEl.onclick = () => {
+          const safeName = `${String(title || "download").replace(/\s+/g, "_")}.zip`;
+          downloadAsset(fileUrl, safeName);
+        };
+      }
+    } catch (err) {
+      console.error("initProductDetails error:", err);
+      setNotFound();
+    }
+  }
+  window.addEventListener("DOMContentLoaded", initProductDetails);
+</script>
+      
 </body>
 </html>
