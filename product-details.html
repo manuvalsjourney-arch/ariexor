@@ -64,45 +64,43 @@
     <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
 </div>
 <script>
-  // -----------------------------
-  // CONFIG: update these
-  // -----------------------------
+  // =========================
+  // CONFIG (edit these)
+  // =========================
   const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co"; // e.g. https://xxxx.supabase.co
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
+  const PURCHASE_BUTTON_ID = "purchaseBtn"; // <-- must match your button id in HTML
 
-  // Where your "Purchase" button is
-  const PURCHASE_BUTTON_ID = "purchaseBtn";
-
-  // -----------------------------
+  // =========================
   // Helper: init supabase client
-  // -----------------------------
+  // =========================
   function createSupabaseClient() {
-    // Assumes you loaded supabase-js in your HTML, e.g.:
-    // <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     if (!window.supabase) {
-      throw new Error("Supabase SDK not found. Make sure you loaded @supabase/supabase-js v2.");
+      throw new Error(
+        "Supabase SDK not found. Make sure you loaded @supabase/supabase-js v2 and it exposes window.supabase."
+      );
     }
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  // -----------------------------
+  // =========================
   // Helper: parse URL ?id=...
-  // -----------------------------
+  // =========================
   function getProductIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return params.get("id");
   }
 
-  // -----------------------------
+  // =========================
   // Blob download + Drive open
-  // -----------------------------
+  // =========================
   async function downloadAsset(file_url, assetName = "download") {
     try {
       if (!file_url) throw new Error("Missing file_url");
 
       // Google Drive: open directly
       if (file_url.includes("drive.google.com")) {
-        window.location.href = file_url; // best mobile behavior
+        window.location.href = file_url;
         return;
       }
 
@@ -117,11 +115,11 @@
 
       // Try to extract filename from Content-Disposition
       let filename = assetName;
-
       const cd = res.headers.get("Content-Disposition");
       if (cd) {
-        // attachment; filename="foo.zip"
-        const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i);
+        const match = cd.match(
+          /filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i
+        );
         if (match && match[1]) filename = decodeURIComponent(match[1]);
       }
 
@@ -149,13 +147,13 @@
     }
   }
 
-  // -----------------------------
+  // =========================
   // Main: fetch product row and wire Purchase button
-  // -----------------------------
+  // =========================
   async function initProductDetails() {
     const supabase = createSupabaseClient();
-
     const productId = getProductIdFromUrl();
+
     if (!productId) {
       console.error("Missing ?id=... in URL");
       alert("Missing product id in URL.");
@@ -185,7 +183,6 @@
       return;
     }
 
-    // Optional: disable if no file
     if (!fileUrl) {
       purchaseBtn.disabled = true;
       purchaseBtn.textContent = "No file available";
@@ -196,15 +193,12 @@
     purchaseBtn.textContent = "Purchase";
 
     purchaseBtn.onclick = async () => {
-      // If Drive link -> open; else -> blob download
       await downloadAsset(fileUrl, `${title}.zip`);
     };
   }
 
-  // Run when page loads
   window.addEventListener("DOMContentLoaded", initProductDetails);
 </script>
-
 <div id="imageModal" class="hidden fixed inset-0 z-[100] bg-black/95 items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
     <img id="modalImage" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl">
 </div>
