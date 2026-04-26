@@ -39,7 +39,7 @@
 async function handlePublish() {
     const btn = document.getElementById('publishBtn');
     
-    // 1. Get values from your inputs
+    // 1. Get user inputs
     const title = document.getElementById('title').value;
     const price = document.getElementById('price').value;
     const desc = document.getElementById('description').value;
@@ -48,41 +48,44 @@ async function handlePublish() {
 
     if (!imageFile || !assetFile) return alert("Please select both files!");
 
-    btn.innerText = "Publishing... Please wait";
+    btn.innerText = "Publishing... System is Syncing";
     btn.disabled = true;
 
     try {
-        // 2. Create ONE ID for everything
+        // 2. Create the ID ONCE
         const uniqueId = Date.now();
         const cleanImgName = `${uniqueId}-${imageFile.name.replace(/\s+/g, '_')}`;
         const cleanAstName = `${uniqueId}-${assetFile.name.replace(/\s+/g, '_')}`;
 
-        // 3. Automatic Uploads
-        await sb.storage.from('product-images').upload(cleanImgName, imageFile);
-        await sb.storage.from('user-products').upload(cleanAstName, assetFile);
+        // 3. Upload files to Storage
+        const { error: imgErr } = await sb.storage.from('product-images').upload(cleanImgName, imageFile);
+        if (imgErr) throw imgErr;
 
-        // 4. Automatic Link Generation
-        const imgUrl = sb.storage.from('product-images').getPublicUrl(cleanImgName).data.publicUrl;
-        const astUrl = sb.storage.from('user-products').getPublicUrl(cleanAstName).data.publicUrl;
+        const { error: astErr } = await sb.storage.from('user-products').upload(cleanAstName, assetFile);
+        if (astErr) throw astErr;
 
-        // 5. Automatic Database Update
-        const { error } = await sb.from('product_details').insert([{
+        // 4. THE AUTOMATIC PART: Get the EXACT links Supabase just created
+        const imgPublicUrl = sb.storage.from('product-images').getPublicUrl(cleanImgName).data.publicUrl;
+        const astPublicUrl = sb.storage.from('user-products').getPublicUrl(cleanAstName).data.publicUrl;
+
+        // 5. Save those EXACT links to the database
+        const { error: dbErr } = await sb.from('product_details').insert([{
             title: title,
             price: price,
             description: desc,
-            image_url: imgUrl,
-            file_url: astUrl,
+            image_url: imgPublicUrl, // This now includes the timestamp automatically
+            file_url: astPublicUrl,   // This now includes the timestamp automatically
             created_at: new Date()
         }]);
 
-        if (error) throw error;
+        if (dbErr) throw dbErr;
 
-        alert("Success! Your product is live.");
+        alert("Done! No manual typing needed.");
         window.location.href = "index.html";
 
     } catch (err) {
-        alert("Error: " + err.message);
-        btn.innerText = "Publish Permanently";
+        alert("Upload Failed: " + err.message);
+        btn.innerText = "Try Again";
         btn.disabled = false;
     }
 }
