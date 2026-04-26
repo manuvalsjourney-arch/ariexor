@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="dynamic-title">Product Details | ariexo</title>
-    <link rel="icon" type="image/png" href="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/your-logo-file.png">
-
+    <title>Product Details | ariexo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
         .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
@@ -26,16 +23,14 @@
 
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            <div class="glass-card p-4 rounded-[2.5rem] cursor-zoom-in group relative overflow-hidden" onclick="openModal()">
-                <img id="productImage" src="" alt="Loading..." class="w-full aspect-square object-cover rounded-[2rem] shadow-2xl transition-transform duration-500 group-hover:scale-105">
-                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-[2.5rem]">
-                    <span class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium border border-white/20">View Full Image</span>
-                </div>
+            
+            <div class="glass-card p-4 rounded-[2.5rem] relative overflow-hidden">
+                <img id="productImage" src="" alt="Loading..." class="w-full aspect-square object-cover rounded-[2rem] shadow-2xl">
             </div>
 
             <div class="space-y-8">
                 <div>
-                    <h1 id="productTitle" class="text-4xl md:text-5xl font-extrabold tracking-tighter mb-4 leading-tight">Loading...</h1>
+                    <h1 id="productTitle" class="text-4xl md:text-5xl font-extrabold tracking-tighter mb-4">Loading...</h1>
                     <div id="productPrice" class="text-3xl font-bold text-indigo-400">$--</div>
                 </div>
 
@@ -44,7 +39,7 @@
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-center py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] shadow-xl shadow-indigo-500/20">
+                    <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01]">
                         Purchase Asset
                     </button>
                     <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
@@ -53,22 +48,56 @@
         </div>
     </main>
 
-    <div id="imageModal" class="hidden fixed inset-0 z-[100] bg-black/95 items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
-        <img id="modalImage" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl">
-    </div>
-
     <script>
         const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-
-        // ZIP FIX: BLOB DOWNLOAD
         async function downloadAsset(file_url, assetName) {
             try {
-                if (!file_url) return alert("Download link not available yet!");
-                const res = await fetch(file_url);
-                const blob = await res.blob();
-                const url =
+                const response = await fetch(file_url);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = assetName || 'asset.zip';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (err) {
+                alert("Download failed. Please check the file link.");
+            }
+        }
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (!id) return;
+
+            const { data, error } = await supabase
+                .from('product_details')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !data) {
+                document.getElementById('productTitle').innerText = "Not Found";
+                return;
+            }
+
+            // CRITICAL FIX: The IDs below now match your HTML exactly
+            document.getElementById('productTitle').innerText = data.title;
+            document.getElementById('productPrice').innerText = `$${data.price}`;
+            document.getElementById('productDescription').innerText = data.description;
+            document.getElementById('productImage').src = data.image_url;
+
+            document.getElementById('downloadBtn').onclick = () => {
+                downloadAsset(data.file_url, `${data.title}.zip`);
+            };
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
