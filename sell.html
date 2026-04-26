@@ -37,27 +37,54 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 async function handlePublish() {
-    // 1. Create ONE timestamp at the very start
-    const uniqueId = Date.now(); 
+    const btn = document.getElementById('publishBtn');
     
-    // 2. Define your filenames using that ONE ID
-    const cleanImageName = `${uniqueId}-${imageFile.name.replace(/\s+/g, '_')}`;
-    const cleanAssetName = `${uniqueId}-${assetFile.name.replace(/\s+/g, '_')}`;
+    // 1. Get values from your inputs
+    const title = document.getElementById('title').value;
+    const price = document.getElementById('price').value;
+    const desc = document.getElementById('description').value;
+    const imageFile = document.getElementById('imageFile').files[0];
+    const assetFile = document.getElementById('assetFile').files[0];
 
-    // 3. Upload to Storage
-    await supabase.storage.from('product-images').upload(cleanImageName, imageFile);
-    await supabase.storage.from('user-products').upload(cleanAssetName, assetFile);
+    if (!imageFile || !assetFile) return alert("Please select both files!");
 
-    // 4. Get the Public URLs (This is the automatic part)
-    const { data: imgData } = supabase.storage.from('product-images').getPublicUrl(cleanImageName);
-    const { data: astData } = supabase.storage.from('user-products').getPublicUrl(cleanAssetName);
+    btn.innerText = "Publishing... Please wait";
+    btn.disabled = true;
 
-    // 5. Save the exact URLs we just generated to the Database
-    const { error } = await supabase.from('product_details').insert([{
-        image_url: imgData.publicUrl, // Matches storage exactly
-        file_url: astData.publicUrl,  // Matches storage exactly
-        // ... other fields
-    }]);
+    try {
+        // 2. Create ONE ID for everything
+        const uniqueId = Date.now();
+        const cleanImgName = `${uniqueId}-${imageFile.name.replace(/\s+/g, '_')}`;
+        const cleanAstName = `${uniqueId}-${assetFile.name.replace(/\s+/g, '_')}`;
+
+        // 3. Automatic Uploads
+        await sb.storage.from('product-images').upload(cleanImgName, imageFile);
+        await sb.storage.from('user-products').upload(cleanAstName, assetFile);
+
+        // 4. Automatic Link Generation
+        const imgUrl = sb.storage.from('product-images').getPublicUrl(cleanImgName).data.publicUrl;
+        const astUrl = sb.storage.from('user-products').getPublicUrl(cleanAstName).data.publicUrl;
+
+        // 5. Automatic Database Update
+        const { error } = await sb.from('product_details').insert([{
+            title: title,
+            price: price,
+            description: desc,
+            image_url: imgUrl,
+            file_url: astUrl,
+            created_at: new Date()
+        }]);
+
+        if (error) throw error;
+
+        alert("Success! Your product is live.");
+        window.location.href = "index.html";
+
+    } catch (err) {
+        alert("Error: " + err.message);
+        btn.innerText = "Publish Permanently";
+        btn.disabled = false;
+    }
 }
     </script>
 </body>
