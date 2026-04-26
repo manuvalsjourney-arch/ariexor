@@ -131,7 +131,7 @@ async function handleDownload(rawUrl, title) {
       // Self-healing: Only activate if a file exists
       if (data.file_url && data.file_url.length > 5) {
         btn.disabled = false;
-        btn.onclick = () => handleMarketplaceDownload(data.file_url, data.title);
+       btn.onclick = () => handleDownload(data.file_url, data.title);
       } else {
         btn.disabled = true;
         btn.innerText = "No Download Available";
