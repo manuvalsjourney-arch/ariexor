@@ -23,21 +23,17 @@
 
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            
             <div class="glass-card p-4 rounded-[2.5rem] relative overflow-hidden">
                 <img id="productImage" src="" alt="Loading..." class="w-full aspect-square object-cover rounded-[2rem] shadow-2xl">
             </div>
-
             <div class="space-y-8">
                 <div>
                     <h1 id="productTitle" class="text-4xl md:text-5xl font-extrabold tracking-tighter mb-4">Loading...</h1>
                     <div id="productPrice" class="text-3xl font-bold text-indigo-400">$--</div>
                 </div>
-
                 <div class="glass-card p-6 rounded-3xl">
                     <p id="productDescription" class="text-slate-400 leading-relaxed italic">Fetching asset details...</p>
                 </div>
-
                 <div class="flex flex-col gap-4">
                     <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01]">
                         Purchase Asset
@@ -47,6 +43,7 @@
             </div>
         </div>
     </main>
+
 <script>
   const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; 
@@ -55,59 +52,54 @@
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  /**
-   * Marketplace Router
-   * This function "guesses" what kind of link the seller provided
-   */
-async function handleDownload(rawUrl, title) {
-  const btn = document.getElementById("downloadBtn");
-  
-  if (rawUrl.includes("drive.google.com")) {
-    window.open(rawUrl, "_blank");
-    return;
-  }
-
-  try {
-    btn.disabled = true;
-    btn.innerText = "Processing...";
-
-    const supabase = createSupabaseClient();
+  async function handleDownload(rawUrl, title) {
+    const btn = document.getElementById("downloadBtn");
+    const originalText = btn.innerText;
     
-    // 1. Get the filename from the end of the URL
-    const filename = rawUrl.split('/').pop().split('?')[0];
-
-    // 2. Marketplace Logic: Try 'downloads/' first, then try the 'root' folder
-    // This handles both your templates AND your journals automatically
-    let { data, error } = await supabase.storage
-        .from('product-images')
-        .createSignedUrl(`downloads/${filename}`, 60);
-
-    if (error || !data) {
-        // Fallback: Check the root folder if it's not in 'downloads'
-        const backup = await supabase.storage
-            .from('product-images')
-            .createSignedUrl(filename, 60);
-        
-        if (backup.error) throw new Error("File truly missing");
-        data = backup.data;
+    if (rawUrl.includes("drive.google.com")) {
+      window.open(rawUrl, "_blank");
+      return;
     }
 
-    // 3. Trigger Download
-    const a = document.createElement("a");
-    a.href = data.signedUrl;
-    a.download = title;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    try {
+      btn.disabled = true;
+      btn.innerText = "Processing...";
+      const supabase = createSupabaseClient();
+      
+      // Extract filename from URL (handles double slashes automatically)
+      const filename = rawUrl.split('/').pop().split('?')[0];
 
-    btn.innerText = "Success!";
-    setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
-  } catch (err) {
-    alert("System Error: The seller's file is missing. Please check the filename in your storage.");
-    btn.disabled = false;
-    btn.innerText = "Purchase Asset";
+      // Try downloads folder first
+      let { data, error } = await supabase.storage
+          .from('product-images')
+          .createSignedUrl(`downloads/${filename}`, 60);
+
+      if (error || !data) {
+          // Backup: Check root folder
+          const backup = await supabase.storage
+              .from('product-images')
+              .createSignedUrl(filename, 60);
+          
+          if (backup.error) throw new Error("File missing");
+          data = backup.data;
+      }
+
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.download = title;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      btn.innerText = "Success!";
+      setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
+    } catch (err) {
+      alert("System Error: The file is missing. Check your Storage bucket names.");
+      btn.disabled = false;
+      btn.innerText = "Purchase Asset";
+    }
   }
-}
+
   async function initProductDetails() {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
@@ -121,17 +113,16 @@ async function handleDownload(rawUrl, title) {
           return;
       }
 
-      // Populate Marketplace UI
       document.getElementById("productTitle").innerText = data.title;
       document.getElementById("productPrice").innerText = `$${data.price}`;
       document.getElementById("productDescription").innerText = data.description;
       document.getElementById("productImage").src = data.image_url;
 
       const btn = document.getElementById("downloadBtn");
-      // Self-healing: Only activate if a file exists
-      if (data.file_url && data.file_url.length > 5) {
+      if (data.file_url) {
         btn.disabled = false;
-       btn.onclick = () => handleDownload(data.file_url, data.title);
+        // FIXED: Name now matches the function above
+        btn.onclick = () => handleDownload(data.file_url, data.title);
       } else {
         btn.disabled = true;
         btn.innerText = "No Download Available";
@@ -141,6 +132,5 @@ async function handleDownload(rawUrl, title) {
 
   window.addEventListener("DOMContentLoaded", initProductDetails);
 </script>
-      
 </body>
 </html>
