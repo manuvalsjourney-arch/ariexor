@@ -84,18 +84,21 @@ async function loadProductDetails() {
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // 2. Direct Link Logic (This fixes the alert error!)
+        // 2. The Mobile-Friendly Button Fix
         const btn = document.getElementById('downloadBtn');
         
-        btn.onclick = (e) => {
-            e.preventDefault();
-            if (data.file_url) {
-                // Opens your Google Drive link immediately in a new tab
-                window.open(data.file_url, '_blank');
-            } else {
-                alert("Download link not found in the database.");
-            }
-        };
+        if (data.file_url) {
+            // Instead of a click script, we set the actual href.
+            // This tells the phone: "This is a normal link, let it through!"
+            btn.href = data.file_url;
+            btn.setAttribute('target', '_blank');
+            btn.setAttribute('rel', 'noopener noreferrer'); // Good for security
+            
+            // Remove any old onclick logic to prevent double-firing
+            btn.onclick = null; 
+        } else {
+            btn.onclick = () => alert("Link not found.");
+        }
     }
 }
 // Modal Functions
