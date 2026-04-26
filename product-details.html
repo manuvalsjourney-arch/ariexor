@@ -56,61 +56,54 @@
   }
 
   /**
-   * SMART DECODER
-   * Automatically extracts BOTH the Bucket Name and the File Path from your URL.
+   * Marketplace Router
+   * This function "guesses" what kind of link the seller provided
    */
-  function decodeSupabaseUrl(url) {
-    try {
-      const parts = url.split('/storage/v1/object/public/')[1].split('/');
-      return {
-        bucket: parts[0],             // e.g., "product-images" or "user-products"
-        path: parts.slice(1).join('/') // e.g., "downloads/file.zip"
-      };
-    } catch (e) {
-      return null;
-    }
-  }
-
-  async function handleDownload(rawUrl, title) {
+  async function handleMarketplaceDownload(rawUrl, title) {
     const btn = document.getElementById("downloadBtn");
-    
-    // 1. Route to Google Drive
-    if (rawUrl.includes("drive.google.com")) {
+    const originalText = btn.innerText;
+
+    // 1. EXTERNAL ROUTE: If it's Google Drive or any other website
+    if (rawUrl.includes("drive.google.com") || (!rawUrl.includes("supabase.co") && rawUrl.startsWith("http"))) {
       window.open(rawUrl, "_blank");
       return;
     }
 
+    // 2. INTERNAL ROUTE: If it's a Supabase link
     try {
       btn.disabled = true;
-      btn.innerText = "Processing...";
-
-      const info = decodeSupabaseUrl(rawUrl);
-      if (!info) throw new Error("Invalid Supabase URL");
+      btn.innerText = "Generating Access...";
 
       const supabase = createSupabaseClient();
       
-      // 2. Use the Bucket we found in the URL automatically
+      // Smart extraction for different buckets (product-images OR user-products)
+      const isPublic = rawUrl.includes('/public/');
+      const urlParts = rawUrl.split(isPublic ? '/public/' : '/authenticated/')[1].split('/');
+      const bucketName = urlParts[0];
+      const filePath = urlParts.slice(1).join('/');
+
       const { data, error } = await supabase.storage
-          .from(info.bucket) 
-          .createSignedUrl(info.path, 60);
+          .from(bucketName)
+          .createSignedUrl(filePath, 60);
 
       if (error) throw error;
 
-      // 3. Trigger Instant Download
+      // Trigger the instant background download
       const a = document.createElement("a");
       a.href = data.signedUrl;
-      a.download = `${title.replace(/\s+/g, "_")}.zip`;
+      a.download = `${title.replace(/\s+/g, "_")}`; 
       document.body.appendChild(a);
       a.click();
       a.remove();
 
       btn.innerText = "Success!";
-      setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
+      setTimeout(() => { btn.disabled = false; btn.innerText = originalText; }, 2000);
+
     } catch (err) {
-      console.error("Download Error:", err);
-      alert("Error: File not found in " + (decodeSupabaseUrl(rawUrl)?.bucket || "storage"));
+      console.error("Marketplace Download Error:", err);
+      alert("This seller's file is currently unavailable. Please contact support.");
       btn.disabled = false;
-      btn.innerText = "Purchase Asset";
+      btn.innerText = originalText;
     }
   }
 
@@ -121,17 +114,26 @@
     try {
       const supabase = createSupabaseClient();
       const { data, error } = await supabase.from("product_details").select("*").eq("id", id).single();
-      if (error || !data) return;
+      
+      if (error || !data) {
+          document.getElementById("productTitle").innerText = "Item Not Found";
+          return;
+      }
 
+      // Populate Marketplace UI
       document.getElementById("productTitle").innerText = data.title;
       document.getElementById("productPrice").innerText = `$${data.price}`;
       document.getElementById("productDescription").innerText = data.description;
       document.getElementById("productImage").src = data.image_url;
 
       const btn = document.getElementById("downloadBtn");
-      if (data.file_url) {
+      // Self-healing: Only activate if a file exists
+      if (data.file_url && data.file_url.length > 5) {
         btn.disabled = false;
-        btn.onclick = () => handleDownload(data.file_url, data.title);
+        btn.onclick = () => handleMarketplaceDownload(data.file_url, data.title);
+      } else {
+        btn.disabled = true;
+        btn.innerText = "No Download Available";
       }
     } catch (err) { console.error(err); }
   }
