@@ -35,62 +35,60 @@
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; // Paste your actual Anon Key here
         const sb = supabase.createClient(SB_URL, SB_KEY);
 
-        async function handlePublish() {
-            const btn = document.getElementById('publishBtn');
-            const title = document.getElementById('title').value;
-            const price = document.getElementById('price').value;
-            const description = document.getElementById('description').value;
-            const driveLink = document.getElementById('driveLink').value;
-            const imageFile = document.getElementById('imageFile').files[0];
+       async function handlePublish() {
+    const btn = document.getElementById('publishBtn');
+    
+    // 1. Capture the link from the text input
+    const driveLink = document.getElementById('driveLink').value; 
+    const title = document.getElementById('title').value;
+    const price = document.getElementById('price').value;
+    const description = document.getElementById('description').value;
+    const imageFile = document.getElementById('imageFile').files[0];
 
-            if (!title || !price || !driveLink || !imageFile) {
-                alert("Please fill all fields and upload an image!");
-                return;
-            }
+    if (!title || !price || !driveLink || !imageFile) {
+        alert("Please fill all fields and paste your Google Drive link!");
+        return;
+    }
 
-            btn.innerText = "Publishing...";
-            btn.disabled = true;
+    btn.innerText = "Publishing...";
+    btn.disabled = true;
 
-            try {
-                // 2. Upload Image to Supabase Storage
-                const fileName = `${Date.now()}-${imageFile.name}`;
-                const { data: imgData, error: imgErr } = await sb.storage
-                    .from('product-images')
-                    .upload(fileName, imageFile);
+    try {
+        // 2. Upload the Image (Standard process)
+        const fileName = `${Date.now()}-${imageFile.name}`;
+        const { data: imgData, error: imgErr } = await sb.storage
+            .from('product-images')
+            .upload(`previews/${fileName}`, imageFile);
 
-                if (imgErr) throw imgErr;
+        if (imgErr) throw imgErr;
 
-                // 3. Get Public URL for the image
-                const { data: publicUrlData } = sb.storage
-                    .from('product-images')
-                    .getPublicUrl(fileName);
+        const { data: publicUrlData } = sb.storage
+            .from('product-images')
+            .getPublicUrl(`previews/${fileName}`);
 
-                const imageUrl = publicUrlData.publicUrl;
+        // 3. THE AUTOMATIC PART: Saving the link to Supabase
+        const { error: dbErr } = await sb
+            .from('product_details')
+            .insert([{
+                title: title,
+                price: parseFloat(price),
+                description: description,
+                image_url: publicUrlData.publicUrl,
+                file_url: driveLink // This sends the Google Drive link to your table
+            }]);
 
-                // 4. Insert into Database Table
-                const { error: dbErr } = await sb
-                    .from('product_details')
-                    .insert([{
-                        title: title,
-                        price: parseFloat(price),
-                        description: description,
-                        image_url: imageUrl,
-                        file_url: driveLink // Saving the Google Drive link
-                    }]);
+        if (dbErr) throw dbErr;
 
-                if (dbErr) throw dbErr;
+        alert("Asset Published Automatically!");
+        window.location.href = "index.html"; 
 
-                alert("Product Published Successfully!");
-                window.location.href = "index.html"; // Redirect to home
-
-            } catch (err) {
-                console.error(err);
-                alert("Error: " + err.message);
-            } finally {
-                btn.innerText = "Publish Permanently";
-                btn.disabled = false;
-            }
-        }
+    } catch (err) {
+        alert("Error: " + err.message);
+    } finally {
+        btn.innerText = "Publish Permanently";
+        btn.disabled = false;
+    }
+}
     </script>
 </body>
 </html>
