@@ -48,7 +48,6 @@
         </div>
     </main>
 <script>
-  // 1. Configuration - Uses the keys already in your project
   const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; 
 
@@ -56,34 +55,48 @@
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  // 2. Helper: Check if it's a Drive link
-  const isExternalLink = (url) => url.includes("drive.google.com") || url.startsWith("http");
+  /**
+   * SMART DECODER
+   * Automatically extracts BOTH the Bucket Name and the File Path from your URL.
+   */
+  function decodeSupabaseUrl(url) {
+    try {
+      const parts = url.split('/storage/v1/object/public/')[1].split('/');
+      return {
+        bucket: parts[0],             // e.g., "product-images" or "user-products"
+        path: parts.slice(1).join('/') // e.g., "downloads/file.zip"
+      };
+    } catch (e) {
+      return null;
+    }
+  }
 
-  async function handleDownload(fileUrl, title) {
+  async function handleDownload(rawUrl, title) {
     const btn = document.getElementById("downloadBtn");
-    const originalText = btn.innerText;
-
-    // Detect Google Drive
-    if (isExternalLink(fileUrl)) {
-      window.open(fileUrl, "_blank");
+    
+    // 1. Route to Google Drive
+    if (rawUrl.includes("drive.google.com")) {
+      window.open(rawUrl, "_blank");
       return;
     }
 
-    // Handle Supabase Direct ZIP
     try {
       btn.disabled = true;
-      btn.innerText = "Downloading...";
-      
+      btn.innerText = "Processing...";
+
+      const info = decodeSupabaseUrl(rawUrl);
+      if (!info) throw new Error("Invalid Supabase URL");
+
       const supabase = createSupabaseClient();
       
-      // Generate a Signed URL (bypasses 404 and CORS issues)
+      // 2. Use the Bucket we found in the URL automatically
       const { data, error } = await supabase.storage
-          .from('user-products')
-          .createSignedUrl(fileUrl, 60);
+          .from(info.bucket) 
+          .createSignedUrl(info.path, 60);
 
       if (error) throw error;
 
-      // Direct Download Trigger
+      // 3. Trigger Instant Download
       const a = document.createElement("a");
       a.href = data.signedUrl;
       a.download = `${title.replace(/\s+/g, "_")}.zip`;
@@ -92,57 +105,39 @@
       a.remove();
 
       btn.innerText = "Success!";
-      setTimeout(() => { btn.disabled = false; btn.innerText = originalText; }, 2000);
+      setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
     } catch (err) {
       console.error("Download Error:", err);
-      alert("Download failed. The file path might be incorrect.");
+      alert("Error: File not found in " + (decodeSupabaseUrl(rawUrl)?.bucket || "storage"));
       btn.disabled = false;
-      btn.innerText = originalText;
+      btn.innerText = "Purchase Asset";
     }
   }
 
   async function initProductDetails() {
-    const btn = document.getElementById("downloadBtn");
     const id = new URLSearchParams(window.location.search).get("id");
-
     if (!id) return;
 
     try {
       const supabase = createSupabaseClient();
-      const { data, error } = await supabase
-        .from("product_details")
-        .select("*")
-        .eq("id", id)
-        .single();
+      const { data, error } = await supabase.from("product_details").select("*").eq("id", id).single();
+      if (error || !data) return;
 
-      if (error || !data) {
-        btn.disabled = true;
-        btn.innerText = "Product Not Found";
-        return;
-      }
+      document.getElementById("productTitle").innerText = data.title;
+      document.getElementById("productPrice").innerText = `$${data.price}`;
+      document.getElementById("productDescription").innerText = data.description;
+      document.getElementById("productImage").src = data.image_url;
 
-      // Populate UI using your specific IDs
-      document.getElementById("productTitle").innerText = data.title || "Asset";
-      document.getElementById("productPrice").innerText = `$${data.price || "0.00"}`;
-      document.getElementById("productDescription").innerText = data.description || "";
-      document.getElementById("productImage").src = data.image_url || "";
-
-      // SELF-HEALING: Only enable if file exists
+      const btn = document.getElementById("downloadBtn");
       if (data.file_url) {
         btn.disabled = false;
         btn.onclick = () => handleDownload(data.file_url, data.title);
-      } else {
-        btn.disabled = true;
-        btn.innerText = "No File Attached";
       }
-    } catch (err) {
-      console.error("System Error:", err);
-    }
+    } catch (err) { console.error(err); }
   }
 
   window.addEventListener("DOMContentLoaded", initProductDetails);
 </script>
-
       
 </body>
 </html>
