@@ -68,59 +68,37 @@
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
 
-  async function downloadAsset(file_url, assetName = "download") {
+ async function downloadAsset(file_url, assetName = "Ariexo_Template") {
     try {
-      if (!file_url) throw new Error("Missing file_url");
+        if (!file_url) throw new Error("Missing file_url");
 
-      // 1) Google Drive links: open directly (best compatibility on mobile)
-      if (file_url.includes("drive.google.com")) {
-        // Use same-tab navigation so mobile browsers behave more predictably.
-        window.location.href = file_url;
-        return;
-      }
+        // 1) If it's a Google Drive link, open it directly (Best for Mobile)
+        if (file_url.includes("drive.google.com")) {
+            window.location.href = file_url;
+            return;
+        }
 
-      // 2) Supabase Storage links: download as blob
-      const res = await fetch(file_url, { method: "GET" });
+        // 2) If it's a Supabase link, download it as a Blob (Bypasses mobile 404s)
+        const res = await fetch(file_url, { method: "GET" });
+        if (!res.ok) throw new Error("Download failed. File might still be uploading.");
 
-      if (!res.ok) {
-        // If this is a signed URL, it may be expired; if public, it may still be propagating.
-        throw new Error(`Download failed: ${res.status} ${res.statusText}`);
-      }
-
-      const blob = await res.blob();
-
-      // Try to determine filename
-      let filename = assetName;
-
-      const cd = res.headers.get("Content-Disposition");
-      if (cd) {
-        // e.g. attachment; filename="foo.zip"
-        const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i);
-        if (match && match[1]) filename = decodeURIComponent(match[1]);
-      }
-
-      // Fallback from URL path
-      if (!filename || filename === "download") {
-        try {
-          const u = new URL(file_url);
-          const last = u.pathname.split("/").filter(Boolean).pop();
-          if (last) filename = last;
-        } catch (_) {}
-      }
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename || "download";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = assetName + ".zip";
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("downloadAsset error:", err);
-      alert(err?.message || "Could not download file.");
+        console.error("Download error:", err);
+        alert("The file is still processing. Please try again in 1 minute.");
     }
-  }
+}
 </script>
 
 <div id="imageModal" class="hidden fixed inset-0 z-[100] bg-black/95 items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
