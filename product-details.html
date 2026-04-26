@@ -54,46 +54,34 @@
 
  async function handleDownload(rawUrl, title) {
   const btn = document.getElementById("downloadBtn");
-  if (rawUrl.includes("drive.google.com")) {
-    window.open(rawUrl, "_blank");
-    return;
-  }
+  if (!rawUrl) return alert("Seller has not uploaded a file yet.");
 
   try {
     btn.disabled = true;
-    btn.innerText = "Locating File...";
+    btn.innerText = "Locating Asset...";
     const supabase = createSupabaseClient();
     
-    // This part is the "Marketplace Logic"
-    // It extracts the filename and cleans up any double slashes or path errors automatically
-    const filename = rawUrl.split('/').pop().split('?')[0];
+    // This grabs the filename from the end of the URL, no matter how many slashes there are
+    const filename = rawUrl.split('/').filter(Boolean).pop();
 
-    // Search in the bucket
+    // The code tries to find the file in your marketplace storage automatically
     const { data, error } = await supabase.storage
         .from('product-images')
         .createSignedUrl(`downloads/${filename}`, 60);
 
-    if (error || !data) {
-        // Fallback: If not in /downloads, check the root folder
-        const { data: rootData, error: rootError } = await supabase.storage
-            .from('product-images')
-            .createSignedUrl(filename, 60);
-            
-        if (rootError) throw rootError;
-        window.location.href = rootData.signedUrl;
-    } else {
-        window.location.href = data.signedUrl;
-    }
+    if (error || !data) throw new Error("File missing");
 
+    // Start download
+    window.location.href = data.signedUrl;
+    
     btn.innerText = "Success!";
     setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
   } catch (err) {
-    alert("File Not Found: The seller's link is broken or the file was removed.");
+    alert("Marketplace Error: The file for '" + title + "' is missing from the seller's storage.");
     btn.disabled = false;
     btn.innerText = "Purchase Asset";
   }
 }
-
   async function initProductDetails() {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
