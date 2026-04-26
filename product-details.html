@@ -52,53 +52,47 @@
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  async function handleDownload(rawUrl, title) {
-    const btn = document.getElementById("downloadBtn");
-    const originalText = btn.innerText;
-    
-    if (rawUrl.includes("drive.google.com")) {
-      window.open(rawUrl, "_blank");
-      return;
-    }
-
-    try {
-      btn.disabled = true;
-      btn.innerText = "Processing...";
-      const supabase = createSupabaseClient();
-      
-      // Extract filename from URL (handles double slashes automatically)
-      const filename = rawUrl.split('/').pop().split('?')[0];
-
-      // Try downloads folder first
-      let { data, error } = await supabase.storage
-          .from('product-images')
-          .createSignedUrl(`downloads/${filename}`, 60);
-
-      if (error || !data) {
-          // Backup: Check root folder
-          const backup = await supabase.storage
-              .from('product-images')
-              .createSignedUrl(filename, 60);
-          
-          if (backup.error) throw new Error("File missing");
-          data = backup.data;
-      }
-
-      const a = document.createElement("a");
-      a.href = data.signedUrl;
-      a.download = title;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      btn.innerText = "Success!";
-      setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
-    } catch (err) {
-      alert("System Error: The file is missing. Check your Storage bucket names.");
-      btn.disabled = false;
-      btn.innerText = "Purchase Asset";
-    }
+ async function handleDownload(rawUrl, title) {
+  const btn = document.getElementById("downloadBtn");
+  if (rawUrl.includes("drive.google.com")) {
+    window.open(rawUrl, "_blank");
+    return;
   }
+
+  try {
+    btn.disabled = true;
+    btn.innerText = "Locating File...";
+    const supabase = createSupabaseClient();
+    
+    // This part is the "Marketplace Logic"
+    // It extracts the filename and cleans up any double slashes or path errors automatically
+    const filename = rawUrl.split('/').pop().split('?')[0];
+
+    // Search in the bucket
+    const { data, error } = await supabase.storage
+        .from('product-images')
+        .createSignedUrl(`downloads/${filename}`, 60);
+
+    if (error || !data) {
+        // Fallback: If not in /downloads, check the root folder
+        const { data: rootData, error: rootError } = await supabase.storage
+            .from('product-images')
+            .createSignedUrl(filename, 60);
+            
+        if (rootError) throw rootError;
+        window.location.href = rootData.signedUrl;
+    } else {
+        window.location.href = data.signedUrl;
+    }
+
+    btn.innerText = "Success!";
+    setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
+  } catch (err) {
+    alert("File Not Found: The seller's link is broken or the file was removed.");
+    btn.disabled = false;
+    btn.innerText = "Purchase Asset";
+  }
+}
 
   async function initProductDetails() {
     const id = new URLSearchParams(window.location.search).get("id");
