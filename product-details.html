@@ -65,156 +65,83 @@
 </div>
 <script>
   const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
-  const PURCHASE_BUTTON_ID = "purchaseBtn";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; // <-- placeholder
 
   function createSupabaseClient() {
     if (!window.supabase) {
-      throw new Error("Supabase SDK not found on window.supabase. Check how you included @supabase/supabase-js.");
+      throw new Error("Supabase SDK not found on window. Make sure you loaded @supabase/supabase-js.");
     }
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  function getProductIdFromUrl() {
+  function getIdFromSearch() {
     const params = new URLSearchParams(window.location.search);
     return params.get("id");
   }
 
- <script>
-  // =========================
-  // CONFIG
-  // =========================
-  const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE"; // <-- placeholder
+  function setLoadingTextToNotFound() {
+    // Your HTML says it starts as "Loading..."
+    // We try to update a dedicated status element if you have one; otherwise replace the body text.
+    const loadingEl =
+      document.getElementById("loadingStatus") ||
+      document.querySelector("#loading") ||
+      document.body;
 
-  // If your HTML uses these IDs, keep them consistent:
-  const PURCHASE_BUTTON_ID = "purchaseBtn"; // optional (only if you have a button)
-  const LOADING_ID = "loadingStatus"; // optional (recommended)
-
-  // =========================
-  // Supabase client
-  // =========================
-  function createSupabaseClient() {
-    if (!window.supabase) {
-      throw new Error("Supabase SDK not found. Load @supabase/supabase-js v2 on this page.");
-    }
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    loadingEl.textContent = "Product Not Found";
   }
 
-  // =========================
-  // Helpers
-  // =========================
-  function getProductIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("id");
-  }
-
-  function setLoadingText(text) {
-    const el = document.getElementById(LOADING_ID) || document.body;
-    el.textContent = text;
-  }
-
-  async function downloadAsset(file_url, assetName = "download.zip") {
+  window.addEventListener("DOMContentLoaded", async () => {
     try {
-      if (!file_url) throw new Error("Missing file_url");
+      console.log("product-details: starting init");
 
-      // Strict ZIP download logic: ALWAYS fetch as blob
-      const res = await fetch(file_url, { method: "GET" });
-      if (!res.ok) {
-        throw new Error(`Download failed: ${res.status} ${res.statusText}`);
+      const id = getIdFromSearch();
+      console.log("product-details: id from URL =", id);
+
+      if (!id) {
+        alert("Product Not Found: missing ?id= in URL.");
+        setLoadingTextToNotFound();
+        return;
       }
-
-      const blob = await res.blob();
-
-      // Create temp object URL
-      const objectUrl = URL.createObjectURL(blob);
-
-      // Hidden anchor click to force download (mobile-friendly)
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = assetName || "download.zip";
-      a.style.display = "none";
-      document.body.appendChild(a);
-
-      a.click();
-
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
-      console.error("downloadAsset error:", err);
-      alert(err?.message || "Could not download the ZIP file.");
-    }
-  }
-
-  // =========================
-  // Main init
-  // =========================
-  async function initProductDetails() {
-    try {
-      setLoadingText("Loading...");
 
       const supabase = createSupabaseClient();
 
-      const productId = getProductIdFromUrl();
-      if (!productId) {
-        alert("Product Not Found: missing id in URL.");
-        setLoadingText("Product Not Found");
-        return;
-      }
-
-      // Fetch row
+      // Fetch full row
       const { data, error } = await supabase
         .from("product_details")
-        .select("id, title, price, description, image_url, file_url")
-        .eq("id", productId)
+        .select("*")
+        .eq("id", id)
         .single();
 
-      if (error) {
-        throw error;
-      }
+      console.log("product-details: fetch result =", { data, error });
 
+      if (error) throw error;
       if (!data) {
         alert("Product Not Found.");
-        setLoadingText("Product Not Found");
+        setLoadingTextToNotFound();
         return;
       }
 
-      // UI updates
+      // Update UI
       const titleEl = document.getElementById("product-title");
       const priceEl = document.getElementById("product-price");
       const descEl = document.getElementById("product-desc");
       const imgEl = document.getElementById("product-img");
 
-      if (titleEl) titleEl.textContent = data.title ?? "";
-      if (priceEl) priceEl.textContent = data.price ?? "";
-      if (descEl) descEl.textContent = data.description ?? "";
+      if (titleEl) titleEl.innerText = data.title ?? "";
+      if (priceEl) priceEl.innerText = data.price ?? "";
+      if (descEl) descEl.innerText = data.description ?? "";
 
       if (imgEl) {
         imgEl.src = data.image_url ?? "";
       }
 
-      // Optional: wire purchase button if present
-      const purchaseBtn = document.getElementById(PURCHASE_BUTTON_ID);
-      if (purchaseBtn && data.file_url) {
-        purchaseBtn.disabled = false;
-        purchaseBtn.textContent = "Purchase";
-
-        purchaseBtn.onclick = async () => {
-          const safeName = `${(data.title || "download").replace(/\s+/g, "_")}.zip`;
-          await downloadAsset(data.file_url, safeName);
-        };
-      }
-
-      setLoadingText(""); // clear loading text
+      console.log("product-details: UI updated");
     } catch (err) {
-      console.error("initProductDetails error:", err);
-      alert("Product Not Found");
-      setLoadingText("Product Not Found");
+      console.error("product-details error:", err);
+      alert(err?.message || "Product Not Found");
+      setLoadingTextToNotFound();
     }
-  }
-
-  window.addEventListener("DOMContentLoaded", initProductDetails);
-
+  });
 </script>
 <div id="imageModal" class="hidden fixed inset-0 z-[100] bg-black/95 items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
     <img id="modalImage" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl">
