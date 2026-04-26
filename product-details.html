@@ -63,85 +63,151 @@
       
     <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
 </div>
+ <script>
+    // 1. PROJECT CONFIG
+    const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; // PASTE YOUR ACTUAL ANON KEY HERE
+    const PURCHASE_BUTTON_ID = "purchaseBtn";
+
+    // 2. INITIALIZE SUPABASE
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 3. GET PRODUCT ID FROM URL (?id=33)
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    // 4. THE BLOB DOWNLOAD FIX (For Mobile ZIPs)
+    async function downloadAsset(file_url, assetName = "download.zip") {
+        try {
+            if (!file_url) throw new Error("Missing file_url");
+            
+            // This fetch method bypasses the "Processing" error on mobile
+            const res = await fetch(file_url, { method: "GET" });
+            if (!res.ok) throw new Error("Download failed. Check file in storage.");
+
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = objectUrl;
+            a.download = assetName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objectUrl);
+        } catch (err) {
+            console.error("Download error:", err);
+            alert("Error downloading ZIP: " + err.message);
+        }
+    }
+
+    // 5. FETCH DATA AND UPDATE UI
+    async function initPage() {
+        if (!productId) {
+            alert("No Product ID found!");
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from('product_details')
+            .select('*')
+            .eq('id', productId)
+            .single();
+
+        if (error || !data) {
+            console.error("Supabase Error:", error);
+            document.body.innerHTML = "<h1>Product Not Found</h1>";
+            return;
+        }
+
+        // REPLACING THE "LOADING..." TEXT
+        document.getElementById('product-title').innerText = data.title;
+        document.getElementById('product-price').innerText = `$${data.price}`;
+        document.getElementById('product-desc').innerText = data.description;
+        document.getElementById('product-img').src = data.image_url;
+
+        // SET UP THE PURCHASE BUTTON
+        const buyBtn = document.getElementById(PURCHASE_BUTTON_ID);
+        if (buyBtn) {
+            buyBtn.onclick = () => downloadAsset(data.file_url, `${data.title}.zip`);
+        }
+    }
+
+    // RUN ON LOAD
+    window.addEventListener("DOMContentLoaded", initPage);
+</script>               
 <script>
-  const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; // <-- placeholder
+    // 1. PROJECT CONFIG
+    const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE"; // PASTE YOUR ACTUAL ANON KEY HERE
+    const PURCHASE_BUTTON_ID = "purchaseBtn";
 
-  function createSupabaseClient() {
-    if (!window.supabase) {
-      throw new Error("Supabase SDK not found on window. Make sure you loaded @supabase/supabase-js.");
+    // 2. INITIALIZE SUPABASE
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 3. GET PRODUCT ID FROM URL (?id=33)
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    // 4. THE BLOB DOWNLOAD FIX (For Mobile ZIPs)
+    async function downloadAsset(file_url, assetName = "download.zip") {
+        try {
+            if (!file_url) throw new Error("Missing file_url");
+            
+            // This fetch method bypasses the "Processing" error on mobile
+            const res = await fetch(file_url, { method: "GET" });
+            if (!res.ok) throw new Error("Download failed. Check file in storage.");
+
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = objectUrl;
+            a.download = assetName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objectUrl);
+        } catch (err) {
+            console.error("Download error:", err);
+            alert("Error downloading ZIP: " + err.message);
+        }
     }
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
 
-  function getIdFromSearch() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("id");
-  }
+    // 5. FETCH DATA AND UPDATE UI
+    async function initPage() {
+        if (!productId) {
+            alert("No Product ID found!");
+            return;
+        }
 
-  function setLoadingTextToNotFound() {
-    // Your HTML says it starts as "Loading..."
-    // We try to update a dedicated status element if you have one; otherwise replace the body text.
-    const loadingEl =
-      document.getElementById("loadingStatus") ||
-      document.querySelector("#loading") ||
-      document.body;
+        const { data, error } = await supabase
+            .from('product_details')
+            .select('*')
+            .eq('id', productId)
+            .single();
 
-    loadingEl.textContent = "Product Not Found";
-  }
+        if (error || !data) {
+            console.error("Supabase Error:", error);
+            document.body.innerHTML = "<h1>Product Not Found</h1>";
+            return;
+        }
 
-  window.addEventListener("DOMContentLoaded", async () => {
-    try {
-      console.log("product-details: starting init");
+        // REPLACING THE "LOADING..." TEXT
+        document.getElementById('product-title').innerText = data.title;
+        document.getElementById('product-price').innerText = `$${data.price}`;
+        document.getElementById('product-desc').innerText = data.description;
+        document.getElementById('product-img').src = data.image_url;
 
-      const id = getIdFromSearch();
-      console.log("product-details: id from URL =", id);
-
-      if (!id) {
-        alert("Product Not Found: missing ?id= in URL.");
-        setLoadingTextToNotFound();
-        return;
-      }
-
-      const supabase = createSupabaseClient();
-
-      // Fetch full row
-      const { data, error } = await supabase
-        .from("product_details")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      console.log("product-details: fetch result =", { data, error });
-
-      if (error) throw error;
-      if (!data) {
-        alert("Product Not Found.");
-        setLoadingTextToNotFound();
-        return;
-      }
-
-      // Update UI
-      const titleEl = document.getElementById("product-title");
-      const priceEl = document.getElementById("product-price");
-      const descEl = document.getElementById("product-desc");
-      const imgEl = document.getElementById("product-img");
-
-      if (titleEl) titleEl.innerText = data.title ?? "";
-      if (priceEl) priceEl.innerText = data.price ?? "";
-      if (descEl) descEl.innerText = data.description ?? "";
-
-      if (imgEl) {
-        imgEl.src = data.image_url ?? "";
-      }
-
-      console.log("product-details: UI updated");
-    } catch (err) {
-      console.error("product-details error:", err);
-      alert(err?.message || "Product Not Found");
-      setLoadingTextToNotFound();
+        // SET UP THE PURCHASE BUTTON
+        const buyBtn = document.getElementById(PURCHASE_BUTTON_ID);
+        if (buyBtn) {
+            buyBtn.onclick = () => downloadAsset(data.file_url, `${data.title}.zip`);
+        }
     }
-  });
+
+    // RUN ON LOAD
+    window.addEventListener("DOMContentLoaded", initPage);
 </script>
 <div id="imageModal" class="hidden fixed inset-0 z-[100] bg-black/95 items-center justify-center p-4 cursor-zoom-out" onclick="closeModal()">
     <img id="modalImage" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl">
