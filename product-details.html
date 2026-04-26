@@ -59,54 +59,55 @@
    * Marketplace Router
    * This function "guesses" what kind of link the seller provided
    */
-  async function handleMarketplaceDownload(rawUrl, title) {
-    const btn = document.getElementById("downloadBtn");
-    const originalText = btn.innerText;
-
-    // 1. EXTERNAL ROUTE: If it's Google Drive or any other website
-    if (rawUrl.includes("drive.google.com") || (!rawUrl.includes("supabase.co") && rawUrl.startsWith("http"))) {
-      window.open(rawUrl, "_blank");
-      return;
-    }
-
-    // 2. INTERNAL ROUTE: If it's a Supabase link
-    try {
-      btn.disabled = true;
-      btn.innerText = "Generating Access...";
-
-      const supabase = createSupabaseClient();
-      
-      // Smart extraction for different buckets (product-images OR user-products)
-      const isPublic = rawUrl.includes('/public/');
-      const urlParts = rawUrl.split(isPublic ? '/public/' : '/authenticated/')[1].split('/');
-      const bucketName = urlParts[0];
-      const filePath = urlParts.slice(1).join('/');
-
-      const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(filePath, 60);
-
-      if (error) throw error;
-
-      // Trigger the instant background download
-      const a = document.createElement("a");
-      a.href = data.signedUrl;
-      a.download = `${title.replace(/\s+/g, "_")}`; 
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      btn.innerText = "Success!";
-      setTimeout(() => { btn.disabled = false; btn.innerText = originalText; }, 2000);
-
-    } catch (err) {
-      console.error("Marketplace Download Error:", err);
-      alert("This seller's file is currently unavailable. Please contact support.");
-      btn.disabled = false;
-      btn.innerText = originalText;
-    }
+async function handleDownload(rawUrl, title) {
+  const btn = document.getElementById("downloadBtn");
+  
+  if (rawUrl.includes("drive.google.com")) {
+    window.open(rawUrl, "_blank");
+    return;
   }
 
+  try {
+    btn.disabled = true;
+    btn.innerText = "Processing...";
+
+    const supabase = createSupabaseClient();
+    
+    // 1. Get the filename from the end of the URL
+    const filename = rawUrl.split('/').pop().split('?')[0];
+
+    // 2. Marketplace Logic: Try 'downloads/' first, then try the 'root' folder
+    // This handles both your templates AND your journals automatically
+    let { data, error } = await supabase.storage
+        .from('product-images')
+        .createSignedUrl(`downloads/${filename}`, 60);
+
+    if (error || !data) {
+        // Fallback: Check the root folder if it's not in 'downloads'
+        const backup = await supabase.storage
+            .from('product-images')
+            .createSignedUrl(filename, 60);
+        
+        if (backup.error) throw new Error("File truly missing");
+        data = backup.data;
+    }
+
+    // 3. Trigger Download
+    const a = document.createElement("a");
+    a.href = data.signedUrl;
+    a.download = title;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    btn.innerText = "Success!";
+    setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
+  } catch (err) {
+    alert("System Error: The seller's file is missing. Please check the filename in your storage.");
+    btn.disabled = false;
+    btn.innerText = "Purchase Asset";
+  }
+}
   async function initProductDetails() {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
