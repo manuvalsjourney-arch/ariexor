@@ -67,7 +67,7 @@
     // 1. Initialize Supabase (Only ONCE)
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-   async function loadProductDetails() {
+async function loadProductDetails() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
@@ -78,22 +78,22 @@
         .single();
 
     if (data) {
-        // 1. Update UI Elements
+        // 1. Update Text & Images
         document.getElementById('productImage').src = data.image_url;
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // 2. Simple Button Logic (Works for Google Drive & Supabase)
+        // 2. The Final Button Logic (No more fetch check!)
         const btn = document.getElementById('downloadBtn');
         
         btn.onclick = (e) => {
             e.preventDefault();
-            // This simply opens your Google Drive link in a new tab
             if (data.file_url) {
+                // This opens your Google Drive link immediately
                 window.open(data.file_url, '_blank');
             } else {
-                alert("Download link not found.");
+                alert("Download link not found in database.");
             }
         };
     }
