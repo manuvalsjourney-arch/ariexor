@@ -65,48 +65,56 @@
 </div>
 <script>
     const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
-async function loadProductDetails() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
+const sb = supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
 
-    const { data, error } = await sb
-        .from('product_details')
-        .select('*')
-        .eq('id', productId)
-        .single();
+    async function loadProductDetails() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
 
-    if (data) {
-        // 1. Update UI Elements
-        document.title = `${data.title} | ariexo`;
-        document.getElementById('productImage').src = data.image_url;
-        document.getElementById('productTitle').innerText = data.title;
-        document.getElementById('productPrice').innerText = `$${data.price}`;
-        document.getElementById('productDescription').innerText = data.description;
-// Replace your previous button logic with this:
-const btn = document.getElementById('downloadBtn');
-const fileName = data.file_url.split('/').pop(); 
-const publicUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
+        const { data, error } = await sb
+            .from('product_details')
+            .select('*')
+            .eq('id', productId)
+            .single();
 
-btn.onclick = async (e) => {
-    e.preventDefault(); // Stop the page from changing
-    
-    try {
-        const response = await fetch(publicUrl, { method: 'HEAD' });
-        if (response.ok) {
-            // File exists! Proceed with download
-            window.location.href = publicUrl; 
-        } else {
-            // File is not ready yet (404)
-            alert("File is being prepared by the system. Please try again in 1 minute!");
-        }
-    } catch (err) {
-        alert("Connection error. Please check your internet.");
-    }
-};
-      
-   
+        if (data) {
+            // 1. Update UI Elements
+            document.getElementById('productImage').src = data.image_url;
+            document.getElementById('productTitle').innerText = data.title;
+            document.getElementById('productPrice').innerText = `$${data.price}`;
+            document.getElementById('productDescription').innerText = data.description;
+
+            // 2. Button Logic
+            const btn = document.getElementById('downloadBtn');
+            const fileName = data.file_url.split('/').pop(); 
+            const publicUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/user-products/${fileName}`;
+
+            btn.onclick = async (e) => {
+                e.preventDefault();
+                try {
+                    const response = await fetch(publicUrl, { method: 'HEAD' });
+                    if (response.ok) {
+                        window.location.href = publicUrl; 
+                    } else {
+                        alert("File not found in storage. Check if it was uploaded!");
+                    }
+                } catch (err) {
+                    alert("Connection error.");
+                }
+            };
+        } // <--- Added this to close "if (data)"
+    } // <--- Added this to close "loadProductDetails"
 
     window.onload = loadProductDetails;
+
+    function openModal() {
+        document.getElementById('imageModal').classList.replace('hidden', 'flex');
+        document.getElementById('modalImage').src = document.getElementById('productImage').src;
+    }
+
+    function closeModal() {
+        document.getElementById('imageModal').classList.replace('flex', 'hidden');
+    }
 </script>
             </body>                
             </html>
