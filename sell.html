@@ -37,77 +37,28 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'; 
         const sb = supabase.createClient(supabaseUrl, supabaseKey);
 async function handlePublish() {
-    const btn = document.getElementById('publishBtn');
+    // 1. Create ONE timestamp at the very start
+    const uniqueId = Date.now(); 
     
-    // 1. Gather Inputs
-    const title = document.getElementById('title').value.trim();
-    const price = parseFloat(document.getElementById('price').value);
-    const desc = document.getElementById('description').value.trim();
-    const imgFile = document.getElementById('imageFile').files[0];
-    const astFile = document.getElementById('assetFile').files[0];
+    // 2. Define your filenames using that ONE ID
+    const cleanImageName = `${uniqueId}-${imageFile.name.replace(/\s+/g, '_')}`;
+    const cleanAssetName = `${uniqueId}-${assetFile.name.replace(/\s+/g, '_')}`;
 
-    if (!title || isNaN(price) || !imgFile || !astFile) {
-        return alert("Please fill all fields and select both files.");
-    }
+    // 3. Upload to Storage
+    await supabase.storage.from('product-images').upload(cleanImageName, imageFile);
+    await supabase.storage.from('user-products').upload(cleanAssetName, assetFile);
 
-    btn.innerText = "Publishing...";
-    btn.disabled = true;
+    // 4. Get the Public URLs (This is the automatic part)
+    const { data: imgData } = supabase.storage.from('product-images').getPublicUrl(cleanImageName);
+    const { data: astData } = supabase.storage.from('user-products').getPublicUrl(cleanAssetName);
 
-    // Configuration
-    const timestamp = Date.now();
-    const cleanName = (name) => name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
-    
-    // Unique paths for storage (Keep these to delete later if DB fails)
-    const imgPath = `previews/${timestamp}-${cleanName(imgFile.name)}`;
-    const astPath = `${timestamp}-${cleanName(astFile.name)}`;
-
-    let uploadedImg = false;
-    let uploadedAst = false;
-
-    try {
-        // STEP 1: Upload Preview Image
-        const { error: imgErr } = await sb.storage.from('product-images').upload(imgPath, imgFile);
-        if (imgErr) throw new Error(`Image Upload Failed: ${imgErr.message}`);
-        uploadedImg = true;
-
-        // STEP 2: Upload Asset File
-        const { error: astErr } = await sb.storage.from('user-products').upload(astPath, astFile);
-        if (astErr) throw new Error(`Asset Upload Failed: ${astErr.message}`);
-        uploadedAst = true;
-
-        // STEP 3: Generate Full Public URLs
-        const { data: imgUrl } = sb.storage.from('product-images').getPublicUrl(imgPath);
-        const { data: astUrl } = sb.storage.from('user-products').getPublicUrl(astPath);
-
-        // STEP 4: Insert into Database
-        const { error: dbErr } = await sb.from('product_details').insert([{
-            title,
-            price,
-            description: desc,
-            image_url: imgUrl.publicUrl, // For Frontend
-            file_url: astUrl.publicUrl,   // For Frontend
-            storage_image_path: imgPath, // For Deletion Logic
-            storage_file_path: astPath   // For Deletion Logic
-        }]);
-
-        if (dbErr) throw dbErr;
-
-        alert("Published Successfully!");
-        window.location.href = 'index.html';
-
-    } catch (err) {
-        console.error("Cleanup Triggered:", err.message);
-        
-        // ROLLBACK: Delete orphaned files if DB insert failed
-        if (uploadedImg) await sb.storage.from('product-images').remove([imgPath]);
-        if (uploadedAst) await sb.storage.from('user-products').remove([astPath]);
-
-        alert(`Error: ${err.message}`);
-        btn.innerText = "Publish Permanently";
-        btn.disabled = false;
-    }
+    // 5. Save the exact URLs we just generated to the Database
+    const { error } = await supabase.from('product_details').insert([{
+        image_url: imgData.publicUrl, // Matches storage exactly
+        file_url: astData.publicUrl,  // Matches storage exactly
+        // ... other fields
+    }]);
 }
-      
     </script>
 </body>
 </html>
