@@ -47,95 +47,136 @@
             </div>
         </div>
     </main>
-    <script>
-
+<script>
+  // 1. Configuration
   const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE"; // <-- placeholder
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; 
+
   function createSupabaseClient() {
     if (!window.supabase) throw new Error("Supabase SDK not found. Load @supabase/supabase-js v2.");
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
+
   function getIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return params.get("id");
   }
+
   function setNotFound() {
-    alert("Product Not Found");
-    const loadingLike = document.getElementById("loading") || document.body;
-    loadingLike.textContent = "Product Not Found";
     const titleEl = document.getElementById("productTitle");
-    const priceEl = document.getElementById("productPrice");
     const descEl = document.getElementById("productDescription");
-    const imgEl = document.getElementById("productImage");
-    if (titleEl) titleEl.innerText = "";
-    if (priceEl) priceEl.innerText = "";
-    if (descEl) descEl.innerText = "";
-    if (imgEl) imgEl.src = "";
+    if (titleEl) titleEl.innerText = "Product Not Found";
+    if (descEl) descEl.innerText = "The asset you are looking for does not exist or has been moved.";
+    alert("Product Not Found");
   }
-  // ZIP Only: Blob fetch + hidden <a> click
-  async function downloadAsset(fileUrl, fileName = "download.zip") {
+
+  /**
+   * Triggers an instant download using a Supabase Signed URL.
+   * This prevents 404 errors by creating a temporary access key.
+   */
+  async function downloadAsset(path, fileName) {
+    const downloadBtnEl = document.getElementById("downloadBtn");
+    const originalText = downloadBtnEl.innerText;
+    
     try {
-      if (!fileUrl) throw new Error("Missing file_url.");
-      const res = await fetch(fileUrl, { method: "GET" });
-      if (!res.ok) throw new Error(`Download failed: ${res.status} ${res.statusText}`);
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
+      // Show loading state on button
+      downloadBtnEl.disabled = true;
+      downloadBtnEl.innerText = "Preparing Download...";
+      
+      const supabase = createSupabaseClient();
+      
+      // 1. Generate a temporary download link (valid for 60 seconds)
+      // This bypasses the 404 issue caused by private bucket restrictions
+      const { data, error } = await supabase.storage
+          .from('user-products') 
+          .createSignedUrl(path, 60);
+
+      if (error) throw error;
+
+      // 2. Trigger the "Instant Download" using a hidden anchor tag
       const a = document.createElement("a");
-      a.href = objectUrl;
+      a.href = data.signedUrl;
       a.download = fileName;
-      a.style.display = "none";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch (err) {
-      console.error("downloadAsset error:", err);
-      alert(err?.message || "Could not download the ZIP file.");
+
+      // Reset button
+      downloadBtnEl.innerText = "Download Started!";
+      setTimeout(() => {
+        downloadBtnEl.disabled = false;
+        downloadBtnEl.innerText = originalText;
+      }, 2000);
+
+    } catch (error) {
+      console.error("Download Error:", error);
+      alert("Error: " + (error.message || "File not found in storage. Check the file path in your database."));
+      downloadBtnEl.disabled = false;
+      downloadBtnEl.innerText = originalText;
     }
   }
+
   async function initProductDetails() {
     try {
       const id = getIdFromUrl();
       if (!id) return setNotFound();
+      
       const supabase = createSupabaseClient();
-      // Fetch full row
+      
+      // Fetch the product record from Postgres
       const { data, error } = await supabase
         .from("product_details")
         .select("*")
         .eq("id", id)
         .single();
+
       if (error || !data) {
-        console.error("product fetch error:", error);
+        console.error("Supabase Fetch Error:", error);
         return setNotFound();
       }
+
+      // UI Element Mapping
       const productTitleEl = document.getElementById("productTitle");
       const productPriceEl = document.getElementById("productPrice");
       const productDescriptionEl = document.getElementById("productDescription");
       const productImageEl = document.getElementById("productImage");
       const downloadBtnEl = document.getElementById("downloadBtn");
-      const title = data.title ?? "";
-      const price = data.price ?? "";
-      const description = data.description ?? "";
+
+      // Extract Data
+      const title = data.title ?? "Untitled Asset";
+      const price = data.price ?? "0.00";
+      const description = data.description ?? "No description provided.";
       const imageUrl = data.image_url ?? "";
-      const fileUrl = data.file_url ?? "";
+      const fileUrl = data.file_url ?? ""; // This should be the PATH in the bucket
+
+      // Update UI
       if (productTitleEl) productTitleEl.innerText = title;
-      if (productPriceEl) productPriceEl.innerText = price;
+      if (productPriceEl) productPriceEl.innerText = `$${price}`;
       if (productDescriptionEl) productDescriptionEl.innerText = description;
-      if (productImageEl) productImageEl.src = imageUrl;
+      if (productImageEl && imageUrl) productImageEl.src = imageUrl;
+
+      // Handle Download Button
       if (downloadBtnEl) {
+        downloadBtnEl.innerText = "Download Asset";
         downloadBtnEl.disabled = false;
         downloadBtnEl.onclick = () => {
-          const safeName = `${String(title || "download").replace(/\s+/g, "_")}.zip`;
+          // Clean the title to create a safe filename
+          const safeName = `${String(title).replace(/\s+/g, "_")}.zip`;
           downloadAsset(fileUrl, safeName);
         };
       }
+
     } catch (err) {
-      console.error("initProductDetails error:", err);
+      console.error("Initialization Error:", err);
       setNotFound();
     }
   }
+
+  // Run on page load
   window.addEventListener("DOMContentLoaded", initProductDetails);
 </script>
+
+
       
 </body>
 </html>
