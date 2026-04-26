@@ -30,65 +30,128 @@
     </div>
 
     <script>
-        // 1. YOUR SUPABASE CONFIG
-        const SB_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; // Paste your actual Anon Key here
-        const sb = supabase.createClient(SB_URL, SB_KEY);
+  // -----------------------------
+  // CONFIG
+  // -----------------------------
+  const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";
 
-       async function handlePublish() {
-    const btn = document.getElementById('publishBtn');
-    
-    // 1. Capture the link from the text input
-    const driveLink = document.getElementById('driveLink').value; 
-    const title = document.getElementById('title').value;
-    const price = document.getElementById('price').value;
-    const description = document.getElementById('description').value;
-    const imageFile = document.getElementById('imageFile').files[0];
+  const BUCKET_NAME = "user-products";
+  const TABLE_NAME = "product_details";
 
-    if (!title || !price || !driveLink || !imageFile) {
-        alert("Please fill all fields and paste your Google Drive link!");
-        return;
+  // Your ZIP input element
+  const ZIP_INPUT_ID = "zipFileInput";     // <input type="file" id="zipFileInput" accept=".zip" />
+  // Your product id input (recommended) OR it can come from ?id=...
+  const PRODUCT_ID_INPUT_ID = "productId"; // <input id="productId" value="32" />
+  // Where to show status
+  const STATUS_ID = "uploadStatus";        // <div id="uploadStatus"></div>
+  // Your upload submit button
+  const UPLOAD_BUTTON_ID = "uploadBtn";    // <button id="uploadBtn">Upload</button>
+
+  // Optional: upsert vs fail if same name exists
+  const UPSERT = true;
+
+  function createSupabaseClient() {
+    if (!window.supabase) {
+      throw new Error("Supabase SDK not found. Load @supabase/supabase-js v2 on this page.");
+    }
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  function getIdFromUrlOrInput() {
+    // Prefer explicit input field if present
+    const input = document.getElementById(PRODUCT_ID_INPUT_ID);
+    if (input?.value) return input.value;
+
+    // Fallback to query string: sell.html?id=32
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+  }
+
+  function sanitizeFileName(name) {
+    // keep it simple for object keys
+    return String(name || "asset").replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
+  }
+
+  async function uploadZipAndSave(productId) {
+    const supabase = createSupabaseClient();
+
+    const zipInput = document.getElementById(ZIP_INPUT_ID);
+    if (!zipInput) throw new Error(`Missing #${ZIP_INPUT_ID} element.`);
+    if (!zipInput.files || zipInput.files.length === 0) {
+      throw new Error("Please choose a ZIP file.");
     }
 
-    btn.innerText = "Publishing...";
-    btn.disabled = true;
+    const file = zipInput.files[0];
+    if (!file.name.toLowerCase().endsWith(".zip")) {
+      throw new Error("Selected file must be a .zip");
+    }
 
-    try {
-        // 2. Upload the Image (Standard process)
-        const fileName = `${Date.now()}-${imageFile.name}`;
-        const { data: imgData, error: imgErr } = await sb.storage
-            .from('product-images')
-            .upload(`previews/${fileName}`, imageFile);
+    const safeName = sanitizeFileName(file.name);
+    // Store each product's zip under a stable object path
+    const objectPath = `${productId}/${Date.now()}_${safeName}`;
 
-        if (imgErr) throw imgErr;
+    const statusEl = document.getElementById(STATUS_ID);
+    if (statusEl) statusEl.textContent = "Uploading...";
 
-        const { data: publicUrlData } = sb.storage
-            .from('product-images')
-            .getPublicUrl(`previews/${fileName}`);
+    // 1) Upload ZIP
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(objectPath, file, {
+        contentType: "application/zip",
+        upsert: UPSERT,
+      });
 
-        // 3. THE AUTOMATIC PART: Saving the link to Supabase
-        const { error: dbErr } = await sb
-            .from('product_details')
-            .insert([{
-                title: title,
-                price: parseFloat(price),
-                description: description,
-                image_url: publicUrlData.publicUrl,
-                file_url: driveLink // This sends the Google Drive link to your table
-            }]);
+    if (uploadError) throw uploadError;
 
-        if (dbErr) throw dbErr;
+    // 2) Get public URL (best for mobile)
+    // Storage serving docs: https://supabase.com/docs/guides/storage/serving/downloads
+    const { data: publicUrlData, error: publicUrlError } =
+      await supabase.storage.from(BUCKET_NAME).getPublicUrl(uploadData.path);
 
-        alert("Asset Published Automatically!");
-        window.location.href = "index.html"; 
+    if (publicUrlError) throw publicUrlError;
 
-    } catch (err) {
-        alert("Error: " + err.message);
-    } finally {
-        btn.innerText = "Publish Permanently";
+    const publicUrl = publicUrlData.publicUrl;
+
+    if (statusEl) statusEl.textContent = "Saving link in database...";
+
+    // 3) Update product_details.file_url
+    const { data: updateData, error: updateError } = await supabase
+      .from(TABLE_NAME)
+      .update({ file_url: publicUrl })
+      .eq("id", productId);
+
+    if (updateError) throw updateError;
+
+    if (statusEl) statusEl.textContent = "✅ Upload successful!";
+    console.log("Uploaded:", uploadData, "Public URL:", publicUrl, "DB update:", updateData);
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById(UPLOAD_BUTTON_ID);
+    if (!btn) {
+      console.error(`Missing #${UPLOAD_BUTTON_ID} button.`);
+      return;
+    }
+
+    btn.addEventListener("click", async () => {
+      try {
+        btn.disabled = true;
+
+        const productId = getIdFromUrlOrInput();
+        if (!productId) throw new Error("Missing product id. Provide #productId or add ?id=... to URL.");
+
+        await uploadZipAndSave(productId);
+      } catch (e) {
+        console.error(e);
+        const statusEl = document.getElementById(STATUS_ID);
+        if (statusEl) statusEl.textContent = `❌ ${e?.message || "Upload failed"}`;
+        alert(e?.message || "Upload failed");
+      } finally {
         btn.disabled = false;
-    }
-}
-    </script>
+      }
+    });
+  });
+</script>
 </body>
 </html>
