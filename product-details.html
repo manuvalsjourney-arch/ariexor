@@ -64,75 +64,43 @@
     <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
 </div>
 <script>
-  // =========================
-  // CONFIG (edit these)
-  // =========================
-  const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co"; // e.g. https://xxxx.supabase.co
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
-  const PURCHASE_BUTTON_ID = "purchaseBtn"; // <-- must match your button id in HTML
+  const SUPABASE_URL = "YOUR_SUPABASE_URL";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+  const PURCHASE_BUTTON_ID = "purchaseBtn";
 
-  // =========================
-  // Helper: init supabase client
-  // =========================
   function createSupabaseClient() {
     if (!window.supabase) {
-      throw new Error(
-        "Supabase SDK not found. Make sure you loaded @supabase/supabase-js v2 and it exposes window.supabase."
-      );
+      throw new Error("Supabase SDK not found on window.supabase. Check how you included @supabase/supabase-js.");
     }
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
-  // =========================
-  // Helper: parse URL ?id=...
-  // =========================
   function getProductIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return params.get("id");
   }
 
-  // =========================
-  // Blob download + Drive open
-  // =========================
   async function downloadAsset(file_url, assetName = "download") {
     try {
       if (!file_url) throw new Error("Missing file_url");
 
-      // Google Drive: open directly
       if (file_url.includes("drive.google.com")) {
         window.location.href = file_url;
         return;
       }
 
-      // Supabase URL: download as blob
       const res = await fetch(file_url, { method: "GET" });
-
-      if (!res.ok) {
-        throw new Error(`Download failed: ${res.status} ${res.statusText}`);
-      }
+      if (!res.ok) throw new Error(`Download failed: ${res.status} ${res.statusText}`);
 
       const blob = await res.blob();
 
-      // Try to extract filename from Content-Disposition
       let filename = assetName;
       const cd = res.headers.get("Content-Disposition");
       if (cd) {
-        const match = cd.match(
-          /filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i
-        );
+        const match = cd.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i);
         if (match && match[1]) filename = decodeURIComponent(match[1]);
       }
 
-      // Fallback: take last part of URL path
-      if (!filename || filename === "download") {
-        try {
-          const u = new URL(file_url);
-          const last = u.pathname.split("/").filter(Boolean).pop();
-          if (last) filename = last;
-        } catch (_) {}
-      }
-
-      // Force download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -147,54 +115,62 @@
     }
   }
 
-  // =========================
-  // Main: fetch product row and wire Purchase button
-  // =========================
   async function initProductDetails() {
-    const supabase = createSupabaseClient();
-    const productId = getProductIdFromUrl();
+    const statusEl = document.getElementById("loadingStatus") || document.body;
+    try {
+      statusEl.textContent = "Loading...";
 
-    if (!productId) {
-      console.error("Missing ?id=... in URL");
-      alert("Missing product id in URL.");
-      return;
+      const supabase = createSupabaseClient();
+
+      const productIdRaw = getProductIdFromUrl();
+      console.log("productIdRaw:", productIdRaw);
+
+      if (!productIdRaw) {
+        throw new Error("Missing ?id= in URL");
+      }
+
+      // Try as number first (works if product_details.id is int)
+      const productId = Number(productIdRaw);
+      console.log("productId (Number):", productId);
+
+      const { data, error } = await supabase
+        .from("product_details")
+        .select("id, title, file_url")
+        .eq("id", productId)
+        .single();
+
+      console.log("fetch result:", { data, error });
+
+      if (error) throw error;
+      if (!data) throw new Error("No row returned (id not found).");
+
+      // Optional UI: show something
+      statusEl.textContent = `Loaded: ${data.title || "product"}`;
+
+      const purchaseBtn = document.getElementById(PURCHASE_BUTTON_ID);
+      if (!purchaseBtn) {
+        console.warn("Purchase button not found:", PURCHASE_BUTTON_ID);
+        return;
+      }
+
+      const fileUrl = data.file_url;
+      if (!fileUrl) {
+        purchaseBtn.disabled = true;
+        purchaseBtn.textContent = "No file available";
+        return;
+      }
+
+      purchaseBtn.disabled = false;
+      purchaseBtn.textContent = "Purchase";
+
+      purchaseBtn.onclick = async () => {
+        await downloadAsset(fileUrl, `${data.title || "download"}.zip`);
+      };
+    } catch (err) {
+      console.error("initProductDetails error:", err);
+      statusEl.textContent = "Loading failed. Check console for the error.";
+      alert(err?.message || "Failed to load product details.");
     }
-
-    // Fetch row
-    const { data, error } = await supabase
-      .from("product_details")
-      .select("id, title, file_url")
-      .eq("id", productId)
-      .single();
-
-    if (error) {
-      console.error("Failed to load product_details:", error);
-      alert("Could not load product details.");
-      return;
-    }
-
-    const fileUrl = data?.file_url;
-    const title = data?.title || "download";
-
-    // Wire button
-    const purchaseBtn = document.getElementById(PURCHASE_BUTTON_ID);
-    if (!purchaseBtn) {
-      console.error(`Purchase button not found: #${PURCHASE_BUTTON_ID}`);
-      return;
-    }
-
-    if (!fileUrl) {
-      purchaseBtn.disabled = true;
-      purchaseBtn.textContent = "No file available";
-      return;
-    }
-
-    purchaseBtn.disabled = false;
-    purchaseBtn.textContent = "Purchase";
-
-    purchaseBtn.onclick = async () => {
-      await downloadAsset(fileUrl, `${title}.zip`);
-    };
   }
 
   window.addEventListener("DOMContentLoaded", initProductDetails);
