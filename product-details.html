@@ -4,58 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | ariexo</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        body { background: #0b0b14; font-family: 'Inter', sans-serif; color: white; }
+        body { background: #0b0b14; color: white; font-family: sans-serif; }
+        .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
-<body class="min-h-screen">
 
-    <nav class="fixed w-full z-50 bg-[#0b0b14]/80 backdrop-blur-md border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
-            <span class="text-2xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer" onclick="window.location.href='index.html'">ariexo</span>
-            <a href="index.html" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">← Back to Marketplace</a>
-        </div>
-    </nav>
+<body>
 
-    <main class="pt-32 pb-20 max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            <div class="glass-card p-4 rounded-[2.5rem] relative overflow-hidden">
-                <img id="productImage" src="" alt="Loading..." class="w-full aspect-square object-cover rounded-[2rem] shadow-2xl">
-            </div>
-            <div class="space-y-8">
-                <div>
-                    <h1 id="productTitle" class="text-4xl md:text-5xl font-extrabold tracking-tighter mb-4">Loading...</h1>
-                    <div id="productPrice" class="text-3xl font-bold text-indigo-400">$--</div>
-                </div>
-                <div class="glass-card p-6 rounded-3xl">
-                    <p id="productDescription" class="text-slate-400 leading-relaxed italic">Fetching asset details...</p>
-                </div>
-                <div class="flex flex-col gap-4">
-                    <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01]">
-                        Purchase Asset
-                    </button>
-                    <p class="text-center text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Checkout Powered by Stripe</p>
-                </div>
-            </div>
+<div class="max-w-5xl mx-auto p-6 mt-20 grid md:grid-cols-2 gap-10">
+
+    <img id="productImage" class="rounded-2xl w-full" />
+
+    <div>
+        <h1 id="productTitle" class="text-4xl font-bold mb-4">Loading...</h1>
+        <p id="productPrice" class="text-2xl text-indigo-400 mb-4">$--</p>
+
+        <div class="glass p-4 rounded-xl mb-6">
+            <p id="productDescription">Fetching...</p>
         </div>
-    </main>
+
+        <button id="downloadBtn"
+            class="bg-indigo-600 px-6 py-4 rounded-xl font-bold w-full">
+            Purchase Asset
+        </button>
+    </div>
+
+</div>
 
 <script>
+// ✅ SINGLE SUPABASE INSTANCE (IMPORTANT)
 const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
-
+const SUPABASE_ANON_KEY = "YOUR_KEY";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
 // 🔽 LOAD PRODUCT
-async function initProductDetails() {
+async function loadProduct() {
     const id = new URLSearchParams(window.location.search).get("id");
 
+    console.log("ID:", id);
+
     if (!id) {
-        document.getElementById("productTitle").innerText = "Invalid Product";
+        document.getElementById("productTitle").innerText = "Invalid Product ID";
         return;
     }
 
@@ -66,17 +61,20 @@ async function initProductDetails() {
             .eq("id", id)
             .single();
 
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
+
         if (error || !data) throw new Error("Product not found");
 
-        // Fill UI
+        // ✅ Fill UI
         document.getElementById("productTitle").innerText = data.title;
-        document.getElementById("productPrice").innerText = `$${data.price}`;
+        document.getElementById("productPrice").innerText = "$" + data.price;
         document.getElementById("productDescription").innerText = data.description;
         document.getElementById("productImage").src = data.image_url;
 
+        // Enable download
         const btn = document.getElementById("downloadBtn");
-
-        btn.onclick = () => handleDownload(data.file_url);
+        btn.onclick = () => downloadFile(data.file_url);
         btn.disabled = false;
 
     } catch (err) {
@@ -85,8 +83,9 @@ async function initProductDetails() {
     }
 }
 
-// 🔽 DOWNLOAD FILE
-async function handleDownload(fileName) {
+
+// 🔽 DOWNLOAD FUNCTION
+async function downloadFile(fileName) {
     const btn = document.getElementById("downloadBtn");
 
     try {
@@ -97,7 +96,7 @@ async function handleDownload(fileName) {
             .from("product-images")
             .createSignedUrl(fileName, 60);
 
-        if (error || !data) throw error;
+        if (error) throw error;
 
         window.location.href = data.signedUrl;
 
@@ -110,13 +109,16 @@ async function handleDownload(fileName) {
 
     } catch (err) {
         console.error(err);
-        alert("Download failed. File missing.");
+        alert("Download failed. File not found.");
         btn.innerText = "Purchase Asset";
         btn.disabled = false;
     }
 }
 
-window.addEventListener("DOMContentLoaded", initProductDetails);
+
+// 🚀 RUN ON LOAD
+window.addEventListener("DOMContentLoaded", loadProduct);
 </script>
+
 </body>
 </html>
