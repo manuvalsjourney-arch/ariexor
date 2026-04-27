@@ -20,8 +20,10 @@
         <div class="glass p-4 rounded-xl mb-6">
             <p id="productDescription">Fetching...</p>
         </div>
+        <!-- ✅ Added error box -->
+        <div id="errorBox" class="hidden bg-red-900/40 border border-red-500 text-red-300 text-sm p-3 rounded-xl mb-4"></div>
         <button id="downloadBtn"
-            class="bg-indigo-600 px-6 py-4 rounded-xl font-bold w-full">
+            class="bg-indigo-600 px-6 py-4 rounded-xl font-bold w-full disabled:opacity-50 disabled:cursor-not-allowed">
             Purchase Asset
         </button>
     </div>
@@ -29,15 +31,24 @@
 
 <script>
     const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_KEY";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadProduct() {
-        const id = new URLSearchParams(window.location.search).get("id"); // ✅ Fixed
-        console.log("ID:", id);
+    function showError(msg) {
+        const box = document.getElementById("errorBox");
+        box.textContent = msg;
+        box.classList.remove("hidden");
+        document.getElementById("productTitle").innerText = "Error";
+        document.getElementById("productDescription").innerText = "";
+    }
 
+    async function loadProduct() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id");
+
+        // ✅ Show error if no ID in URL
         if (!id) {
-            document.getElementById("productTitle").innerText = "Invalid Product ID";
+            showError("No product ID found in URL. Make sure the link includes ?id=YOUR_ID");
             return;
         }
 
@@ -48,5 +59,64 @@
                 .eq("id", id)
                 .single();
 
-            console.log("DATA:", data);
-            console.log("ERROR
+            if (error) {
+                showError("Supabase error: " + error.message);
+                return;
+            }
+
+            if (!data) {
+                showError("No product found with ID: " + id);
+                return;
+            }
+
+            // ✅ Fill UI
+            document.getElementById("productTitle").innerText = data.title;
+            document.getElementById("productPrice").innerText = "$" + data.price;
+            document.getElementById("productDescription").innerText = data.description;
+            document.getElementById("productImage").src = data.image_url;
+
+            const btn = document.getElementById("downloadBtn");
+            if (data.file_url) {
+                btn.onclick = () => downloadFile(data.file_url);
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+                btn.innerText = "No File Available";
+            }
+
+        } catch (err) {
+            showError("Unexpected error: " + err.message);
+        }
+    }
+
+    async function downloadFile(fileName) {
+        const btn = document.getElementById("downloadBtn");
+        try {
+            btn.disabled = true;
+            btn.innerText = "Preparing...";
+
+            const { data, error } = await supabase.storage
+                .from("product-images")
+                .createSignedUrl(fileName, 60);
+
+            if (error) throw error;
+
+            window.location.href = data.signedUrl;
+            btn.innerText = "Downloading...";
+
+            setTimeout(() => {
+                btn.innerText = "Purchase Asset";
+                btn.disabled = false;
+            }, 2000);
+
+        } catch (err) {
+            alert("Download failed: " + err.message);
+            btn.innerText = "Purchase Asset";
+            btn.disabled = false;
+        }
+    }
+
+    window.addEventListener("DOMContentLoaded", loadProduct);
+</script>
+</body>
+</html>
