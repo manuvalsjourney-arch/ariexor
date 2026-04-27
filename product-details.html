@@ -76,6 +76,8 @@
             document.getElementById("productDescription").innerText = data.description;
             document.getElementById("productImage").src = data.image_url;
 
+            console.log('Product loaded. File URL from database:', data.file_url);
+
             const btn = document.getElementById("downloadBtn");
             if (data.file_url) {
                 btn.onclick = () => downloadFile(data.file_url);
@@ -94,38 +96,48 @@
     // Handles: Google Drive links, full Supabase URLs, and short paths
     async function downloadFile(fileInput) {
       try {
+        console.log('====== DOWNLOAD DEBUG START ======');
+        console.log('1. Raw fileInput from database:', fileInput);
+        console.log('2. Type:', typeof fileInput);
+
         // FIX: Use productSupabase instead of window.supabase
         const supabaseClient = productSupabase;
 
         // 1. DETECT GOOGLE DRIVE LINKS
         if (fileInput && typeof fileInput === 'string' && fileInput.includes('drive.google.com')) {
+          console.log('Google Drive link detected, opening in new tab');
           window.open(fileInput, '_blank');
           return;
         }
 
         // 2. NORMALIZE THE PATH
         let filePath = fileInput;
+        console.log('3. Starting path normalization...');
 
         // If it's a full Supabase URL, extract just the path
         if (filePath && typeof filePath === 'string' && filePath.startsWith('http')) {
-          console.log('Full URL detected:', filePath);
+          console.log('4. Full URL detected');
           
-          // Try to extract path - handles both /public/ and direct URLs
+          // Try pattern 1: /product-images/path/to/file
           let match = filePath.match(/\/product-images\/(.+?)(\?|$)/);
+          console.log('5. Pattern 1 match:', match ? match[1] : 'no match');
           
           if (!match) {
+            // Try pattern 2: /product-images/path/to/file$
             match = filePath.match(/\/product-images\/(.+)$/);
+            console.log('6. Pattern 2 match:', match ? match[1] : 'no match');
           }
           
           if (match) {
-            filePath = match[1]; // Extract: downloads/file.zip or something/else.html
-            // Decode URL-encoded characters if any
+            filePath = match[1];
             filePath = decodeURIComponent(filePath);
-            console.log('Extracted short path:', filePath);
+            console.log('7. Extracted path:', filePath);
           } else {
-            console.error('Could not extract path from URL:', filePath);
-            throw new Error('Invalid URL format. Could not extract file path from: ' + filePath);
+            console.error('8. EXTRACTION FAILED - URL:', filePath);
+            throw new Error('Could not extract file path from URL: ' + filePath);
           }
+        } else {
+          console.log('4. Short path detected (not a full URL)');
         }
 
         // 3. VALIDATE THE PATH
@@ -133,18 +145,20 @@
           throw new Error('No valid file path provided');
         }
 
-        console.log('Creating signed URL with path:', filePath);
-        console.log('Bucket: product-images');
+        console.log('9. Final path to use:', filePath);
+        console.log('10. Bucket: product-images');
+        console.log('11. Creating signed URL...');
 
         // 4. CREATE SIGNED URL
         const { data, error } = await supabaseClient.storage
           .from('product-images')
-          .createSignedUrl(filePath, 60); // 60 second expiry
+          .createSignedUrl(filePath, 60);
 
-        console.log('Supabase response:', { data, error });
+        console.log('12. Supabase response error:', error ? error.message : 'no error');
+        console.log('13. Supabase response data:', data ? 'URL created' : 'no data');
 
         if (error) {
-          console.error('Supabase signed URL error:', error);
+          console.error('Supabase error details:', error);
           throw new Error(`Failed to generate download link: ${error.message}`);
         }
 
@@ -155,10 +169,13 @@
         // 5. TRIGGER DOWNLOAD
         const link = document.createElement('a');
         link.href = data.signedUrl;
-        link.download = filePath.split('/').pop(); // Extract filename from path
+        link.download = filePath.split('/').pop();
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        console.log('14. Download triggered for:', link.download);
+        console.log('====== DOWNLOAD DEBUG END ======');
 
       } catch (error) {
         console.error('Download error:', error);
