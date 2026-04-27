@@ -55,31 +55,51 @@ async function handleDownload(rawUrl, title) {
   const btn = document.getElementById("downloadBtn");
   const supabase = createSupabaseClient();
   
-  // Extract and decode (This is what the AI is emphasizing)
-  const filename = decodeURIComponent(rawUrl.split('/').pop().split('?')[0]);
-
   try {
-    btn.innerText = "Searching...";
-    
-    // Attempt 1: Root (Where your new PDFs are)
+    btn.disabled = true;
+    btn.innerText = "Locating File...";
+
+    // 1. Get the filename and fix the encoding
+    // This handles the "daily%20planner%20(3).pdf" -> "daily planner (3).pdf" conversion
+    let filename = rawUrl.split('/').pop().split('?')[0];
+    filename = decodeURIComponent(filename);
+
+    console.log("Searching for decoded filename:", filename);
+
+    // 2. TRY ATTEMPT 1: Main folder (Root)
     let { data, error } = await supabase.storage
         .from('product-images')
         .createSignedUrl(filename, 60);
 
-    // Attempt 2: Downloads folder (Where your old templates are)
+    // 3. TRY ATTEMPT 2: downloads/ folder
     if (error || !data) {
+        console.log("Not in root, checking downloads folder...");
         const fallback = await supabase.storage
             .from('product-images')
             .createSignedUrl(`downloads/${filename}`, 60);
         
-        if (fallback.error) throw new Error("File not found in either location");
+        if (fallback.error) {
+            console.error("Root Error:", error);
+            console.error("Fallback Error:", fallback.error);
+            throw new Error("File not found in root or downloads folder.");
+        }
         data = fallback.data;
     }
 
+    // 4. Success - Trigger Download
     window.location.href = data.signedUrl;
-    btn.innerText = "Success!";
+    btn.innerText = "Downloading...";
+    
+    setTimeout(() => { 
+        btn.disabled = false; 
+        btn.innerText = "Purchase Asset"; 
+    }, 2000);
+
   } catch (err) {
-    alert("Marketplace Error: " + err.message);
+    console.error("Final Download Error:", err);
+    alert("Marketplace Error: The file '" + title + "' exists in the database but the storage link is broken. Please check if the file name in Supabase matches exactly.");
+    btn.disabled = false;
+    btn.innerText = "Purchase Asset";
   }
 }
   async function initProductDetails() {
