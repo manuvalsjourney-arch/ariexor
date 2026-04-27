@@ -89,37 +89,28 @@
             showError("System Error: " + err.message);
         }
     }
-async function downloadFile(fileInput) {
+async function downloadFile(shortPath) {
     const btn = document.getElementById("downloadBtn");
     try {
         btn.disabled = true;
         btn.innerText = "Preparing...";
 
-        // 1. Handle External Links (like Google Drive)
-        if (fileInput.includes('drive.google.com')) {
-            window.open(fileInput, '_blank');
+        // 1. If it's a Google Drive link, just open it
+        if (shortPath.includes('drive.google.com')) {
+            window.open(shortPath, '_blank');
             resetButton(btn);
             return;
         }
 
-        // 2. AUTOMATIC URL CLEANING
-        // This removes the long Supabase URL part if it exists
-        // It keeps only the path (e.g., "downloads/your-file.zip")
-        let filePath = fileInput;
-        if (fileInput.includes('/public/')) {
-            // This splits at /public/ and takes the part after the bucket name
-            const parts = fileInput.split('/public/product-images/');
-            filePath = parts.length > 1 ? parts[1] : fileInput;
-        }
-
-        // 3. Request the signed URL from the 'product-images' bucket
+        // 2. Since your DB now has short paths, we use it directly
+        // This looks inside the "product-images" bucket for your "downloads/file.zip"
         const { data, error } = await productSupabase.storage
             .from("product-images")
-            .createSignedUrl(filePath, 60);
+            .createSignedUrl(shortPath, 60);
 
         if (error) throw error;
 
-        // 4. Trigger the download
+        // 3. Start the download
         window.location.href = data.signedUrl;
         btn.innerText = "Downloading...";
 
@@ -136,7 +127,6 @@ function resetButton(btn) {
     btn.innerText = "Purchase Asset";
     btn.disabled = false;
 }
-
     window.addEventListener("DOMContentLoaded", loadProduct);
 </script>
 </body>
