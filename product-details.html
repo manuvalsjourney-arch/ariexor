@@ -108,15 +108,23 @@
 
         // If it's a full Supabase URL, extract just the path
         if (filePath && typeof filePath === 'string' && filePath.startsWith('http')) {
-          // Match patterns like:
-          // https://xxx.supabase.co/storage/v1/object/public/product-images/downloads/file.zip
-          // https://xxx.supabase.co/storage/v1/object/public/product-images/something/else.html
+          console.log('Full URL detected:', filePath);
           
-          const match = filePath.match(/\/product-images\/(.+)$/);
+          // Try to extract path - handles both /public/ and direct URLs
+          let match = filePath.match(/\/product-images\/(.+?)(\?|$)/);
+          
+          if (!match) {
+            match = filePath.match(/\/product-images\/(.+)$/);
+          }
+          
           if (match) {
             filePath = match[1]; // Extract: downloads/file.zip or something/else.html
+            // Decode URL-encoded characters if any
+            filePath = decodeURIComponent(filePath);
+            console.log('Extracted short path:', filePath);
           } else {
-            throw new Error('Invalid Supabase URL format');
+            console.error('Could not extract path from URL:', filePath);
+            throw new Error('Invalid URL format. Could not extract file path from: ' + filePath);
           }
         }
 
@@ -125,10 +133,15 @@
           throw new Error('No valid file path provided');
         }
 
+        console.log('Creating signed URL with path:', filePath);
+        console.log('Bucket: product-images');
+
         // 4. CREATE SIGNED URL
         const { data, error } = await supabaseClient.storage
           .from('product-images')
           .createSignedUrl(filePath, 60); // 60 second expiry
+
+        console.log('Supabase response:', { data, error });
 
         if (error) {
           console.error('Supabase signed URL error:', error);
