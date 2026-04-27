@@ -89,95 +89,72 @@
             showError("System Error: " + err.message);
         }
     }
-// Robust downloadFile function for ariexo marketplace
-// Handles: Google Drive links, full Supabase URLs, and short paths
 
-// Robust downloadFile function for ariexo marketplace
-// Handles: Google Drive links, full Supabase URLs, and short paths
-// AUTO-DETECTS supabase from window object (no parameter needed)
+    // Robust downloadFile function for ariexo marketplace
+    // Handles: Google Drive links, full Supabase URLs, and short paths
+    async function downloadFile(fileInput) {
+      try {
+        // FIX: Use productSupabase instead of window.supabase
+        const supabaseClient = productSupabase;
 
-async function downloadFile(fileInput) {
-  try {
-    // Get the supabase client from the window object
-    const supabaseClient = window.supabase;
-    
-    // CHECK IF SUPABASE CLIENT EXISTS
-    if (!supabaseClient) {
-      throw new Error('Supabase client not found. Make sure your Supabase client is initialized and available as window.supabase');
-    }
+        // 1. DETECT GOOGLE DRIVE LINKS
+        if (fileInput && typeof fileInput === 'string' && fileInput.includes('drive.google.com')) {
+          window.open(fileInput, '_blank');
+          return;
+        }
 
-    // 1. DETECT GOOGLE DRIVE LINKS
-    if (fileInput && typeof fileInput === 'string' && fileInput.includes('drive.google.com')) {
-      window.open(fileInput, '_blank');
-      return;
-    }
+        // 2. NORMALIZE THE PATH
+        let filePath = fileInput;
 
-    // 2. NORMALIZE THE PATH
-    let filePath = fileInput;
+        // If it's a full Supabase URL, extract just the path
+        if (filePath && typeof filePath === 'string' && filePath.startsWith('http')) {
+          // Match patterns like:
+          // https://xxx.supabase.co/storage/v1/object/public/product-images/downloads/file.zip
+          // https://xxx.supabase.co/storage/v1/object/public/product-images/something/else.html
+          
+          const match = filePath.match(/\/product-images\/(.+)$/);
+          if (match) {
+            filePath = match[1]; // Extract: downloads/file.zip or something/else.html
+          } else {
+            throw new Error('Invalid Supabase URL format');
+          }
+        }
 
-    // If it's a full Supabase URL, extract just the path
-    if (filePath && typeof filePath === 'string' && filePath.startsWith('http')) {
-      // Match patterns like:
-      // https://xxx.supabase.co/storage/v1/object/public/product-images/downloads/file.zip
-      // https://xxx.supabase.co/storage/v1/object/public/product-images/something/else.html
-      
-      const match = filePath.match(/\/product-images\/(.+)$/);
-      if (match) {
-        filePath = match[1]; // Extract: downloads/file.zip or something/else.html
-      } else {
-        throw new Error('Invalid Supabase URL format');
+        // 3. VALIDATE THE PATH
+        if (!filePath || typeof filePath !== 'string' || filePath.trim() === '') {
+          throw new Error('No valid file path provided');
+        }
+
+        // 4. CREATE SIGNED URL
+        const { data, error } = await supabaseClient.storage
+          .from('product-images')
+          .createSignedUrl(filePath, 60); // 60 second expiry
+
+        if (error) {
+          console.error('Supabase signed URL error:', error);
+          throw new Error(`Failed to generate download link: ${error.message}`);
+        }
+
+        if (!data || !data.signedUrl) {
+          throw new Error('No signed URL returned from Supabase');
+        }
+
+        // 5. TRIGGER DOWNLOAD
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.download = filePath.split('/').pop(); // Extract filename from path
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+      } catch (error) {
+        console.error('Download error:', error);
+        alert(`Download failed: ${error.message}`);
       }
     }
 
-    // 3. VALIDATE THE PATH
-    if (!filePath || typeof filePath !== 'string' || filePath.trim() === '') {
-      throw new Error('No valid file path provided');
-    }
-
-    // 4. CREATE SIGNED URL
-    const { data, error } = await supabaseClient.storage
-      .from('product-images')
-      .createSignedUrl(filePath, 60); // 60 second expiry
-
-    if (error) {
-      console.error('Supabase signed URL error:', error);
-      throw new Error(`Failed to generate download link: ${error.message}`);
-    }
-
-    if (!data || !data.signedUrl) {
-      throw new Error('No signed URL returned from Supabase');
-    }
-
-    // 5. TRIGGER DOWNLOAD
-    const link = document.createElement('a');
-    link.href = data.signedUrl;
-    link.download = filePath.split('/').pop(); // Extract filename from path
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  } catch (error) {
-    console.error('Download error:', error);
-    alert(`Download failed: ${error.message}`);
-  }
-}
-
-// EXAMPLE USAGE - NOW SIMPLER (just pass the file URL):
-/*
-// Short path format
-downloadFile('downloads/file.zip');
-
-// Full Supabase URL
-downloadFile('https://xxx.supabase.co/storage/v1/object/public/product-images/downloads/file.zip');
-
-// Google Drive link
-downloadFile('https://drive.google.com/file/d/1abc123xyz/view');
-
-// HTML file
-downloadFile('downloads/product-catalog.html');
-
-// NO SECOND PARAMETER NEEDED - Function auto-detects supabase from window.supabase
-*/
+    // Load product on page load
+    loadProduct();
 </script>
 </body>
 </html>
