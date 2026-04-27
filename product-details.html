@@ -4,121 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | ariexo</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
         body { background: #0b0b14; color: white; font-family: sans-serif; }
         .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
-
 <body>
-
 <div class="max-w-5xl mx-auto p-6 mt-20 grid md:grid-cols-2 gap-10">
-
     <img id="productImage" class="rounded-2xl w-full" />
-
     <div>
         <h1 id="productTitle" class="text-4xl font-bold mb-4">Loading...</h1>
         <p id="productPrice" class="text-2xl text-indigo-400 mb-4">$--</p>
-
         <div class="glass p-4 rounded-xl mb-6">
             <p id="productDescription">Fetching...</p>
         </div>
-
         <button id="downloadBtn"
             class="bg-indigo-600 px-6 py-4 rounded-xl font-bold w-full">
             Purchase Asset
         </button>
     </div>
-
 </div>
 
 <script>
-// ✅ SINGLE SUPABASE INSTANCE (IMPORTANT)
-const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_KEY";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    async function loadProduct() {
+        const id = new URLSearchParams(window.location.search).get("id"); // ✅ Fixed
+        console.log("ID:", id);
 
-// 🔽 LOAD PRODUCT
-async function loadProduct() {
-    const id = new URLSearchParams(window.location.search).get("id");
+        if (!id) {
+            document.getElementById("productTitle").innerText = "Invalid Product ID";
+            return;
+        }
 
-    console.log("ID:", id);
+        try {
+            const { data, error } = await supabase
+                .from("product_details")
+                .select("*")
+                .eq("id", id)
+                .single();
 
-    if (!id) {
-        document.getElementById("productTitle").innerText = "Invalid Product ID";
-        return;
-    }
-
-    try {
-        const { data, error } = await supabase
-            .from("product_details")
-            .select("*")
-            .eq("id", id)
-            .single();
-
-        console.log("DATA:", data);
-        console.log("ERROR:", error);
-
-        if (error || !data) throw new Error("Product not found");
-
-        // ✅ Fill UI
-        document.getElementById("productTitle").innerText = data.title;
-        document.getElementById("productPrice").innerText = "$" + data.price;
-        document.getElementById("productDescription").innerText = data.description;
-        document.getElementById("productImage").src = data.image_url;
-
-        // Enable download
-        const btn = document.getElementById("downloadBtn");
-        btn.onclick = () => downloadFile(data.file_url);
-        btn.disabled = false;
-
-    } catch (err) {
-        console.error(err);
-        document.getElementById("productTitle").innerText = "Error loading product";
-    }
-}
-
-
-// 🔽 DOWNLOAD FUNCTION
-async function downloadFile(fileName) {
-    const btn = document.getElementById("downloadBtn");
-
-    try {
-        btn.disabled = true;
-        btn.innerText = "Preparing...";
-
-        const { data, error } = await supabase.storage
-            .from("product-images")
-            .createSignedUrl(fileName, 60);
-
-        if (error) throw error;
-
-        window.location.href = data.signedUrl;
-
-        btn.innerText = "Downloading...";
-
-        setTimeout(() => {
-            btn.innerText = "Purchase Asset";
-            btn.disabled = false;
-        }, 2000);
-
-    } catch (err) {
-        console.error(err);
-        alert("Download failed. File not found.");
-        btn.innerText = "Purchase Asset";
-        btn.disabled = false;
-    }
-}
-
-
-// 🚀 RUN ON LOAD
-window.addEventListener("DOMContentLoaded", loadProduct);
-</script>
-
-</body>
-</html>
+            console.log("DATA:", data);
+            console.log("ERROR
