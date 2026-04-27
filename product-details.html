@@ -89,47 +89,56 @@
             showError("System Error: " + err.message);
         }
     }
-
-    async function downloadFile(fileInput) {
+async function downloadFile(fileInput) {
     const btn = document.getElementById("downloadBtn");
     try {
         btn.disabled = true;
         btn.innerText = "Preparing...";
 
-        // 1. If it's a Google Drive link or external link, just open it
+        // 1. AUTOMATIC EXTERNAL LINK CHECK
+        // If it's Google Drive or NOT a Supabase link, just open it directly
         if (fileInput.includes('drive.google.com') || !fileInput.includes('supabase.co')) {
             window.open(fileInput, '_blank');
-            btn.innerText = "Purchase Asset";
-            btn.disabled = false;
+            resetButton(btn);
             return;
         }
 
-        // 2. If it's a Supabase link, get just the file name
-        // This converts "https://.../downloads/file.zip" into "downloads/file.zip"
-        const pathParts = fileInput.split('/product-images/');
-        const filePath = pathParts.length > 1 ? pathParts[1] : fileInput;
+        // 2. AUTOMATIC SUPABASE PATH CLEANING
+        // This takes "https://.../public/user-products/downloads/file.zip"
+        // and automatically finds the bucket ("user-products") and the path ("downloads/file.zip")
+        const urlParts = fileInput.split('/public/');
+        if (urlParts.length < 2) throw new Error("Invalid Supabase URL format");
 
+        const fullPath = urlParts[1]; // e.g., "user-products/downloads/file.zip"
+        const bucketName = fullPath.split('/')[0]; // e.g., "user-products"
+        const filePath = fullPath.replace(`${bucketName}/`, ''); // e.g., "downloads/file.zip"
+
+        // 3. GENERATE THE SECURE DOWNLOAD LINK
         const { data, error } = await productSupabase.storage
-            .from("product-images")
+            .from(bucketName)
             .createSignedUrl(filePath, 60);
 
         if (error) throw error;
 
+        // 4. START DOWNLOAD
         window.location.href = data.signedUrl;
         btn.innerText = "Downloading...";
 
-        setTimeout(() => {
-            btn.innerText = "Purchase Asset";
-            btn.disabled = false;
-        }, 2000);
+        setTimeout(() => resetButton(btn), 2000);
 
     } catch (err) {
-        console.error(err);
+        console.error("Download System Error:", err);
         alert("Download failed: " + err.message);
-        btn.innerText = "Purchase Asset";
-        btn.disabled = false;
+        resetButton(btn);
     }
 }
+
+// Helper to keep code clean
+function resetButton(btn) {
+    btn.innerText = "Purchase Asset";
+    btn.disabled = false;
+}
+   
 
     window.addEventListener("DOMContentLoaded", loadProduct);
 </script>
