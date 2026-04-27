@@ -44,40 +44,43 @@
 
         if (!file || !title) return alert("Title and ZIP file are required!");
 
-        try {
-            btn.disabled = true;
-            status.innerText = "Uploading ZIP to Storage...";
+      try {
+        btn.disabled = true;
+        status.innerText = "Uploading ZIP to Storage...";
 
-            // 1. Upload ZIP
-           // Inside your handlePublish function in sell.html
-const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-const { data: uploadData, error: uploadError } = await supabase.storage
-    .from('product-images')
-    .upload(fileName, file); // Uploading to ROOT for now based on your bucket
+        // 1. Generate a unique filename
+        const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
 
-if (uploadError) throw uploadError;
+        // 2. Upload the file to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, file);
 
-// Use the exact name we just created for the database entry
-const fileUrlForDb = fileName; 
+        if (uploadError) throw uploadError;
 
-const { error: dbError } = await supabase
-    .from('product_details')
-    .insert([{
-        title: title,
-        price: price,
-        file_url: fileUrlForDb, // Save ONLY the filename or the full path
-        // ... rest of your fields
-    }]);
-            if (dbError) throw dbError;
+        status.innerText = "Saving to Database...";
 
-            status.innerText = "✅ Success! Product is live.";
-            setTimeout(() => window.location.href = "index.html", 1500);
+        // 3. Insert into Database using the SAME fileName
+        const { error: dbError } = await supabase
+            .from('product_details')
+            .insert([{
+                title: title,
+                price: price,
+                description: desc,
+                image_url: imgUrl || "https://via.placeholder.com/500",
+                file_url: fileName  // This matches the file we just uploaded
+            }]);
 
-        } catch (err) {
-            console.error(err);
-            status.innerText = "❌ Error: " + err.message;
-            btn.disabled = false;
-        }
+        if (dbError) throw dbError;
+
+        status.innerText = "✅ Success! Product is live.";
+        setTimeout(() => window.location.href = "index.html", 1500);
+
+    } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Error: " + err.message;
+        btn.disabled = false;
+    }
     }
 </script>
 </body>
