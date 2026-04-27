@@ -89,44 +89,81 @@
             showError("System Error: " + err.message);
         }
     }
-async function downloadFile(shortPath) {
-    const btn = document.getElementById("downloadBtn");
-    try {
-        btn.disabled = true;
-        btn.innerText = "Preparing...";
+// Robust downloadFile function for ariexo marketplace
+// Handles: Google Drive links, full Supabase URLs, and short paths
 
-        // 1. If it's a Google Drive link, just open it
-        if (shortPath.includes('drive.google.com')) {
-            window.open(shortPath, '_blank');
-            resetButton(btn);
-            return;
-        }
-
-        // 2. Since your DB now has short paths, we use it directly
-        // This looks inside the "product-images" bucket for your "downloads/file.zip"
-        const { data, error } = await productSupabase.storage
-            .from("product-images")
-            .createSignedUrl(shortPath, 60);
-
-        if (error) throw error;
-
-        // 3. Start the download
-        window.location.href = data.signedUrl;
-        btn.innerText = "Downloading...";
-
-        setTimeout(() => resetButton(btn), 2000);
-
-    } catch (err) {
-        console.error("Download Error:", err);
-        alert("Download failed: " + err.message);
-        resetButton(btn);
+async function downloadFile(fileInput) {
+  try {
+    // 1. DETECT GOOGLE DRIVE LINKS
+    if (fileInput && typeof fileInput === 'string' && fileInput.includes('drive.google.com')) {
+      window.open(fileInput, '_blank');
+      return;
     }
+
+    // 2. NORMALIZE THE PATH
+    let filePath = fileInput;
+
+    // If it's a full Supabase URL, extract just the path
+    if (filePath && typeof filePath === 'string' && filePath.startsWith('http')) {
+      // Match patterns like:
+      // https://xxx.supabase.co/storage/v1/object/public/product-images/downloads/file.zip
+      // https://xxx.supabase.co/storage/v1/object/public/product-images/something/else.html
+      
+      const match = filePath.match(/\/product-images\/(.+)$/);
+      if (match) {
+        filePath = match[1]; // Extract: downloads/file.zip or something/else.html
+      } else {
+        throw new Error('Invalid Supabase URL format');
+      }
+    }
+
+    // 3. VALIDATE THE PATH
+    if (!filePath || typeof filePath !== 'string' || filePath.trim() === '') {
+      throw new Error('No valid file path provided');
+    }
+
+    // 4. CREATE SIGNED URL
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .createSignedUrl(filePath, 60); // 60 second expiry
+
+    if (error) {
+      console.error('Supabase signed URL error:', error);
+      throw new Error(`Failed to generate download link: ${error.message}`);
+    }
+
+    if (!data || !data.signedUrl) {
+      throw new Error('No signed URL returned from Supabase');
+    }
+
+    // 5. TRIGGER DOWNLOAD
+    const link = document.createElement('a');
+    link.href = data.signedUrl;
+    link.download = filePath.split('/').pop(); // Extract filename from path
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch (error) {
+    console.error('Download error:', error);
+    alert(`Download failed: ${error.message}`);
+  }
 }
 
-function resetButton(btn) {
-    btn.innerText = "Purchase Asset";
-    btn.disabled = false;
-}
+// EXAMPLE USAGE - ALL THESE FORMATS WILL WORK:
+/*
+// Short path format
+downloadFile('downloads/file.zip');
+
+// Full Supabase URL
+downloadFile('https://xxx.supabase.co/storage/v1/object/public/product-images/downloads/file.zip');
+
+// Google Drive link
+downloadFile('https://drive.google.com/file/d/1abc123xyz/view');
+
+// HTML file
+downloadFile('downloads/product-catalog.html');
+*/
     window.addEventListener("DOMContentLoaded", loadProduct);
 </script>
 </body>
