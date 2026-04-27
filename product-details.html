@@ -29,7 +29,7 @@
 </div>
 
 <script>
-    // 1. Initialize with a unique name to avoid the "Already Declared" error
+    // 1. Initialize Supabase Client
     const productSupabase = window.supabase.createClient(
         'https://qtewpjdnnjgvfgllgryy.supabase.co', 
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
@@ -39,8 +39,6 @@
         const box = document.getElementById("errorBox");
         box.textContent = msg;
         box.classList.remove("hidden");
-        document.getElementById("productTitle").innerText = "Error";
-        document.getElementById("productDescription").innerText = "Could not load data.";
     }
 
     async function loadProduct() {
@@ -48,42 +46,36 @@
         const id = params.get("id");
 
         if (!id) {
-            showError("No product ID found in URL. Use ?id=37");
+            showError("No product ID found. Use ?id=36");
             return;
         }
 
         try {
-            // 2. Use the new client name here
             const { data, error } = await productSupabase
                 .from("product_details")
                 .select("*")
                 .eq("id", id)
                 .single();
 
-            if (error) {
-                showError("Database Error: " + error.message);
+            if (error || !data) {
+                showError("Product not found.");
                 return;
             }
 
-            if (!data) {
-                showError("Product not found in database.");
-                return;
-            }
-
-            // 3. Fill the page with data
+            // Fill UI
             document.getElementById("productTitle").innerText = data.title;
             document.getElementById("productPrice").innerText = "$" + data.price;
             document.getElementById("productDescription").innerText = data.description;
             document.getElementById("productImage").src = data.image_url;
 
-            console.log('Product loaded. File URL from database:', data.file_url);
-
             const btn = document.getElementById("downloadBtn");
+            
+            // Only enable button if file_url exists
             if (data.file_url) {
-                btn.onclick = () => downloadFile(data.file_url);
+                btn.onclick = () => downloadSecureFile(data.file_url);
                 btn.disabled = false;
             } else {
-                btn.innerText = "No File Available";
+                btn.innerText = "File Not Available";
                 btn.disabled = true;
             }
 
@@ -92,81 +84,40 @@
         }
     }
 
-    // Robust downloadFile function for ariexo marketplace
-    // Handles: Google Drive links, full Supabase URLs, and short paths
-    async function downloadFile(fileInput) {
+    // THE SECURE DOWNLOAD FUNCTION
+    async function downloadSecureFile(fileInput) {
       try {
-        console.log('====== DOWNLOAD DEBUG START ======');
-        console.log('1. Raw fileInput from database:', fileInput);
-        console.log('2. Type:', typeof fileInput);
+        const btn = document.getElementById("downloadBtn");
+        btn.innerText = "Generating Link...";
+        btn.disabled = true;
 
-        // FIX: Use productSupabase instead of window.supabase
-        const supabaseClient = productSupabase;
-
-        // 1. DETECT GOOGLE DRIVE LINKS
-        if (fileInput && typeof fileInput === 'string' && fileInput.includes('drive.google.com')) {
-          console.log('Google Drive link detected, opening in new tab');
+        // 1. Handle Google Drive Links (External)
+        if (fileInput.includes('drive.google.com')) {
           window.open(fileInput, '_blank');
+          btn.innerText = "Purchase Asset";
+          btn.disabled = false;
           return;
         }
 
-        // 2. NORMALIZE THE PATH
+        // 2. Clean the Path
         let filePath = fileInput;
-        console.log('3. Starting path normalization...');
-
-        // If it's a full Supabase URL, extract just the path
-        if (filePath && typeof filePath === 'string' && filePath.startsWith('http')) {
-          console.log('4. Full URL detected');
-          
-          // Try pattern 1: /product-images/path/to/file
-          let match = filePath.match(/\/product-images\/(.+?)(\?|$)/);
-          console.log('5. Pattern 1 match:', match ? match[1] : 'no match');
-          
-          if (!match) {
-            // Try pattern 2: /product-images/path/to/file$
-            match = filePath.match(/\/product-images\/(.+)$/);
-            console.log('6. Pattern 2 match:', match ? match[1] : 'no match');
-          }
-          
-          if (match) {
-            filePath = match[1];
-            filePath = decodeURIComponent(filePath);
-            console.log('7. Extracted path:', filePath);
-          } else {
-            console.error('8. EXTRACTION FAILED - URL:', filePath);
-            throw new Error('Could not extract file path from URL: ' + filePath);
-          }
-        } else {
-          console.log('4. Short path detected (not a full URL)');
+        // If the DB has the full URL, strip it to get the path
+        if (filePath.startsWith('http')) {
+           const parts = filePath.split('/product-images/');
+           filePath = parts[1] ? decodeURIComponent(parts[1].split('?')[0]) : filePath;
         }
 
-        // 3. VALIDATE THE PATH
-        if (!filePath || typeof filePath !== 'string' || filePath.trim() === '') {
-          throw new Error('No valid file path provided');
-        }
-
-        console.log('9. Final path to use:', filePath);
-        console.log('10. Bucket: product-images');
-        console.log('11. Creating signed URL...');
-
-        // 4. CREATE SIGNED URL
-        const { data, error } = await supabaseClient.storage
+        // 3. ASK SUPABASE FOR THE 60-SECOND SECRET LINK
+        // This works because your bucket is now PRIVATE
+        const { data, error } = await productSupabase.storage
           .from('product-images')
           .createSignedUrl(filePath, 60);
 
-        console.log('12. Supabase response error:', error ? error.message : 'no error');
-        console.log('13. Supabase response data:', data ? 'URL created' : 'no data');
-
-        if (error) {
-          console.error('Supabase error details:', error);
-          throw new Error(`Failed to generate download link: ${error.message}`);
+        if (error || !data.signedUrl) {
+          throw new Error(error ? error.message : "Could not create secure link");
         }
 
-        if (!data || !data.signedUrl) {
-          throw new Error('No signed URL returned from Supabase');
-        }
-
-        // 5. TRIGGER DOWNLOAD
+        // 4. TRIGGER THE DOWNLOAD
         const link = document.createElement('a');
         link.href = data.signedUrl;
         link.download = filePath.split('/').pop();
@@ -174,16 +125,18 @@
         link.click();
         document.body.removeChild(link);
 
-        console.log('14. Download triggered for:', link.download);
-        console.log('====== DOWNLOAD DEBUG END ======');
+        // Reset button
+        btn.innerText = "Purchase Asset";
+        btn.disabled = false;
 
       } catch (error) {
-        console.error('Download error:', error);
-        alert(`Download failed: ${error.message}`);
+        console.error('Download Error:', error);
+        alert(`Security Error: ${error.message}. Please check if the file exists in the private bucket.`);
+        document.getElementById("downloadBtn").innerText = "Purchase Asset";
+        document.getElementById("downloadBtn").disabled = false;
       }
     }
 
-    // Load product on page load
     loadProduct();
 </script>
 </body>
