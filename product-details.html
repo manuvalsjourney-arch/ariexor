@@ -13,14 +13,13 @@
 </head>
 <body>
 <div class="max-w-5xl mx-auto p-6 mt-20 grid md:grid-cols-2 gap-10">
-    <img id="productImage" class="rounded-2xl w-full" />
+    <img id="productImage" class="rounded-2xl w-full" src="" alt="" />
     <div>
         <h1 id="productTitle" class="text-4xl font-bold mb-4">Loading...</h1>
         <p id="productPrice" class="text-2xl text-indigo-400 mb-4">$--</p>
         <div class="glass p-4 rounded-xl mb-6">
-            <p id="productDescription">Fetching...</p>
+            <p id="productDescription">Fetching product details...</p>
         </div>
-        <!-- ✅ Added error box -->
         <div id="errorBox" class="hidden bg-red-900/40 border border-red-500 text-red-300 text-sm p-3 rounded-xl mb-4"></div>
         <button id="downloadBtn"
             class="bg-indigo-600 px-6 py-4 rounded-xl font-bold w-full disabled:opacity-50 disabled:cursor-not-allowed">
@@ -30,44 +29,48 @@
 </div>
 
 <script>
+    // 1. Initialize with a unique name to avoid the "Already Declared" error
+    const productSupabase = window.supabase.createClient(
+        'https://qtewpjdnnjgvfgllgryy.supabase.co', 
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
+    );
 
-  const supabase = window.supabase.createClient('https://qtewpjdnnjgvfgllgryy.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU');
     function showError(msg) {
         const box = document.getElementById("errorBox");
         box.textContent = msg;
         box.classList.remove("hidden");
         document.getElementById("productTitle").innerText = "Error";
-        document.getElementById("productDescription").innerText = "";
+        document.getElementById("productDescription").innerText = "Could not load data.";
     }
 
     async function loadProduct() {
         const params = new URLSearchParams(window.location.search);
         const id = params.get("id");
 
-        // ✅ Show error if no ID in URL
         if (!id) {
-            showError("No product ID found in URL. Make sure the link includes ?id=YOUR_ID");
+            showError("No product ID found in URL. Use ?id=37");
             return;
         }
 
         try {
-            const { data, error } = await supabase
+            // 2. Use the new client name here
+            const { data, error } = await productSupabase
                 .from("product_details")
                 .select("*")
                 .eq("id", id)
                 .single();
 
             if (error) {
-                showError("Supabase error: " + error.message);
+                showError("Database Error: " + error.message);
                 return;
             }
 
             if (!data) {
-                showError("No product found with ID: " + id);
+                showError("Product not found in database.");
                 return;
             }
 
-            // ✅ Fill UI
+            // 3. Fill the page with data
             document.getElementById("productTitle").innerText = data.title;
             document.getElementById("productPrice").innerText = "$" + data.price;
             document.getElementById("productDescription").innerText = data.description;
@@ -78,12 +81,12 @@
                 btn.onclick = () => downloadFile(data.file_url);
                 btn.disabled = false;
             } else {
-                btn.disabled = true;
                 btn.innerText = "No File Available";
+                btn.disabled = true;
             }
 
         } catch (err) {
-            showError("Unexpected error: " + err.message);
+            showError("System Error: " + err.message);
         }
     }
 
@@ -93,7 +96,7 @@
             btn.disabled = true;
             btn.innerText = "Preparing...";
 
-            const { data, error } = await supabase.storage
+            const { data, error } = await productSupabase.storage
                 .from("product-images")
                 .createSignedUrl(fileName, 60);
 
