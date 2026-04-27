@@ -51,37 +51,57 @@
   function createSupabaseClient() {
     return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
-
- async function handleDownload(rawUrl, title) {
+async function handleDownload(rawUrl, title) {
   const btn = document.getElementById("downloadBtn");
-  if (!rawUrl) return alert("Seller has not uploaded a file yet.");
+  
+  if (rawUrl.includes("drive.google.com")) {
+    window.open(rawUrl, "_blank");
+    return;
+  }
 
   try {
     btn.disabled = true;
-    btn.innerText = "Locating Asset...";
+    btn.innerText = "Connecting...";
+
     const supabase = createSupabaseClient();
     
-    // This grabs the filename from the end of the URL, no matter how many slashes there are
-    const filename = rawUrl.split('/').filter(Boolean).pop();
-
-    // The code tries to find the file in your marketplace storage automatically
-    const { data, error } = await supabase.storage
+    // 1. Get the filename from the URL accurately
+    // This works for BOTH manually added files and the new automated ones
+    const urlParts = rawUrl.split('/');
+    const filename = urlParts.pop().split('?')[0];
+    
+    // 2. Check if the file is in the 'downloads' folder (where sell.html puts it)
+    let { data, error } = await supabase.storage
         .from('product-images')
         .createSignedUrl(`downloads/${filename}`, 60);
 
-    if (error || !data) throw new Error("File missing");
+    // 3. Fallback: If not in downloads, check the main folder
+    if (error || !data) {
+        const fallback = await supabase.storage
+            .from('product-images')
+            .createSignedUrl(filename, 60);
+        
+        if (fallback.error) throw new Error("File not found in storage");
+        data = fallback.data;
+    }
 
-    // Start download
+    // 4. Trigger the download
     window.location.href = data.signedUrl;
-    
+
     btn.innerText = "Success!";
-    setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
+    setTimeout(() => { 
+      btn.disabled = false; 
+      btn.innerText = "Purchase Asset"; 
+    }, 2000);
+
   } catch (err) {
-    alert("Marketplace Error: The file for '" + title + "' is missing from the seller's storage.");
+    console.error(err);
+    alert("Marketplace Error: The file link in the database doesn't match the file in Storage. Please check the 'downloads' folder in Supabase.");
     btn.disabled = false;
     btn.innerText = "Purchase Asset";
   }
 }
+
   async function initProductDetails() {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
