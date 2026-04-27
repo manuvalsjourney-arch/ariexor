@@ -90,32 +90,46 @@
         }
     }
 
-    async function downloadFile(fileName) {
-        const btn = document.getElementById("downloadBtn");
-        try {
-            btn.disabled = true;
-            btn.innerText = "Preparing...";
+    async function downloadFile(fileInput) {
+    const btn = document.getElementById("downloadBtn");
+    try {
+        btn.disabled = true;
+        btn.innerText = "Preparing...";
 
-            const { data, error } = await productSupabase.storage
-                .from("product-images")
-                .createSignedUrl(fileName, 60);
-
-            if (error) throw error;
-
-            window.location.href = data.signedUrl;
-            btn.innerText = "Downloading...";
-
-            setTimeout(() => {
-                btn.innerText = "Purchase Asset";
-                btn.disabled = false;
-            }, 2000);
-
-        } catch (err) {
-            alert("Download failed: " + err.message);
+        // 1. If it's a Google Drive link or external link, just open it
+        if (fileInput.includes('drive.google.com') || !fileInput.includes('supabase.co')) {
+            window.open(fileInput, '_blank');
             btn.innerText = "Purchase Asset";
             btn.disabled = false;
+            return;
         }
+
+        // 2. If it's a Supabase link, get just the file name
+        // This converts "https://.../downloads/file.zip" into "downloads/file.zip"
+        const pathParts = fileInput.split('/product-images/');
+        const filePath = pathParts.length > 1 ? pathParts[1] : fileInput;
+
+        const { data, error } = await productSupabase.storage
+            .from("product-images")
+            .createSignedUrl(filePath, 60);
+
+        if (error) throw error;
+
+        window.location.href = data.signedUrl;
+        btn.innerText = "Downloading...";
+
+        setTimeout(() => {
+            btn.innerText = "Purchase Asset";
+            btn.disabled = false;
+        }, 2000);
+
+    } catch (err) {
+        console.error(err);
+        alert("Download failed: " + err.message);
+        btn.innerText = "Purchase Asset";
+        btn.disabled = false;
     }
+}
 
     window.addEventListener("DOMContentLoaded", loadProduct);
 </script>
