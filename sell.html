@@ -33,7 +33,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-   async function handlePublish() {
+ async function handlePublish() {
     const title = document.getElementById('title').value;
     const price = document.getElementById('price').value;
     const desc = document.getElementById('description').value;
@@ -48,10 +48,10 @@
         btn.disabled = true;
         status.innerText = "Uploading ZIP to Storage...";
 
-        // 1. Generate a unique filename (removes spaces to prevent 404s)
+        // 1. Define the filename ONCE
         const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
 
-        // 2. Upload ZIP to the root of 'product-images' bucket
+        // 2. Upload to Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('product-images')
             .upload(fileName, file);
@@ -60,9 +60,7 @@
 
         status.innerText = "Saving to Database...";
 
-        // 3. Create Database Entry
-        // Use the EXACT same 'fileName' variable here
-       // 3. Create Database Entry
+        // 3. Save to Database (Using the SAME fileName variable)
         const { error: dbError } = await supabase
             .from('product_details')
             .insert([{
@@ -70,7 +68,7 @@
                 price: price,
                 description: desc,
                 image_url: imgUrl || "https://via.placeholder.com/500",
-                file_url: fileName  // THIS IS THE LINE YOU ARE MISSING
+                file_url: fileName // Corrected variable name
             }]);
 
         if (dbError) throw dbError;
