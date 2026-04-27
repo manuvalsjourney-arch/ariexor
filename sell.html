@@ -62,6 +62,7 @@
 
         // 3. Create Database Entry
         // Use the EXACT same 'fileName' variable here
+       // 3. Create Database Entry
         const { error: dbError } = await supabase
             .from('product_details')
             .insert([{
@@ -69,7 +70,7 @@
                 price: price,
                 description: desc,
                 image_url: imgUrl || "https://via.placeholder.com/500",
-                file_url: fileName  
+                file_url: fileName  // THIS IS THE LINE YOU ARE MISSING
             }]);
 
         if (dbError) throw dbError;
