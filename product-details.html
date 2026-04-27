@@ -46,7 +46,7 @@
         const id = params.get("id");
 
         if (!id) {
-            showError("No product ID found. Use ?id=36");
+            showError("No product ID found.");
             return;
         }
 
@@ -69,16 +69,14 @@
             document.getElementById("productImage").src = data.image_url;
 
             const btn = document.getElementById("downloadBtn");
-            
-            // Only enable button if file_url exists
             if (data.file_url) {
+                // Connect the button to the SECURE function
                 btn.onclick = () => downloadSecureFile(data.file_url);
                 btn.disabled = false;
             } else {
-                btn.innerText = "File Not Available";
+                btn.innerText = "No File Available";
                 btn.disabled = true;
             }
-
         } catch (err) {
             showError("System Error: " + err.message);
         }
@@ -88,10 +86,10 @@
     async function downloadSecureFile(fileInput) {
       try {
         const btn = document.getElementById("downloadBtn");
-        btn.innerText = "Generating Link...";
+        btn.innerText = "Securing Connection...";
         btn.disabled = true;
 
-        // 1. Handle Google Drive Links (External)
+        // 1. Handle Google Drive links
         if (fileInput.includes('drive.google.com')) {
           window.open(fileInput, '_blank');
           btn.innerText = "Purchase Asset";
@@ -99,22 +97,20 @@
           return;
         }
 
-        // 2. Clean the Path
+        // 2. Clean the path (remove full URL if present)
         let filePath = fileInput;
-        // If the DB has the full URL, strip it to get the path
         if (filePath.startsWith('http')) {
            const parts = filePath.split('/product-images/');
            filePath = parts[1] ? decodeURIComponent(parts[1].split('?')[0]) : filePath;
         }
 
         // 3. ASK SUPABASE FOR THE 60-SECOND SECRET LINK
-        // This works because your bucket is now PRIVATE
         const { data, error } = await productSupabase.storage
           .from('product-images')
           .createSignedUrl(filePath, 60);
 
         if (error || !data.signedUrl) {
-          throw new Error(error ? error.message : "Could not create secure link");
+          throw new Error(error ? error.message : "Access Denied");
         }
 
         // 4. TRIGGER THE DOWNLOAD
@@ -125,13 +121,12 @@
         link.click();
         document.body.removeChild(link);
 
-        // Reset button
         btn.innerText = "Purchase Asset";
         btn.disabled = false;
 
       } catch (error) {
         console.error('Download Error:', error);
-        alert(`Security Error: ${error.message}. Please check if the file exists in the private bucket.`);
+        alert(`Security Error: ${error.message}`);
         document.getElementById("downloadBtn").innerText = "Purchase Asset";
         document.getElementById("downloadBtn").disabled = false;
       }
