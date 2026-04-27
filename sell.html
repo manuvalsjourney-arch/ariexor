@@ -29,12 +29,12 @@
     </div>
 
 <script>
-    const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function handlePublish() {
-    const title = document.getElementById('title').value;
+    const title = document.getElementById('title').value.trim();
     const price = document.getElementById('price').value;
     const desc = document.getElementById('description').value;
     const imgUrl = document.getElementById('imageUrl').value;
@@ -42,47 +42,46 @@ async function handlePublish() {
     const status = document.getElementById('uploadStatus');
     const btn = document.getElementById('publishBtn');
 
-    if (!file || !title) return alert("Title and ZIP file are required!");
+    if (!title || !file) {
+        alert("Title and ZIP file required");
+        return;
+    }
 
     try {
         btn.disabled = true;
-        status.innerText = "Uploading ZIP...";
+        status.innerText = "Uploading...";
 
+        // Clean filename
         const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        // Upload
+        const { error: uploadError } = await supabase.storage
             .from('product-images')
             .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
-        // ✅ Get the public URL of the uploaded file
-        const { data: urlData } = supabase.storage
-            .from('product-images')
-            .getPublicUrl(fileName);
+        status.innerText = "Saving product...";
 
-        const fileUrlForDb = urlData.publicUrl; // ✅ Now this is defined!
-
-        status.innerText = "Saving to Database...";
-
+        // Save ONLY filename
         const { error: dbError } = await supabase
             .from('product_details')
             .insert([{
-                title: title,
-                price: price,
+                title,
+                price,
                 description: desc,
                 image_url: imgUrl || "https://via.placeholder.com/500",
-                file_url: fileUrlForDb  // ✅ Now saves correctly
+                file_url: fileName
             }]);
 
         if (dbError) throw dbError;
 
-        status.innerText = "✅ Success!";
+        status.innerText = "✅ Uploaded!";
         setTimeout(() => window.location.href = "index.html", 1500);
 
     } catch (err) {
         console.error(err);
-        status.innerText = "❌ Error: " + err.message;
+        status.innerText = "❌ " + err.message;
         btn.disabled = false;
     }
 }
