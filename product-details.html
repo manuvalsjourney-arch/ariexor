@@ -45,43 +45,78 @@
     </main>
 
 <script>
-  const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU"; 
+const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
 
-  function createSupabaseClient() {
-    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-async function handleDownload(fileName, title) {
-  const btn = document.getElementById("downloadBtn");
-  const supabase = createSupabaseClient();
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  try {
-    btn.disabled = true;
-    btn.innerText = "Preparing Download...";
+// 🔽 LOAD PRODUCT
+async function initProductDetails() {
+    const id = new URLSearchParams(window.location.search).get("id");
 
-    const { data, error } = await supabase.storage
-      .from('product-images')
-      .createSignedUrl(fileName, 60);
+    if (!id) {
+        document.getElementById("productTitle").innerText = "Invalid Product";
+        return;
+    }
 
-    if (error || !data) throw error;
+    try {
+        const { data, error } = await supabase
+            .from("product_details")
+            .select("*")
+            .eq("id", id)
+            .single();
 
-    window.location.href = data.signedUrl;
+        if (error || !data) throw new Error("Product not found");
 
-    btn.innerText = "Downloading...";
-    
-    setTimeout(() => { 
-        btn.disabled = false; 
-        btn.innerText = "Purchase Asset"; 
-    }, 2000);
+        // Fill UI
+        document.getElementById("productTitle").innerText = data.title;
+        document.getElementById("productPrice").innerText = `$${data.price}`;
+        document.getElementById("productDescription").innerText = data.description;
+        document.getElementById("productImage").src = data.image_url;
 
-  } catch (err) {
-    console.error(err);
-    alert("Download failed. File may be missing.");
-    btn.disabled = false;
-    btn.innerText = "Purchase Asset";
-  }
+        const btn = document.getElementById("downloadBtn");
+
+        btn.onclick = () => handleDownload(data.file_url);
+        btn.disabled = false;
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("productTitle").innerText = "Error loading product";
+    }
 }
-  window.addEventListener("DOMContentLoaded", initProductDetails);
+
+// 🔽 DOWNLOAD FILE
+async function handleDownload(fileName) {
+    const btn = document.getElementById("downloadBtn");
+
+    try {
+        btn.disabled = true;
+        btn.innerText = "Preparing...";
+
+        const { data, error } = await supabase.storage
+            .from("product-images")
+            .createSignedUrl(fileName, 60);
+
+        if (error || !data) throw error;
+
+        window.location.href = data.signedUrl;
+
+        btn.innerText = "Downloading...";
+
+        setTimeout(() => {
+            btn.innerText = "Purchase Asset";
+            btn.disabled = false;
+        }, 2000);
+
+    } catch (err) {
+        console.error(err);
+        alert("Download failed. File missing.");
+        btn.innerText = "Purchase Asset";
+        btn.disabled = false;
+    }
+}
+
+window.addEventListener("DOMContentLoaded", initProductDetails);
 </script>
 </body>
 </html>
