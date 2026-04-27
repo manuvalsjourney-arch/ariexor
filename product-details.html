@@ -60,15 +60,18 @@ async function handleDownload(rawUrl, title) {
 
     const supabase = createSupabaseClient();
     
-    // 1. Get the exact filename from the URL
-    const filename = rawUrl.split('/').pop().split('?')[0];
+    // FIX: We must decode the URL to handle spaces and parentheses ( )
+    const encodedFilename = rawUrl.split('/').pop().split('?')[0];
+    const filename = decodeURIComponent(encodedFilename);
 
-    // 2. Strategy: Try the ROOT folder first (where your new files are)
+    console.log("Searching for decoded file:", filename);
+
+    // 1. Try the ROOT folder first (where your new files are)
     let { data, error } = await supabase.storage
         .from('product-images')
         .createSignedUrl(filename, 60);
 
-    // 3. Fallback: If not found, try the 'downloads/' folder
+    // 2. Fallback: Try the 'downloads/' folder
     if (error || !data) {
         const fallback = await supabase.storage
             .from('product-images')
@@ -78,14 +81,14 @@ async function handleDownload(rawUrl, title) {
         data = fallback.data;
     }
 
-    // 4. Success!
+    // 3. Success!
     window.location.href = data.signedUrl;
     btn.innerText = "Success!";
     setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
 
   } catch (err) {
-    console.error(err);
-    alert("Marketplace Error: The file was not found. Ensure the filename in the database matches your Storage bucket exactly.");
+    console.error("Download Error:", err);
+    alert("Marketplace Error: The file name contains characters (like spaces) that the system couldn't read. Check your Storage bucket names.");
     btn.disabled = false;
     btn.innerText = "Purchase Asset";
   }
