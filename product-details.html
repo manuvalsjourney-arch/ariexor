@@ -53,47 +53,35 @@
   }
 async function handleDownload(rawUrl, title) {
   const btn = document.getElementById("downloadBtn");
+  const supabase = createSupabaseClient();
   
+  // Extract and decode (This is what the AI is emphasizing)
+  const filename = decodeURIComponent(rawUrl.split('/').pop().split('?')[0]);
+
   try {
-    btn.disabled = true;
-    btn.innerText = "Connecting...";
-
-    const supabase = createSupabaseClient();
+    btn.innerText = "Searching...";
     
-    // FIX: We must decode the URL to handle spaces and parentheses ( )
-    const encodedFilename = rawUrl.split('/').pop().split('?')[0];
-    const filename = decodeURIComponent(encodedFilename);
-
-    console.log("Searching for decoded file:", filename);
-
-    // 1. Try the ROOT folder first (where your new files are)
+    // Attempt 1: Root (Where your new PDFs are)
     let { data, error } = await supabase.storage
         .from('product-images')
         .createSignedUrl(filename, 60);
 
-    // 2. Fallback: Try the 'downloads/' folder
+    // Attempt 2: Downloads folder (Where your old templates are)
     if (error || !data) {
         const fallback = await supabase.storage
             .from('product-images')
             .createSignedUrl(`downloads/${filename}`, 60);
         
-        if (fallback.error) throw new Error("File not found");
+        if (fallback.error) throw new Error("File not found in either location");
         data = fallback.data;
     }
 
-    // 3. Success!
     window.location.href = data.signedUrl;
     btn.innerText = "Success!";
-    setTimeout(() => { btn.disabled = false; btn.innerText = "Purchase Asset"; }, 2000);
-
   } catch (err) {
-    console.error("Download Error:", err);
-    alert("Marketplace Error: The file name contains characters (like spaces) that the system couldn't read. Check your Storage bucket names.");
-    btn.disabled = false;
-    btn.innerText = "Purchase Asset";
+    alert("Marketplace Error: " + err.message);
   }
 }
-
   async function initProductDetails() {
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) return;
