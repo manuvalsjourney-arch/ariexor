@@ -89,7 +89,7 @@
 
     const safeName = sanitizeFileName(file.name);
     // Store each product's zip under a stable object path
-    const objectPath = `${productId}/${Date.now()}_${safeName}`;
+ const objectPath = `downloads/${Date.now()}_${safeName}`;
 
     const statusEl = document.getElementById(STATUS_ID);
     if (statusEl) statusEl.textContent = "Uploading...";
