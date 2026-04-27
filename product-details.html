@@ -92,8 +92,20 @@
 // Robust downloadFile function for ariexo marketplace
 // Handles: Google Drive links, full Supabase URLs, and short paths
 
+// Robust downloadFile function for ariexo marketplace
+// Handles: Google Drive links, full Supabase URLs, and short paths
+// AUTO-DETECTS supabase from window object (no parameter needed)
+
 async function downloadFile(fileInput) {
   try {
+    // Get the supabase client from the window object
+    const supabaseClient = window.supabase;
+    
+    // CHECK IF SUPABASE CLIENT EXISTS
+    if (!supabaseClient) {
+      throw new Error('Supabase client not found. Make sure your Supabase client is initialized and available as window.supabase');
+    }
+
     // 1. DETECT GOOGLE DRIVE LINKS
     if (fileInput && typeof fileInput === 'string' && fileInput.includes('drive.google.com')) {
       window.open(fileInput, '_blank');
@@ -123,7 +135,7 @@ async function downloadFile(fileInput) {
     }
 
     // 4. CREATE SIGNED URL
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabaseClient.storage
       .from('product-images')
       .createSignedUrl(filePath, 60); // 60 second expiry
 
@@ -150,7 +162,7 @@ async function downloadFile(fileInput) {
   }
 }
 
-// EXAMPLE USAGE - ALL THESE FORMATS WILL WORK:
+// EXAMPLE USAGE - NOW SIMPLER (just pass the file URL):
 /*
 // Short path format
 downloadFile('downloads/file.zip');
@@ -163,8 +175,9 @@ downloadFile('https://drive.google.com/file/d/1abc123xyz/view');
 
 // HTML file
 downloadFile('downloads/product-catalog.html');
+
+// NO SECOND PARAMETER NEEDED - Function auto-detects supabase from window.supabase
 */
-    window.addEventListener("DOMContentLoaded", loadProduct);
 </script>
 </body>
 </html>
