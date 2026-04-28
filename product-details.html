@@ -1,31 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details | ariexo</title>
+
+    <link rel="icon" href="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { background: #0b0b14; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); transition: 0.3s; }
+        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99,102,241,0.3); }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+<div class="max-w-6xl mx-auto p-6 mt-10 md:mt-20 grid md:grid-cols-2 gap-12">
+
+    <!-- Image -->
+    <div>
+        <img id="productImage"
+             class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl"
+             src=""
+             alt="Product Preview">
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col justify-center">
+        <h1 id="productTitle" class="text-5xl font-extrabold mb-4">Loading...</h1>
+        <p id="productPrice" class="text-4xl text-indigo-400 font-black mb-8">$--</p>
+
+        <div class="glass p-6 rounded-2xl mb-6">
+            <p id="productDescription" class="text-gray-300 italic">
+                Fetching product details...
+            </p>
+        </div>
+
+        <button id="downloadBtn"
+                onclick="handleDownload()"
+                class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
+            Purchase & Download
+        </button>
+
+        <p class="text-center text-gray-500 text-xs mt-4">
+            Secure delivery via ariexo cloud
+        </p>
+    </div>
+
+</div>
+
 <script>
 const supabase = window.supabase.createClient(
-    'https://qtewpjdnnjgvfgllgryy.supabase.co', 
-    'YOUR_ANON_KEY'
+    'https://qtewpjdnnjgvfgllgryy.supabase.co',
+    'YOUR_ANON_KEY_HERE'
 );
 
 let currentProduct = null;
 
+// Load product
 async function loadProduct() {
     try {
         const params = new URLSearchParams(window.location.search);
         const productId = params.get('id');
 
-        console.log("Product ID:", productId);
+        console.log("ID:", productId);
 
         if (!productId) {
-            showError("No product ID in URL");
+            showError("Missing product ID");
             return;
         }
 
-        // Fetch product
         const { data, error } = await supabase
             .from('product_details')
             .select('*')
             .eq('id', parseInt(productId))
             .single();
 
-        console.log("Product:", data, "Error:", error);
+        console.log("DATA:", data, "ERROR:", error);
 
         if (error || !data) {
             showError("Product not found");
@@ -34,12 +90,12 @@ async function loadProduct() {
 
         currentProduct = data;
 
-        // Set text content
+        // Text
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // ✅ Image (clean method)
+        // Image (correct way)
         if (data.image_url) {
             const { data: img } = supabase.storage
                 .from('product-images')
@@ -50,19 +106,19 @@ async function loadProduct() {
 
     } catch (err) {
         console.error(err);
-        showError("Something went wrong");
+        showError("Something broke");
     }
 }
 
-// Download handler
+// Download
 async function handleDownload() {
     if (!currentProduct) return;
 
     const btn = document.getElementById('downloadBtn');
-    const originalText = btn.innerHTML;
+    const original = btn.innerHTML;
 
     btn.disabled = true;
-    btn.innerHTML = "Generating download...";
+    btn.innerHTML = "Preparing download...";
 
     try {
         const { data, error } = await supabase.storage
@@ -71,7 +127,6 @@ async function handleDownload() {
 
         if (error) throw error;
 
-        // Trigger download
         const link = document.createElement('a');
         link.href = data.signedUrl;
         link.download = "";
@@ -84,7 +139,7 @@ async function handleDownload() {
 
         setTimeout(() => {
             btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.innerHTML = original;
             btn.style.background = "";
         }, 3000);
 
@@ -96,12 +151,15 @@ async function handleDownload() {
 }
 
 // Error UI
-function showError(message) {
-    document.getElementById('productTitle').innerText = message;
+function showError(msg) {
+    document.getElementById('productTitle').innerText = msg;
     document.getElementById('productPrice').innerText = "";
     document.getElementById('productDescription').innerText = "";
 }
 
-// Run
+// Init
 loadProduct();
 </script>
+
+</body>
+</html>
