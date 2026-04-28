@@ -49,11 +49,10 @@
 
         let currentProduct = null;
 
-    async function loadProduct() {
+async function loadProduct() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     
-    // FIXED: Changed 'sb' to 'supabase' to match your initialization
     const { data: product, error } = await supabase
         .from('product_details')
         .select('*')
@@ -62,7 +61,6 @@
 
     if (error || !product) {
         document.getElementById('productTitle').innerText = "Product Not Found";
-        document.getElementById('productDescription').innerText = "Please check if the Product ID exists in your database.";
         return;
     }
 
@@ -71,11 +69,14 @@
     document.getElementById('productPrice').innerText = `$${product.price}`;
     document.getElementById('productDescription').innerText = product.description;
 
-    // THE FOLDER FIX:
-    const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/";
-    const imagePath = product.image_url.startsWith('previews/') ? product.image_url : 'previews/' + product.image_url;
+    // THE FIX: If the DB has a full URL, use it. If not, build it.
+    let finalImageUrl = product.image_url;
+    if (!finalImageUrl.startsWith('http')) {
+        const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/";
+        finalImageUrl = storageBase + product.image_url;
+    }
 
-    document.getElementById('productImage').src = storageBase + imagePath;
+    document.getElementById('productImage').src = finalImageUrl;
 }
         async function handleDownload() {
             if (!currentProduct) return;
