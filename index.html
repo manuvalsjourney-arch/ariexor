@@ -237,10 +237,10 @@ function renderProducts(products) {
 
             <a href="product-details.html?id=${p.id}" class="block glass-card p-6 rounded-[2rem] h-full transition-all duration-300 hover:translate-y-[-5px]">
                 
-                <div class="overflow-hidden rounded-2xl mb-4 bg-slate-800 aspect-video">
+               <div class="overflow-hidden rounded-2xl mb-4 bg-slate-800 aspect-video">
                     <img src="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${p.image_url}" 
                          alt="${p.title}" 
-                         class="w-full h-full object-cover group-hover:scale-110 transition duration-500"
+                         class="w-full h-full object-cover group-hover:scale-110 transition duration-500" 
                          onerror="this.src='https://via.placeholder.com/400x225?text=Image+Not+Found'">
                 </div>
 
