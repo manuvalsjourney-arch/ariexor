@@ -55,31 +55,38 @@
         document.getElementById('productPrice').innerText = `$${product.price}`;
         document.getElementById('productDescription').innerText = product.description;
 
-        // FIX IMAGE PATH: This builds the correct link to your Supabase Storage
-        const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/";
-        document.getElementById('productImage').src = storageBase + product.image_url;
-
+       // This tells the browser to look inside the 'previews' folder
+const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/";
+document.getElementById('productImage').src = storageBase + product.image_url;
         document.getElementById('downloadBtn').onclick = () => startDownload(product.file_url);
     }
 
-    async function startDownload(filePath) {
-        const btn = document.getElementById('downloadBtn');
-        btn.innerText = "Generating Link...";
-        try {
-            const { data, error } = await supabase.storage.from('product-images').createSignedUrl(filePath, 60);
-            if (error) throw error;
-            const link = document.createElement('a');
-            link.href = data.signedUrl;
-            link.download = filePath.split('/').pop();
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            btn.innerText = "Download Started!";
-        } catch (err) {
-            alert("Error: " + err.message);
-            btn.innerText = "Purchase & Download";
-        }
+   async function startDownload(filePath) {
+    const btn = document.getElementById('downloadBtn');
+    btn.innerText = "Generating Link...";
+    try {
+        // This looks inside the 'products' folder for your zip/file
+        const { data, error } = await supabase.storage
+            .from('product-images')
+            .createSignedUrl('products/' + filePath, 60); 
+
+        if (error) throw error;
+
+        // This part creates a hidden link and "clicks" it for the user
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.download = filePath.split('/').pop();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        btn.innerText = "Download Started!";
+    } catch (err) {
+        console.error(err);
+        alert("Error: " + err.message);
+        btn.innerText = "Purchase & Download";
     }
+}
 
     loadProduct();
 </script>
