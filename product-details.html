@@ -49,35 +49,38 @@
 
         let currentProduct = null;
 
-      async function loadProduct() {
+     async function loadProduct() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     
-    // 1. Fetch data
-    const { data: product, error } = await supabase
+    // 1. Get the data from the database
+    const { data: product, error } = await sb
         .from('product_details')
         .select('*')
         .eq('id', productId)
         .single();
 
+    // 2. If ID doesn't match or there's an error, stop "Fetching"
     if (error || !product) {
         document.getElementById('productTitle').innerText = "Product Not Found";
-        document.getElementById('productDescription').innerText = "We couldn't find a product with ID: " + productId;
+        document.getElementById('productDescription').innerText = "Please check if the Product ID exists in your database.";
         return;
     }
 
-    // 2. Set Text
+    // 3. Set the text content
     currentProduct = product;
     document.getElementById('productTitle').innerText = product.title;
     document.getElementById('productPrice').innerText = `$${product.price}`;
     document.getElementById('productDescription').innerText = product.description;
 
-    // 3. THE IMAGE FIX: Try to find the image in 'previews' first, then root
+    // 4. THE IMAGE FIX:
     const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/";
     
-    // If the image_url in DB is just "pic.png", this makes it "previews/pic.png"
-    let imagePath = product.image_url.includes('/') ? product.image_url : 'previews/' + product.image_url;
-    
+    // This logic checks if the path already has 'previews/' or needs it
+    const imagePath = product.image_url.startsWith('previews/') 
+        ? product.image_url 
+        : 'previews/' + product.image_url;
+
     document.getElementById('productImage').src = storageBase + imagePath;
 }
         async function handleDownload() {
