@@ -69,14 +69,11 @@ async function loadProduct() {
     document.getElementById('productPrice').innerText = `$${product.price}`;
     document.getElementById('productDescription').innerText = product.description;
 
-    // THE FIX: If the DB has a full URL, use it. If not, build it.
-    let finalImageUrl = product.image_url;
-    if (!finalImageUrl.startsWith('http')) {
-        const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/";
-        finalImageUrl = storageBase + product.image_url;
-    }
+    // THE MF FIX: Extract just the filename and force the correct bucket path
+    const filename = product.image_url.split('/').pop();
+    const correctPath = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${filename}`;
 
-    document.getElementById('productImage').src = finalImageUrl;
+    document.getElementById('productImage').src = correctPath;
 }
         async function handleDownload() {
             if (!currentProduct) return;
