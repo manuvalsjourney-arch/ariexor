@@ -40,100 +40,42 @@
         box.textContent = msg;
         box.classList.remove("hidden");
     }
+async function downloadProduct(fileUrl) {
+    const statusBtn = document.getElementById('purchase-btn');
+    statusBtn.innerText = "Generating Link...";
 
-    async function loadProduct() {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get("id");
+    try {
+        // 1. Get the Signed URL from Supabase
+        const { data, error } = await supabase.storage
+            .from('product-images')
+            .createSignedUrl(fileUrl, 60); // Link valid for 60 seconds
 
-        if (!id) {
-            showError("No product ID found.");
-            return;
-        }
+        if (error) throw error;
 
-        try {
-            const { data, error } = await productSupabase
-                .from("product_details")
-                .select("*")
-                .eq("id", id)
-                .single();
+        // 2. Define the signedUrl here!
+        const signedUrl = data.signedUrl;
 
-            if (error || !data) {
-                showError("Product not found.");
-                return;
-            }
+        // 3. Trigger Instant Download (The "Silent" way)
+        const link = document.createElement('a');
+        link.href = signedUrl;
+        
+        // This line forces the browser to download instead of opening a new page
+        link.setAttribute('download', fileUrl.split('/').pop()); 
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-            // Fill UI
-            document.getElementById("productTitle").innerText = data.title;
-            document.getElementById("productPrice").innerText = "$" + data.price;
-            document.getElementById("productDescription").innerText = data.description;
-            document.getElementById("productImage").src = data.image_url;
+        statusBtn.innerText = "Download Started!";
+        setTimeout(() => { statusBtn.innerText = "Download Again"; }, 3000);
 
-            const btn = document.getElementById("downloadBtn");
-            if (data.file_url) {
-                // Connect the button to the SECURE function
-                btn.onclick = () => downloadSecureFile(data.file_url);
-                btn.disabled = false;
-            } else {
-                btn.innerText = "No File Available";
-                btn.disabled = true;
-            }
-        } catch (err) {
-            showError("System Error: " + err.message);
-        }
+    } catch (err) {
+        console.error("Download Error:", err);
+        alert("Error: " + err.message);
+        statusBtn.innerText = "Download Failed";
     }
-
-    // THE SECURE DOWNLOAD FUNCTION
-    async function downloadSecureFile(fileInput) {
-      try {
-        const btn = document.getElementById("downloadBtn");
-        btn.innerText = "Securing Connection...";
-        btn.disabled = true;
-
-        // 1. Handle Google Drive links
-        if (fileInput.includes('drive.google.com')) {
-          window.open(fileInput, '_blank');
-          btn.innerText = "Purchase Asset";
-          btn.disabled = false;
-          return;
-        }
-
-        // 2. Clean the path (remove full URL if present)
-        let filePath = fileInput;
-        if (filePath.startsWith('http')) {
-           const parts = filePath.split('/product-images/');
-           filePath = parts[1] ? decodeURIComponent(parts[1].split('?')[0]) : filePath;
-        }
-
-        // 3. ASK SUPABASE FOR THE 60-SECOND SECRET LINK
-        const { data, error } = await productSupabase.storage
-          .from('product-images')
-          .createSignedUrl(filePath, 60);
-
-        if (error || !data.signedUrl) {
-          throw new Error(error ? error.message : "Access Denied");
-        }
-
-        // Replace window.location.href = signedUrl; with this:
-
-const link = document.createElement('a');
-link.href = signedUrl;
-link.setAttribute('download', ''); // Forces the browser to download
-document.body.appendChild(link);
-link.click();
-document.body.removeChild(link);
-
-        btn.innerText = "Purchase Asset";
-        btn.disabled = false;
-
-      } catch (error) {
-        console.error('Download Error:', error);
-        alert(`Security Error: ${error.message}`);
-        document.getElementById("downloadBtn").innerText = "Purchase Asset";
-        document.getElementById("downloadBtn").disabled = false;
-      }
-    }
-
-    loadProduct();
+}
+   
 </script>
 </body>
 </html>
