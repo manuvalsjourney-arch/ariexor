@@ -29,59 +29,59 @@
         </div>
     </div>
 
-    <script>
-        const supabase = window.supabase.createClient(
-            'https://qtewpjdnnjgvfgllgryy.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
-        );
+  <script>
+    const supabase = window.supabase.createClient(
+        'https://qtewpjdnnjgvfgllgryy.supabase.co', 
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
+    );
 
-        async function loadProduct() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
+    async function loadProduct() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
 
-            const { data: product, error } = await supabase
-                .from('product_details')
-                .select('*')
-                .eq('id', productId)
-                .single();
+        const { data: product, error } = await supabase
+            .from('product_details')
+            .select('*')
+            .eq('id', productId)
+            .single();
 
-            if (error || !product) {
-                document.getElementById('productTitle').innerText = "Product Not Found";
-                return;
-            }
-
-            document.getElementById('productTitle').innerText = product.title;
-            document.getElementById('productPrice').innerText = `$${product.price}`;
-            document.getElementById('productDescription').innerText = product.description;
-            document.getElementById('productImage').src = product.image_url;
-
-            document.getElementById('downloadBtn').onclick = () => startDownload(product.file_url);
+        if (error || !product) {
+            document.getElementById('productTitle').innerText = "Product Not Found";
+            return;
         }
 
-        async function startDownload(filePath) {
-            const btn = document.getElementById('downloadBtn');
-            btn.innerText = "Generating Link...";
-            try {
-                const { data, error } = await supabase.storage
-                    .from('product-images')
-                    .createSignedUrl(filePath, 60);
+        // UPDATE DATA ON PAGE
+        document.getElementById('productTitle').innerText = product.title;
+        document.getElementById('productPrice').innerText = `$${product.price}`;
+        document.getElementById('productDescription').innerText = product.description;
 
-                if (error) throw error;
+        // FIX IMAGE PATH: This builds the correct link to your Supabase Storage
+        const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/";
+        document.getElementById('productImage').src = storageBase + product.image_url;
 
-                const link = document.createElement('a');
-                link.href = data.signedUrl;
-                link.setAttribute('download', filePath.split('/').pop());
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                btn.innerText = "Download Started!";
-            } catch (err) {
-                alert("Error: " + err.message);
-                btn.innerText = "Purchase & Download";
-            }
+        document.getElementById('downloadBtn').onclick = () => startDownload(product.file_url);
+    }
+
+    async function startDownload(filePath) {
+        const btn = document.getElementById('downloadBtn');
+        btn.innerText = "Generating Link...";
+        try {
+            const { data, error } = await supabase.storage.from('product-images').createSignedUrl(filePath, 60);
+            if (error) throw error;
+            const link = document.createElement('a');
+            link.href = data.signedUrl;
+            link.download = filePath.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            btn.innerText = "Download Started!";
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.innerText = "Purchase & Download";
         }
+    }
 
-        loadProduct();
-    </script>
+    loadProduct();
+</script>
 </body>
 </html>
