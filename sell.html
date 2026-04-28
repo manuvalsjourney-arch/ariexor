@@ -27,55 +27,70 @@
             <p id="uploadStatus" class="text-center text-sm mt-2 text-slate-400"></p>
         </div>
     </div>
-
 <script>
-const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Function to automate the upload and database entry
-async function handleProductUpload(event) {
-    event.preventDefault();
-    
-    const imageFile = document.getElementById('imageInput').files[0];
-    const zipFile = document.getElementById('zipInput').files[0];
-    const title = document.getElementById('titleInput').value;
+    async function handlePublish() {
+        const btn = document.getElementById('publishBtn');
+        const status = document.getElementById('uploadStatus');
+        
+        // Get Form Data
+        const title = document.getElementById('title').value;
+        const price = document.getElementById('price').value;
+        const description = document.getElementById('description').value;
+        const zipFile = document.getElementById('zipFileInput').files[0];
+        
+        // IMPORTANT: We need an image file input. 
+        // For now, I'll use a placeholder if you don't add a file input for images.
+        if (!zipFile || !title || !price) {
+            alert("Please fill in Title, Price, and Upload a ZIP file.");
+            return;
+        }
 
-    try {
-        // 1. AUTOMATE IMAGE UPLOAD (To Public Bucket)
-        const imagePath = `previews/${Date.now()}_${imageFile.name}`;
-        const { data: imgData } = await supabase.storage
-            .from('public-assets')
-            .upload(imagePath, imageFile);
+        btn.innerText = "Uploading Assets...";
+        btn.disabled = true;
 
-        // Automatically get the Permanent Public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from('public-assets')
-            .getPublicUrl(imagePath);
+        try {
+            // 1. AUTOMATE ZIP UPLOAD (Private Bucket)
+            const zipName = `${Date.now()}_${zipFile.name}`;
+            const zipPath = `downloads/${zipName}`;
+            
+            const { error: zipError } = await supabase.storage
+                .from('product-images')
+                .upload(zipPath, zipFile);
 
-        // 2. AUTOMATE ZIP UPLOAD (To Private Bucket)
-        const zipPath = `downloads/${Date.now()}_${zipFile.name}`;
-        await supabase.storage
-            .from('product-images')
-            .upload(zipPath, zipFile);
+            if (zipError) throw zipError;
 
-        // 3. AUTOMATE DATABASE ENTRY
-        const { error } = await supabase
-            .from('product_details')
-            .insert([{
-                title: title,
-                image_url: publicUrl, // The auto-generated permanent link
-                file_url: zipPath,    // The auto-generated secure path
-                price: document.getElementById('priceInput').value,
-                description: document.getElementById('descInput').value
-            }]);
+            // 2. IMAGE URL 
+            // If you are still pasting a URL manually, we use that. 
+            // If you want to automate images, you'd add an <input type="file" id="imageFile">
+            const finalImageUrl = document.getElementById('imageUrl').value;
 
-        if (!error) alert("Product listed automatically!");
+            // 3. AUTOMATE DATABASE ENTRY
+            const { data, error: dbError } = await supabase
+                .from('product_details')
+                .insert([{
+                    title: title,
+                    price: parseFloat(price),
+                    description: description,
+                    image_url: finalImageUrl, 
+                    file_url: zipPath // This matches the "downloads/" folder exactly
+                }]);
 
-    } catch (err) {
-        console.error("Automation failed:", err);
+            if (dbError) throw dbError;
+
+            status.innerText = "🚀 Product Published Successfully!";
+            btn.innerText = "Publish Product";
+            btn.disabled = false;
+
+        } catch (err) {
+            console.error(err);
+            status.innerText = "Error: " + err.message;
+            btn.disabled = false;
+        }
     }
-}
 </script>
 </body>
 </html>
