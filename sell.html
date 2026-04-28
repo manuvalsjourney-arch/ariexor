@@ -33,56 +33,47 @@ const SUPABASE_URL = "https://qtewpjdnnjgvfgllgryy.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-async function handlePublish() {
-    const title = document.getElementById('title').value.trim();
-    const price = document.getElementById('price').value;
-    const desc = document.getElementById('description').value;
-    const imgUrl = document.getElementById('imageUrl').value;
-    const file = document.getElementById('zipFileInput').files[0];
-    const status = document.getElementById('uploadStatus');
-    const btn = document.getElementById('publishBtn');
-
-    if (!title || !file) {
-        alert("Title and ZIP file required");
-        return;
-    }
+// Function to automate the upload and database entry
+async function handleProductUpload(event) {
+    event.preventDefault();
+    
+    const imageFile = document.getElementById('imageInput').files[0];
+    const zipFile = document.getElementById('zipInput').files[0];
+    const title = document.getElementById('titleInput').value;
 
     try {
-        btn.disabled = true;
-        status.innerText = "Uploading...";
+        // 1. AUTOMATE IMAGE UPLOAD (To Public Bucket)
+        const imagePath = `previews/${Date.now()}_${imageFile.name}`;
+        const { data: imgData } = await supabase.storage
+            .from('public-assets')
+            .upload(imagePath, imageFile);
 
-        // Clean filename
-        const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+        // Automatically get the Permanent Public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('public-assets')
+            .getPublicUrl(imagePath);
 
-        // Upload
-        const { error: uploadError } = await supabase.storage
+        // 2. AUTOMATE ZIP UPLOAD (To Private Bucket)
+        const zipPath = `downloads/${Date.now()}_${zipFile.name}`;
+        await supabase.storage
             .from('product-images')
-            .upload(fileName, file);
+            .upload(zipPath, zipFile);
 
-        if (uploadError) throw uploadError;
-
-        status.innerText = "Saving product...";
-
-        // Save ONLY filename
-        const { error: dbError } = await supabase
+        // 3. AUTOMATE DATABASE ENTRY
+        const { error } = await supabase
             .from('product_details')
             .insert([{
-                title,
-                price,
-                description: desc,
-                image_url: imgUrl || "https://via.placeholder.com/500",
-                file_url: fileName
+                title: title,
+                image_url: publicUrl, // The auto-generated permanent link
+                file_url: zipPath,    // The auto-generated secure path
+                price: document.getElementById('priceInput').value,
+                description: document.getElementById('descInput').value
             }]);
 
-        if (dbError) throw dbError;
-
-        status.innerText = "✅ Uploaded!";
-        setTimeout(() => window.location.href = "index.html", 1500);
+        if (!error) alert("Product listed automatically!");
 
     } catch (err) {
-        console.error(err);
-        status.innerText = "❌ " + err.message;
-        btn.disabled = false;
+        console.error("Automation failed:", err);
     }
 }
 </script>
