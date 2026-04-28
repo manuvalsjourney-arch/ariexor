@@ -1,125 +1,107 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Details | ariexo</title>
-    
-    <link rel="icon" type="image/png" href="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
+<script>
+const supabase = window.supabase.createClient(
+    'https://qtewpjdnnjgvfgllgryy.supabase.co', 
+    'YOUR_ANON_KEY'
+);
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        body { background: #0b0b14; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); transition: all 0.3s ease; }
-        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); }
-    </style>
-</head>
-<body class="min-h-screen">
-
-    <div class="max-w-6xl mx-auto p-6 mt-10 md:mt-20 grid md:grid-cols-2 gap-12">
-        <div class="relative group">
-            <img id="productImage" class="rounded-3xl w-full object-cover shadow-2xl border border-white/10" src="" alt="Product Preview" />
-        </div>
-
-        <div class="flex flex-col justify-center">
-            <h1 id="productTitle" class="text-5xl font-extrabold mb-4 tracking-tight">Loading...</h1>
-            <p id="productPrice" class="text-4xl text-indigo-400 font-black mb-8">$--</p>
-            
-            <div class="glass p-8 rounded-3xl mb-8">
-                <h3 class="text-xs uppercase tracking-[0.2em] text-gray-500 mb-4 font-bold">About this asset</h3>
-                <p id="productDescription" class="text-gray-300 leading-relaxed text-lg italic">Fetching product details...</p>
-            </div>
-
-            <button id="downloadBtn" onclick="handleDownload()" class="btn-gradient px-8 py-5 rounded-2xl font-bold w-full text-xl shadow-xl flex items-center justify-center gap-3">
-                Purchase & Download
-            </button>
-            <p class="text-center text-gray-500 text-xs mt-4 italic">Secure delivery via ariexo cloud</p>
-        </div>
-    </div>
-
-    <script>
-        // Initialize Supabase
-        const supabase = window.supabase.createClient(
-            'https://qtewpjdnnjgvfgllgryy.supabase.co', 
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
-        );
-
-        let currentProduct = null;
+let currentProduct = null;
 
 async function loadProduct() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
-    
-    const { data: product, error } = await supabase
-        .from('product_details')
-        .select('*')
-        .eq('id', productId)
-        .single();
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const productId = params.get('id');
 
-    if (error || !product) {
-        document.getElementById('productTitle').innerText = "Product Not Found";
-        return;
-    }
+        console.log("Product ID:", productId);
 
-    currentProduct = product;
-    document.getElementById('productTitle').innerText = product.title;
-    document.getElementById('productPrice').innerText = `$${product.price}`;
-    document.getElementById('productDescription').innerText = product.description;
-
-    // THE MF FIX: Extract just the filename and force the correct bucket path
-    const filename = product.image_url.split('/').pop();
-    const correctPath = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${filename}`;
-
-    document.getElementById('productImage').src = correctPath;
-}
-        async function handleDownload() {
-            if (!currentProduct) return;
-            
-            const btn = document.getElementById('downloadBtn');
-            const originalText = btn.innerHTML;
-            
-            // 1. Gumroad-style Loading State
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
-
-            try {
-                // 2. FOLDER FIX: Looks in 'products' for the zip/file
-                const { data, error } = await supabase.storage
-                    .from('product-images')
-                    .createSignedUrl('products/' + currentProduct.file_url, 60);
-
-                if (error) throw error;
-
-                // 3. Trigger Download
-                const link = document.createElement('a');
-                link.href = data.signedUrl;
-                link.download = currentProduct.file_url;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                // 4. Success State
-                btn.innerHTML = "Success! Download Started";
-                btn.style.background = "#10b981"; // Emerald green
-                
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
-                    btn.style.background = ""; 
-                }, 4000);
-
-            } catch (err) {
-                console.error(err);
-                alert("Download Error: " + err.message);
-                btn.disabled = false;
-                btn.innerHTML = "Try Again";
-            }
+        if (!productId) {
+            showError("No product ID in URL");
+            return;
         }
 
-        loadProduct();
-    </script>
-</body>
-</html>
+        // Fetch product
+        const { data, error } = await supabase
+            .from('product_details')
+            .select('*')
+            .eq('id', parseInt(productId))
+            .single();
+
+        console.log("Product:", data, "Error:", error);
+
+        if (error || !data) {
+            showError("Product not found");
+            return;
+        }
+
+        currentProduct = data;
+
+        // Set text content
+        document.getElementById('productTitle').innerText = data.title;
+        document.getElementById('productPrice').innerText = `$${data.price}`;
+        document.getElementById('productDescription').innerText = data.description;
+
+        // ✅ Image (clean method)
+        if (data.image_url) {
+            const { data: img } = supabase.storage
+                .from('product-images')
+                .getPublicUrl(data.image_url);
+
+            document.getElementById('productImage').src = img.publicUrl;
+        }
+
+    } catch (err) {
+        console.error(err);
+        showError("Something went wrong");
+    }
+}
+
+// Download handler
+async function handleDownload() {
+    if (!currentProduct) return;
+
+    const btn = document.getElementById('downloadBtn');
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = "Generating download...";
+
+    try {
+        const { data, error } = await supabase.storage
+            .from('product-images')
+            .createSignedUrl(currentProduct.file_url, 60);
+
+        if (error) throw error;
+
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.download = "";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        btn.innerHTML = "Download Started";
+        btn.style.background = "#10b981";
+
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            btn.style.background = "";
+        }, 3000);
+
+    } catch (err) {
+        console.error(err);
+        btn.innerHTML = "Failed - Try Again";
+        btn.disabled = false;
+    }
+}
+
+// Error UI
+function showError(message) {
+    document.getElementById('productTitle').innerText = message;
+    document.getElementById('productPrice').innerText = "";
+    document.getElementById('productDescription').innerText = "";
+}
+
+// Run
+loadProduct();
+</script>
