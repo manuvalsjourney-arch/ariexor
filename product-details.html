@@ -29,65 +29,7 @@
 </div>
 
 <script>
-    // 1. Initialize Supabase
-    const supabase = window.supabase.createClient(
-        'https://qtewpjdnnjgvfgllgryy.supabase.co', 
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
-    );
-
-    // 2. Fetch and Display Data
-    async function loadPage() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-
-        const { data: product, error } = await supabase
-            .from('product_details')
-            .select('*')
-            .eq('id', productId)
-            .single();
-
-        if (error || !product) {
-            document.getElementById('productTitle').innerText = "Product Not Found";
-            return;
-        }
-
-        // Fill the UI (Matching your HTML IDs exactly)
-        document.getElementById('productTitle').innerText = product.title;
-        document.getElementById('productPrice').innerText = `$${product.price}`;
-        document.getElementById('productDescription').innerText = product.description;
-        document.getElementById('productImage').src = product.image_url;
-
-        // Set up the Download Button
-        const btn = document.getElementById('downloadBtn');
-        btn.onclick = () => handleDownload(product.file_url);
-    }
-
-    // 3. Instant Download Logic
-    async function handleDownload(filePath) {
-        const btn = document.getElementById('downloadBtn');
-        btn.innerText = "Preparing Download...";
-
-        try {
-            const { data, error } = await supabase.storage
-                .from('product-images')
-                .createSignedUrl(filePath, 60);
-
-            if (error) throw error;
-
-            // Trigger the download
-            const a = document.createElement('a');
-            a.href = data.signedUrl;
-            a.download = filePath.split('/').pop();
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-
-            btn.innerText = "Download Started!";
-        } catch (err) {
-            alert("Download failed: " + err.message);
-            btn.innerText = "Purchase Asset";
-        }
-    }
+   
 // 1. Initialize Supabase (ONLY ONCE)
 const supabase = window.supabase.createClient(
     'https://qtewpjdnnjgvfgllgryy.supabase.co', 
