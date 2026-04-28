@@ -15,8 +15,8 @@
             <input type="number" id="price" placeholder="Price ($)" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-indigo-500">
             <textarea id="description" placeholder="Description" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl h-32 outline-none focus:border-indigo-500"></textarea>
             
-            <label class="block text-sm text-slate-400 font-medium">Step 1: Upload ZIP Asset</label>
-            <input type="file" id="zipFileInput" accept=".zip" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+            <label class="block text-sm text-slate-400 font-medium">Step 2: Upload Preview Image</label>
+            <input type="file" id="imageFileInput" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
             
             <label class="block text-sm text-slate-400 font-medium">Step 2: Preview Image URL (Optional)</label>
             <input type="text" id="imageUrl" placeholder="Paste image link here" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl outline-none focus:border-indigo-500">
@@ -33,64 +33,57 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function handlePublish() {
-        const btn = document.getElementById('publishBtn');
-        const status = document.getElementById('uploadStatus');
-        
-        // Get Form Data
-        const title = document.getElementById('title').value;
-        const price = document.getElementById('price').value;
-        const description = document.getElementById('description').value;
-        const zipFile = document.getElementById('zipFileInput').files[0];
-        
-        // IMPORTANT: We need an image file input. 
-        // For now, I'll use a placeholder if you don't add a file input for images.
-        if (!zipFile || !title || !price) {
-            alert("Please fill in Title, Price, and Upload a ZIP file.");
-            return;
-        }
+    const btn = document.getElementById('publishBtn');
+    const status = document.getElementById('uploadStatus');
+    
+    const title = document.getElementById('title').value;
+    const price = document.getElementById('price').value;
+    const description = document.getElementById('description').value;
+    const zipFile = document.getElementById('zipFileInput').files[0];
+    const imageFile = document.getElementById('imageFileInput').files[0];
 
-        btn.innerText = "Uploading Assets...";
-        btn.disabled = true;
-
-        try {
-            // 1. AUTOMATE ZIP UPLOAD (Private Bucket)
-            const zipName = `${Date.now()}_${zipFile.name}`;
-            const zipPath = `downloads/${zipName}`;
-            
-            const { error: zipError } = await supabase.storage
-                .from('product-images')
-                .upload(zipPath, zipFile);
-
-            if (zipError) throw zipError;
-
-            // 2. IMAGE URL 
-            // If you are still pasting a URL manually, we use that. 
-            // If you want to automate images, you'd add an <input type="file" id="imageFile">
-            const finalImageUrl = document.getElementById('imageUrl').value;
-
-            // 3. AUTOMATE DATABASE ENTRY
-            const { data, error: dbError } = await supabase
-                .from('product_details')
-                .insert([{
-                    title: title,
-                    price: parseFloat(price),
-                    description: description,
-                    image_url: finalImageUrl, 
-                    file_url: zipPath // This matches the "downloads/" folder exactly
-                }]);
-
-            if (dbError) throw dbError;
-
-            status.innerText = "🚀 Product Published Successfully!";
-            btn.innerText = "Publish Product";
-            btn.disabled = false;
-
-        } catch (err) {
-            console.error(err);
-            status.innerText = "Error: " + err.message;
-            btn.disabled = false;
-        }
+    if (!zipFile || !imageFile || !title || !price) {
+        alert("Please upload both the ZIP and an Image.");
+        return;
     }
+
+    btn.innerText = "Uploading...";
+    btn.disabled = true;
+
+    try {
+        // 1. Upload Image to PUBLIC bucket
+        const imgName = `${Date.now()}_${imageFile.name}`;
+        await supabase.storage.from('public-assets').upload(imgName, imageFile);
+        
+        // Auto-generate the permanent Public URL
+        const { data: { publicUrl } } = supabase.storage.from('public-assets').getPublicUrl(imgName);
+
+        // 2. Upload ZIP to PRIVATE bucket
+        const zipName = `${Date.now()}_${zipFile.name}`;
+        const zipPath = `downloads/${zipName}`;
+        const { error: zipError } = await supabase.storage.from('product-images').upload(zipPath, zipFile);
+        if (zipError) throw zipError;
+
+        // 3. Insert into Database
+        const { error: dbError } = await supabase.from('product_details').insert([{
+            title: title,
+            price: parseFloat(price),
+            description: description,
+            image_url: publicUrl, // Automated URL
+            file_url: zipPath    // Automated Path
+        }]);
+
+        if (dbError) throw dbError;
+
+        status.innerText = "🚀 Success! Product is live.";
+        btn.innerText = "Publish Product";
+        btn.disabled = false;
+
+    } catch (err) {
+        status.innerText = "Error: " + err.message;
+        btn.disabled = false;
+    }
+}
 </script>
 </body>
 </html>
