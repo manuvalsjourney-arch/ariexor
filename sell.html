@@ -66,8 +66,9 @@
 
         // 2. Upload ZIP to PRIVATE bucket
         // We use backticks `` and the 'downloads/' prefix to match your Table Editor
-        const zipName = `${Date.now()}_${zipFile.name}`;
-        const zipPath = `downloads/${zipName}`;
+       // This ensures the file goes into the 'downloads' folder automatically
+const zipName = `${Date.now()}_${zipFile.name}`;
+const zipPath = `downloads/${zipName}`;
         
         const { error: zipError } = await supabase.storage
             .from('product-images')
