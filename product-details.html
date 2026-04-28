@@ -12,87 +12,106 @@
     </style>
 </head>
 <body>
-<div class="max-w-5xl mx-auto p-6 mt-20 grid md:grid-cols-2 gap-10">
-    <img id="productImage" class="rounded-2xl w-full" src="" alt="" />
-    <div>
-        <h1 id="productTitle" class="text-4xl font-bold mb-4">Loading...</h1>
-        <p id="productPrice" class="text-2xl text-indigo-400 mb-4">$--</p>
-        <div class="glass p-4 rounded-xl mb-6">
-            <p id="productDescription">Fetching product details...</p>
+    <div class="max-w-5xl mx-auto p-6 mt-20 grid md:grid-cols-2 gap-10">
+        <div class="relative group">
+            <img id="productImage" class="rounded-2xl w-full object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]" src="" alt="Product Preview" />
         </div>
-        <div id="errorBox" class="hidden bg-red-900/40 border border-red-500 text-red-300 text-sm p-3 rounded-xl mb-4"></div>
-        <button id="downloadBtn"
-            class="bg-indigo-600 px-6 py-4 rounded-xl font-bold w-full disabled:opacity-50 disabled:cursor-not-allowed">
-            Purchase Asset
-        </button>
+
+        <div>
+            <h1 id="productTitle" class="text-4xl font-bold mb-4 tracking-tight">Loading...</h1>
+            <p id="productPrice" class="text-3xl text-indigo-400 font-semibold mb-6">$--</p>
+            
+            <div class="glass p-6 rounded-2xl mb-8">
+                <h3 class="text-sm uppercase tracking-widest text-gray-400 mb-2 font-bold">Description</h3>
+                <p id="productDescription" class="text-gray-300 leading-relaxed">Fetching product details...</p>
+            </div>
+
+            <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 transition-colors px-6 py-4 rounded-xl font-bold w-full text-lg shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+                Purchase & Download
+            </button>
+            
+            <p class="text-center text-gray-500 text-xs mt-4 italic">Instant delivery after clicking download</p>
+        </div>
     </div>
-</div>
 
-<script>
-   
-// 1. Initialize Supabase (ONLY ONCE)
-const supabase = window.supabase.createClient(
-    'https://qtewpjdnnjgvfgllgryy.supabase.co', 
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
-);
+    <script>
+        // 1. Setup Supabase
+        const supabase = window.supabase.createClient(
+            'https://qtewpjdnnjgvfgllgryy.supabase.co', 
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
+        );
 
-// 2. Fetch and Display Data
-async function loadPage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const productId = urlParams.get('id');
+        // 2. Load the Product from Database
+        async function loadProduct() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
 
-    const { data: product, error } = await supabase
-        .from('product_details')
-        .select('*')
-        .eq('id', productId)
-        .single();
+            if (!productId) {
+                document.getElementById('productTitle').innerText = "No Product Selected";
+                return;
+            }
 
-    if (error || !product) {
-        document.getElementById('productTitle').innerText = "Product Not Found";
-        return;
-    }
+            const { data: product, error } = await supabase
+                .from('product_details')
+                .select('*')
+                .eq('id', productId)
+                .single();
 
-    // Fill the UI 
-    document.getElementById('productTitle').innerText = product.title;
-    document.getElementById('productPrice').innerText = `$${product.price}`;
-    document.getElementById('productDescription').innerText = product.description;
-    document.getElementById('productImage').src = product.image_url;
+            if (error || !product) {
+                document.getElementById('productTitle').innerText = "Product Not Found";
+                console.error("Supabase Error:", error);
+                return;
+            }
 
-    // Set up the Download Button
-    const btn = document.getElementById('downloadBtn');
-    btn.onclick = () => handleDownload(product.file_url);
-}
+            // Fill HTML with Database Data
+            document.getElementById('productTitle').innerText = product.title;
+            document.getElementById('productPrice').innerText = `$${product.price}`;
+            document.getElementById('productDescription').innerText = product.description;
+            document.getElementById('productImage').src = product.image_url;
 
-// 3. Instant Download Logic
-async function handleDownload(filePath) {
-    const btn = document.getElementById('downloadBtn');
-    btn.innerText = "Preparing Download...";
+            // Connect the button to the file
+            const btn = document.getElementById('downloadBtn');
+            btn.onclick = () => startInstantDownload(product.file_url);
+        }
 
-    try {
-        const { data, error } = await supabase.storage
-            .from('product-images')
-            .createSignedUrl(filePath, 60);
+        // 3. The "Instant Download" Logic
+        async function startInstantDownload(filePath) {
+            const btn = document.getElementById('downloadBtn');
+            const originalText = btn.innerText;
+            btn.innerText = "Generating Link...";
+            btn.disabled = true;
 
-        if (error) throw error;
+            try {
+                // Get a temporary secure link
+                const { data, error } = await supabase.storage
+                    .from('product-images')
+                    .createSignedUrl(filePath, 60);
 
-        // Trigger the download silently
-        const a = document.createElement('a');
-        a.href = data.signedUrl;
-        a.download = filePath.split('/').pop();
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+                if (error) throw error;
 
-        btn.innerText = "Download Started!";
-    } catch (err) {
-        alert("Download failed: " + err.message);
-        btn.innerText = "Purchase Asset";
-    }
-}
+                // Hidden link trick to start download
+                const link = document.createElement('a');
+                link.href = data.signedUrl;
+                link.setAttribute('download', filePath.split('/').pop());
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
 
-// Start the process
-loadPage();
-   
-</script>
+                btn.innerText = "Download Started!";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }, 3000);
+
+            } catch (err) {
+                alert("Download Error: " + err.message);
+                btn.innerText = "Error Occurred";
+                btn.disabled = false;
+            }
+        }
+
+        // Run on Page Load
+        loadProduct();
+    </script>
 </body>
 </html>
