@@ -13,29 +13,23 @@
 </head>
 <body>
     <div class="max-w-5xl mx-auto p-6 mt-20 grid md:grid-cols-2 gap-10">
-        <div class="relative group">
-            <img id="productImage" class="rounded-2xl w-full object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]" src="" alt="Product Preview" />
-        </div>
-
         <div>
-            <h1 id="productTitle" class="text-4xl font-bold mb-4 tracking-tight">Loading...</h1>
+            <img id="productImage" class="rounded-2xl w-full object-cover shadow-2xl" src="" alt="Product Preview" />
+        </div>
+        <div>
+            <h1 id="productTitle" class="text-4xl font-bold mb-4">Loading...</h1>
             <p id="productPrice" class="text-3xl text-indigo-400 font-semibold mb-6">$--</p>
-            
             <div class="glass p-6 rounded-2xl mb-8">
                 <h3 class="text-sm uppercase tracking-widest text-gray-400 mb-2 font-bold">Description</h3>
                 <p id="productDescription" class="text-gray-300 leading-relaxed">Fetching product details...</p>
             </div>
-
-            <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 transition-colors px-6 py-4 rounded-xl font-bold w-full text-lg shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+            <button id="downloadBtn" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-4 rounded-xl font-bold w-full text-lg shadow-lg">
                 Purchase & Download
             </button>
-            
-            <p class="text-center text-gray-500 text-xs mt-4 italic">Instant delivery after clicking download</p>
         </div>
     </div>
 
     <script>
-        // Initialize Supabase ONLY ONCE
         const supabase = window.supabase.createClient(
             'https://qtewpjdnnjgvfgllgryy.supabase.co', 
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
@@ -44,11 +38,6 @@
         async function loadProduct() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
-
-            if (!productId) {
-                document.getElementById('productTitle').innerText = "No Product Selected";
-                return;
-            }
 
             const { data: product, error } = await supabase
                 .from('product_details')
@@ -66,11 +55,10 @@
             document.getElementById('productDescription').innerText = product.description;
             document.getElementById('productImage').src = product.image_url;
 
-            const btn = document.getElementById('downloadBtn');
-            btn.onclick = () => startInstantDownload(product.file_url);
+            document.getElementById('downloadBtn').onclick = () => startDownload(product.file_url);
         }
 
-        async function startInstantDownload(filePath) {
+        async function startDownload(filePath) {
             const btn = document.getElementById('downloadBtn');
             btn.innerText = "Generating Link...";
             try {
@@ -86,11 +74,9 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-
                 btn.innerText = "Download Started!";
-                setTimeout(() => { btn.innerText = "Purchase & Download"; }, 3000);
             } catch (err) {
-                alert("Download Error: " + err.message);
+                alert("Error: " + err.message);
                 btn.innerText = "Purchase & Download";
             }
         }
