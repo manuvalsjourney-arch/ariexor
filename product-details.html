@@ -35,13 +35,12 @@
     </div>
 
     <script>
-        // 1. Setup Supabase
+        // Initialize Supabase ONLY ONCE
         const supabase = window.supabase.createClient(
             'https://qtewpjdnnjgvfgllgryy.supabase.co', 
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU'
         );
 
-        // 2. Load the Product from Database
         async function loadProduct() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
@@ -59,37 +58,28 @@
 
             if (error || !product) {
                 document.getElementById('productTitle').innerText = "Product Not Found";
-                console.error("Supabase Error:", error);
                 return;
             }
 
-            // Fill HTML with Database Data
             document.getElementById('productTitle').innerText = product.title;
             document.getElementById('productPrice').innerText = `$${product.price}`;
             document.getElementById('productDescription').innerText = product.description;
             document.getElementById('productImage').src = product.image_url;
 
-            // Connect the button to the file
             const btn = document.getElementById('downloadBtn');
             btn.onclick = () => startInstantDownload(product.file_url);
         }
 
-        // 3. The "Instant Download" Logic
         async function startInstantDownload(filePath) {
             const btn = document.getElementById('downloadBtn');
-            const originalText = btn.innerText;
             btn.innerText = "Generating Link...";
-            btn.disabled = true;
-
             try {
-                // Get a temporary secure link
                 const { data, error } = await supabase.storage
                     .from('product-images')
                     .createSignedUrl(filePath, 60);
 
                 if (error) throw error;
 
-                // Hidden link trick to start download
                 const link = document.createElement('a');
                 link.href = data.signedUrl;
                 link.setAttribute('download', filePath.split('/').pop());
@@ -98,19 +88,13 @@
                 document.body.removeChild(link);
 
                 btn.innerText = "Download Started!";
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }, 3000);
-
+                setTimeout(() => { btn.innerText = "Purchase & Download"; }, 3000);
             } catch (err) {
                 alert("Download Error: " + err.message);
-                btn.innerText = "Error Occurred";
-                btn.disabled = false;
+                btn.innerText = "Purchase & Download";
             }
         }
 
-        // Run on Page Load
         loadProduct();
     </script>
 </body>
