@@ -49,10 +49,11 @@
 
         let currentProduct = null;
 
-       async function loadProduct() {
+      async function loadProduct() {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
     
+    // 1. Fetch data
     const { data: product, error } = await supabase
         .from('product_details')
         .select('*')
@@ -61,24 +62,24 @@
 
     if (error || !product) {
         document.getElementById('productTitle').innerText = "Product Not Found";
+        document.getElementById('productDescription').innerText = "We couldn't find a product with ID: " + productId;
         return;
     }
 
+    // 2. Set Text
     currentProduct = product;
     document.getElementById('productTitle').innerText = product.title;
     document.getElementById('productPrice').innerText = `$${product.price}`;
     document.getElementById('productDescription').innerText = product.description;
 
-    // THE FIX: Check if the image_url already has 'previews/' or needs it
-    let imagePath = product.image_url;
-    if (!imagePath.startsWith('previews/')) {
-        imagePath = 'previews/' + imagePath;
-    }
-
+    // 3. THE IMAGE FIX: Try to find the image in 'previews' first, then root
     const storageBase = "https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/";
+    
+    // If the image_url in DB is just "pic.png", this makes it "previews/pic.png"
+    let imagePath = product.image_url.includes('/') ? product.image_url : 'previews/' + product.image_url;
+    
     document.getElementById('productImage').src = storageBase + imagePath;
 }
-
         async function handleDownload() {
             if (!currentProduct) return;
             
