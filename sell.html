@@ -50,37 +50,53 @@
     btn.innerText = "Uploading...";
     btn.disabled = true;
 
-    try {
+   try {
         // 1. Upload Image to PUBLIC bucket
         const imgName = `${Date.now()}_${imageFile.name}`;
-        await supabase.storage.from('public-assets').upload(imgName, imageFile);
+        const { error: imgError } = await supabase.storage
+            .from('public-assets')
+            .upload(imgName, imageFile);
         
+        if (imgError) throw imgError;
+
         // Auto-generate the permanent Public URL
-        const { data: { publicUrl } } = supabase.storage.from('public-assets').getPublicUrl(imgName);
+        const { data: { publicUrl } } = supabase.storage
+            .from('public-assets')
+            .getPublicUrl(imgName);
 
         // 2. Upload ZIP to PRIVATE bucket
+        // We use backticks `` and the 'downloads/' prefix to match your Table Editor
         const zipName = `${Date.now()}_${zipFile.name}`;
         const zipPath = `downloads/${zipName}`;
-        const { error: zipError } = await supabase.storage.from('product-images').upload(zipPath, zipFile);
+        
+        const { error: zipError } = await supabase.storage
+            .from('product-images')
+            .upload(zipPath, zipFile);
+            
         if (zipError) throw zipError;
 
         // 3. Insert into Database
-        const { error: dbError } = await supabase.from('product_details').insert([{
-            title: title,
-            price: parseFloat(price),
-            description: description,
-            image_url: publicUrl, // Automated URL
-            file_url: zipPath    // Automated Path
-        }]);
+        const { error: dbError } = await supabase
+            .from('product_details')
+            .insert([{
+                title: title,
+                price: parseFloat(price),
+                description: description,
+                image_url: publicUrl, // The auto-generated public link
+                file_url: zipPath    // The auto-generated internal path (e.g., downloads/123_file.zip)
+            }]);
 
         if (dbError) throw dbError;
 
         status.innerText = "🚀 Success! Product is live.";
+        status.className = "text-center text-sm mt-2 text-green-500";
         btn.innerText = "Publish Product";
         btn.disabled = false;
 
     } catch (err) {
+        console.error("Upload failed:", err);
         status.innerText = "Error: " + err.message;
+        status.className = "text-center text-sm mt-2 text-red-500";
         btn.disabled = false;
     }
 }
