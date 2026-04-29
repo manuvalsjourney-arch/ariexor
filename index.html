@@ -197,7 +197,7 @@ function renderProducts(products) {
     grid.innerHTML = products.map(p => {
         // --- THE ROBOT FIX: Extract filename and force /previews/ path ---
         const fileName = p.image_url ? p.image_url.split('/').pop() : 'placeholder.png';
-       const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
+     const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName.replace(/%20/g, ' '))}`;
 
         return `
         <div class="relative group fade-in">
