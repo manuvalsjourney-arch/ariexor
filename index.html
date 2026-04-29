@@ -235,8 +235,9 @@ async function shareProduct(e, title, id) {
     if (navigator.share) {
         try { await navigator.share({ title, url }); } catch (err) {}
     } else {
-        navigator.clipboard.writeText(url);
-        alert('Link copied to clipboard!');
+ const rawUrl = p.image_url || '';
+        const fileName = rawUrl.split('/').pop().split('?')[0];
+        const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
     }
 }
 
