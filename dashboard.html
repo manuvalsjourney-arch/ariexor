@@ -472,24 +472,20 @@ form.addEventListener('submit', async (e) => {
 
         setProgress(80);
 
-        // ── 5. Write to database ──────────────────────────────────────────────
-        if (editId) {
-            // UPDATE (seller_id already set; don't overwrite)
-            const { error: updateErr } = await sb
-                .from('product_details')
-                .update(payload)
-                .eq('id', editId);
+      
+      // ── 5. Write to database ──────────────────────────────────────────────
+// Add the seller_id so it passes the RLS security check
+payload.seller_id = user.id; 
 
-            if (updateErr) {
-                throw new Error(
-                    `DB_UPDATE failed\n` +
-                    `Code: ${updateErr.code}\n` +
-                    `Message: ${updateErr.message}\n` +
-                    `Hint: ${updateErr.hint ?? 'none'}\n` +
-                    `Details: ${updateErr.details ?? 'none'}`
-                );
-            }
-
+if (editId) {
+    // UPDATE
+    const { error: updateErr } = await sb.from('product_details').update(payload).eq('id', editId);
+    if (updateErr) throw new Error(`DB_UPDATE failed: ${updateErr.message}`);
+} else {
+    // INSERT
+    const { error: insertErr } = await sb.from('product_details').insert([payload]);
+    if (insertErr) throw new Error(`DB_INSERT failed: ${insertErr.message}`);
+}
             setProgress(100);
             showToast('Changes saved successfully!', 'success');
 
