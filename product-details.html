@@ -4,37 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | ariexo</title>
+
     <link rel="icon" href="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        body { background: #0b0b14; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        .btn-gradient { background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); transition: 0.3s; }
-        .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99,102,241,0.3); }
+        body { 
+            background: #0b0b14; 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+        }
+        .glass { 
+            background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            backdrop-filter: blur(10px); 
+        }
+        .btn-gradient { 
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); 
+            transition: 0.3s; 
+        }
+        .btn-gradient:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 20px rgba(99,102,241,0.3); 
+        }
+        .btn-gradient:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .loading-skeleton {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
     </style>
 </head>
+
 <body class="min-h-screen">
 
 <div class="max-w-6xl mx-auto p-6 mt-10 md:mt-20 grid md:grid-cols-2 gap-12">
+
+    <!-- Image -->
     <div>
-        <img id="productImage" class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl" src="" alt="Product Preview">
+        <img id="productImage"
+             class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl loading-skeleton"
+             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23222' width='400' height='400'/%3E%3C/svg%3E"
+             alt="Product Preview">
     </div>
 
+    <!-- Content -->
     <div class="flex flex-col justify-center">
-        <h1 id="productTitle" class="text-5xl font-extrabold mb-4">Loading...</h1>
-        <p id="productPrice" class="text-4xl text-indigo-400 font-black mb-8">$--</p>
+        <h1 id="productTitle" class="text-5xl font-extrabold mb-4 loading-skeleton h-12 rounded-lg"></h1>
+        <p id="productPrice" class="text-4xl text-indigo-400 font-black mb-8 loading-skeleton h-10 rounded-lg w-32"></p>
+
         <div class="glass p-6 rounded-2xl mb-6">
-            <p id="productDescription" class="text-gray-300 italic">Fetching product details...</p>
+            <p id="productDescription" class="text-gray-300 italic loading-skeleton h-24 rounded-lg">
+            </p>
         </div>
-        <button id="downloadBtn" onclick="handleDownload()" class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
+
+        <button id="downloadBtn"
+                onclick="handleDownload()"
+                class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
             Purchase & Download
         </button>
-        <p class="text-center text-gray-500 text-xs mt-4">Secure delivery via ariexo cloud</p>
+
+        <p class="text-center text-gray-500 text-xs mt-4">
+            Secure delivery via ariexo cloud
+        </p>
     </div>
+
 </div>
 
 <script>
+// Initialize Supabase client
 const supabase = window.supabase.createClient(
     'https://jiuzebbrjbqkoovfrbvp.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
@@ -42,70 +89,157 @@ const supabase = window.supabase.createClient(
 
 let currentProduct = null;
 
+/**
+ * Extract clean filename from URL or path
+ * Handles both full URLs and file paths
+ */
+function extractFileName(urlOrPath) {
+    if (!urlOrPath) return '';
+    return urlOrPath.split('/').pop().split('?')[0];
+}
+
+/**
+ * Load product data from Supabase
+ */
 async function loadProduct() {
     try {
+        // Get product ID from URL query parameter
         const productId = new URLSearchParams(window.location.search).get('id');
-        if (!productId) return showError("Missing product ID");
+        
+        if (!productId) {
+            return showError("Missing product ID in URL");
+        }
 
+        // Fetch product from database
         const { data, error } = await supabase
             .from('product_details')
             .select('*')
             .eq('id', parseInt(productId))
             .single();
 
-        if (error || !data) return showError("Product not found");
+        if (error || !data) {
+            return showError("Product not found");
+        }
+
         currentProduct = data;
 
-        // Populate UI
+        // Update title
         document.getElementById('productTitle').innerText = data.title;
+        document.getElementById('productTitle').classList.remove('loading-skeleton');
+
+        // Update price
         document.getElementById('productPrice').innerText = `$${data.price}`;
-        document.getElementById('productDescription').innerText = data.description || "No description provided.";
+        document.getElementById('productPrice').classList.remove('loading-skeleton');
+
+        // Update description
+        document.getElementById('productDescription').innerText = data.description;
+        document.getElementById('productDescription').classList.remove('loading-skeleton');
+
+        // Build image URL - handle multiple data formats
+        let imageUrl = data.image_url;
         
-        // Fix Image URL
-        const fileName = data.image_url;
-        document.getElementById('productImage').src = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/${fileName}`;
+        // If it's just a filename, build the full URL
+        if (!imageUrl.startsWith('http')) {
+            const imageFileName = extractFileName(imageUrl);
+            // Check if path already contains 'previews'
+            if (imageUrl.includes('previews')) {
+                imageUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/${imageUrl}`;
+            } else {
+                imageUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${imageFileName}`;
+            }
+        }
+        
+        const imageElement = document.getElementById('productImage');
+        imageElement.src = imageUrl;
+        imageElement.classList.remove('loading-skeleton');
+        imageElement.onerror = () => {
+            console.error('Image failed to load from:', imageUrl);
+            showError("Failed to load product image");
+        };
 
     } catch (err) {
-        showError("Connection Error");
+        console.error('Load product error:', err);
+        showError("Something went wrong loading the product");
     }
 }
 
+/**
+ * Handle download button click
+ */
 async function handleDownload() {
-    if (!currentProduct) return;
+    if (!currentProduct) {
+        alert("Product data not loaded yet");
+        return;
+    }
+
     const btn = document.getElementById('downloadBtn');
-    const original = btn.innerHTML;
+    const originalHTML = btn.innerHTML;
+    const originalStyle = btn.className;
+
     btn.disabled = true;
     btn.innerHTML = "Preparing download...";
 
     try {
-        const fileClean = currentProduct.file_url.split('/').pop();
+        // Extract clean filename from file_url
+        const fileClean = extractFileName(currentProduct.file_url);
+        
+        // Create signed URL for secure download
         const { data, error } = await supabase.storage
             .from('product-images')
             .createSignedUrl(`products/${fileClean}`, 60);
 
-        if (error) throw error;
+        if (error) {
+            throw new Error(`Storage error: ${error.message}`);
+        }
+
+        if (!data || !data.signedUrl) {
+            throw new Error("Failed to generate download link");
+        }
+
+        // Open download in new tab
         window.open(data.signedUrl, '_blank');
 
-        btn.innerHTML = "Download Started";
+        // Update button feedback
+        btn.innerHTML = "✓ Download Started";
         btn.style.background = "#10b981";
+
+        // Reset button after 3 seconds
         setTimeout(() => {
             btn.disabled = false;
-            btn.innerHTML = original;
-            btn.style.background = "";
+            btn.innerHTML = originalHTML;
+            btn.className = originalStyle;
         }, 3000);
+
     } catch (err) {
-        btn.innerHTML = "Download Failed";
+        console.error('Download error:', err);
+        btn.innerHTML = "✗ Failed - Try Again";
+        btn.style.background = "#ef4444";
         btn.disabled = false;
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.className = originalStyle;
+        }, 3000);
     }
 }
 
+/**
+ * Display error message in UI
+ */
 function showError(msg) {
-    document.getElementById('productTitle').innerText = msg;
+    document.getElementById('productTitle').innerText = "⚠️ " + msg;
+    document.getElementById('productTitle').classList.remove('loading-skeleton');
+    
     document.getElementById('productPrice').innerText = "";
-    document.getElementById('productDescription').innerText = "Please check the product ID.";
+    document.getElementById('productDescription').innerText = "";
+    
+    const btn = document.getElementById('downloadBtn');
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
 }
 
-// THIS STARTS THE ROBOT
+// Load product when page is ready
 loadProduct();
 </script>
 
