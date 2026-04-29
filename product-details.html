@@ -87,8 +87,7 @@ async function loadProduct() {
 const fileName = data.image_url.split('/').pop().replace(/%20/g, ' ');
 document.getElementById('productImage').src = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
         
-            `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
-
+           
     } catch (err) {
         showError("Something broke");
     }
