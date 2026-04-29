@@ -159,7 +159,7 @@
             document.getElementById('productDescription').innerText = data.description;
             document.getElementById('productDescription').classList.remove('loading-skeleton');
 
-            // Build image URL - handle multiple data formats
+            // Build image URL - handle multiple data formats with URL encoding
             let imageUrl = data.image_url;
             
             if (!imageUrl) {
@@ -169,21 +169,25 @@
             // If it's not already a full URL, build it
             if (!imageUrl.startsWith('http')) {
                 const imageFileName = extractFileName(imageUrl);
+                const encodedFileName = encodeURIComponent(imageFileName);
+                
                 // Check if path already contains 'previews'
                 if (imageUrl.includes('previews')) {
-                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/${imageUrl}`;
+                    // Path already has previews, but we need to encode just the filename
+                    const pathWithoutFileName = imageUrl.substring(0, imageUrl.lastIndexOf('/') + 1);
+                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/${pathWithoutFileName}${encodedFileName}`;
                 } else {
-                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/previews/${imageFileName}`;
+                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/previews/${encodedFileName}`;
                 }
             }
             
-            console.log('Image URL:', imageUrl);
+            console.log('📸 Final Image URL:', imageUrl);
             
             const imageElement = document.getElementById('productImage');
             imageElement.src = imageUrl;
             imageElement.classList.remove('loading-skeleton');
             imageElement.onerror = () => {
-                console.error('Image failed to load from:', imageUrl);
+                console.error('❌ Image failed to load from:', imageUrl);
                 showError("Failed to load product image");
             };
 
@@ -215,15 +219,17 @@
                 throw new Error("Supabase not initialized");
             }
 
-            // Extract clean filename from file_url
+            // Extract clean filename from file_url with URL encoding
             const fileClean = extractFileName(currentProduct.file_url);
+            const encodedFileName = encodeURIComponent(fileClean);
             
-            console.log('Creating signed URL for:', fileClean);
+            console.log('📥 Creating signed URL for:', fileClean);
+            console.log('📥 Encoded filename:', encodedFileName);
 
             // Create signed URL for secure download
             const { data, error } = await sb.storage
                 .from('product-images')
-                .createSignedUrl(`products/${fileClean}`, 60);
+                .createSignedUrl(`products/${encodedFileName}`, 60);
 
             if (error) {
                 throw new Error(`Storage error: ${error.message}`);
