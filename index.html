@@ -6,7 +6,7 @@
     
    <title>ariexo | Buy/Sell Premium Digital Assets & Creator Tools</title>
 <meta name="title" content="ariexo | Buy or Sell Premium Digital Assets & Creator Tools">
- <link rel="icon" type="image/png" href="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
+ <link rel="icon" type="image/png" href="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
     <meta name="title" content="ariexo | Premium Digital Assets & Creator Tools">
     <meta name="description" content="Shop high-end aesthetic planners, video editing assets, and digital tools. Join the ariexo ecosystem to elevate your digital workspace.">
     <meta name="keywords" content="digital assets, aesthetic planners, video editing templates, ariexo, digital marketplace, creator tools">
@@ -16,7 +16,7 @@
     <meta property="og:url" content="https://ariexor.vercel.app/">
     <meta property="og:title" content="ariexo | Level Up Your Digital Life">
     <meta property="og:description" content="One account to buy or sell everything. Explore our latest drops in aesthetic digital tools.">
-    <meta property="og:image" content="https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/favicon.png"> <meta property="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png"> <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://ariexor.vercel.app/">
     <meta property="twitter:title" content="ariexo | Premium Digital Marketplace">
     <meta property="twitter:description" content="Shop the latest in aesthetic digital productivity.">
@@ -202,7 +202,7 @@ function renderProducts(products) {
         // Grab filename, fix %20, and point to the previews folder
        // This handles both the %20 from the table and the spaces in your storage folder
 const fileName = p.image_url ? p.image_url.split('/').pop().replace(/%20/g, ' ') : 'placeholder.png';
-const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
+const finalImgUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
         return `
         <div class="relative group fade-in">
             <button onclick="shareProduct(event, '${p.title}', '${p.id}')" 
@@ -238,7 +238,7 @@ async function shareProduct(e, title, id) {
     } else {
  const rawUrl = p.image_url || '';
         const fileName = rawUrl.split('/').pop().split('?')[0];
-        const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
+        const finalImgUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
     }
 }
 
