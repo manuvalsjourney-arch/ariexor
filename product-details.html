@@ -81,166 +81,227 @@
 </div>
 
 <script>
-// Initialize Supabase client
-const supabase = window.supabase.createClient(
-    'https://jiuzebbrjbqkoovfrbvp.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
-);
+(function() {
+    'use strict';
 
-let currentProduct = null;
+    // Initialize Supabase client ONCE
+    const supabaseURL = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
+    
+    let supabase = null;
+    let currentProduct = null;
 
-/**
- * Extract clean filename from URL or path
- * Handles both full URLs and file paths
- */
-function extractFileName(urlOrPath) {
-    if (!urlOrPath) return '';
-    return urlOrPath.split('/').pop().split('?')[0];
-}
-
-/**
- * Load product data from Supabase
- */
-async function loadProduct() {
-    try {
-        // Get product ID from URL query parameter
-        const productId = new URLSearchParams(window.location.search).get('id');
-        
-        if (!productId) {
-            return showError("Missing product ID in URL");
+    // Initialize Supabase safely
+    function initSupabase() {
+        if (!supabase && window.supabase) {
+            supabase = window.supabase.createClient(supabaseURL, supabaseKey);
+            console.log('✓ Supabase initialized');
         }
+        return supabase;
+    }
 
-        // Fetch product from database
-        const { data, error } = await supabase
-            .from('product_details')
-            .select('*')
-            .eq('id', parseInt(productId))
-            .single();
+    /**
+     * Extract clean filename from URL or path
+     * Handles both full URLs and file paths
+     */
+    function extractFileName(urlOrPath) {
+        if (!urlOrPath) return '';
+        return urlOrPath.split('/').pop().split('?')[0];
+    }
 
-        if (error || !data) {
-            return showError("Product not found");
-        }
-
-        currentProduct = data;
-
-        // Update title
-        document.getElementById('productTitle').innerText = data.title;
-        document.getElementById('productTitle').classList.remove('loading-skeleton');
-
-        // Update price
-        document.getElementById('productPrice').innerText = `$${data.price}`;
-        document.getElementById('productPrice').classList.remove('loading-skeleton');
-
-        // Update description
-        document.getElementById('productDescription').innerText = data.description;
-        document.getElementById('productDescription').classList.remove('loading-skeleton');
-
-        // Build image URL - handle multiple data formats
-        let imageUrl = data.image_url;
-        
-        // If it's just a filename, build the full URL
-        if (!imageUrl.startsWith('http')) {
-            const imageFileName = extractFileName(imageUrl);
-            // Check if path already contains 'previews'
-            if (imageUrl.includes('previews')) {
-                imageUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/${imageUrl}`;
-            } else {
-                imageUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${imageFileName}`;
+    /**
+     * Load product data from Supabase
+     */
+    async function loadProduct() {
+        try {
+            const sb = initSupabase();
+            if (!sb) {
+                return showError("Supabase failed to initialize");
             }
-        }
-        
-        const imageElement = document.getElementById('productImage');
-        imageElement.src = imageUrl;
-        imageElement.classList.remove('loading-skeleton');
-        imageElement.onerror = () => {
-            console.error('Image failed to load from:', imageUrl);
-            showError("Failed to load product image");
-        };
 
-    } catch (err) {
-        console.error('Load product error:', err);
-        showError("Something went wrong loading the product");
+            // Get product ID from URL query parameter
+            const productId = new URLSearchParams(window.location.search).get('id');
+            
+            if (!productId) {
+                return showError("Missing product ID in URL");
+            }
+
+            console.log('Loading product ID:', productId);
+
+            // Fetch product from database
+            const { data, error } = await sb
+                .from('product_details')
+                .select('*')
+                .eq('id', parseInt(productId))
+                .single();
+
+            if (error) {
+                console.error('Database error:', error);
+                return showError("Product not found or database error");
+            }
+
+            if (!data) {
+                return showError("Product not found");
+            }
+
+            currentProduct = data;
+            console.log('✓ Product loaded:', data.title);
+
+            // Update title
+            document.getElementById('productTitle').innerText = data.title;
+            document.getElementById('productTitle').classList.remove('loading-skeleton');
+
+            // Update price
+            document.getElementById('productPrice').innerText = `$${data.price}`;
+            document.getElementById('productPrice').classList.remove('loading-skeleton');
+
+            // Update description
+            document.getElementById('productDescription').innerText = data.description;
+            document.getElementById('productDescription').classList.remove('loading-skeleton');
+
+            // Build image URL - handle multiple data formats
+            let imageUrl = data.image_url;
+            
+            if (!imageUrl) {
+                return showError("No image URL in product data");
+            }
+
+            // If it's not already a full URL, build it
+            if (!imageUrl.startsWith('http')) {
+                const imageFileName = extractFileName(imageUrl);
+                // Check if path already contains 'previews'
+                if (imageUrl.includes('previews')) {
+                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/${imageUrl}`;
+                } else {
+                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/previews/${imageFileName}`;
+                }
+            }
+            
+            console.log('Image URL:', imageUrl);
+            
+            const imageElement = document.getElementById('productImage');
+            imageElement.src = imageUrl;
+            imageElement.classList.remove('loading-skeleton');
+            imageElement.onerror = () => {
+                console.error('Image failed to load from:', imageUrl);
+                showError("Failed to load product image");
+            };
+
+        } catch (err) {
+            console.error('Load product error:', err);
+            showError("Something went wrong loading the product");
+        }
     }
-}
 
-/**
- * Handle download button click
- */
-async function handleDownload() {
-    if (!currentProduct) {
-        alert("Product data not loaded yet");
-        return;
-    }
-
-    const btn = document.getElementById('downloadBtn');
-    const originalHTML = btn.innerHTML;
-    const originalStyle = btn.className;
-
-    btn.disabled = true;
-    btn.innerHTML = "Preparing download...";
-
-    try {
-        // Extract clean filename from file_url
-        const fileClean = extractFileName(currentProduct.file_url);
-        
-        // Create signed URL for secure download
-        const { data, error } = await supabase.storage
-            .from('product-images')
-            .createSignedUrl(`products/${fileClean}`, 60);
-
-        if (error) {
-            throw new Error(`Storage error: ${error.message}`);
+    /**
+     * Handle download button click
+     */
+    async function handleDownload() {
+        if (!currentProduct) {
+            alert("Product data not loaded yet");
+            return;
         }
 
-        if (!data || !data.signedUrl) {
-            throw new Error("Failed to generate download link");
-        }
+        const btn = document.getElementById('downloadBtn');
+        const originalHTML = btn.innerHTML;
+        const originalClass = btn.className;
 
-        // Open download in new tab
-        window.open(data.signedUrl, '_blank');
+        btn.disabled = true;
+        btn.innerHTML = "Preparing download...";
 
-        // Update button feedback
-        btn.innerHTML = "✓ Download Started";
-        btn.style.background = "#10b981";
+        try {
+            const sb = initSupabase();
+            if (!sb) {
+                throw new Error("Supabase not initialized");
+            }
 
-        // Reset button after 3 seconds
-        setTimeout(() => {
+            // Extract clean filename from file_url
+            const fileClean = extractFileName(currentProduct.file_url);
+            
+            console.log('Creating signed URL for:', fileClean);
+
+            // Create signed URL for secure download
+            const { data, error } = await sb.storage
+                .from('product-images')
+                .createSignedUrl(`products/${fileClean}`, 60);
+
+            if (error) {
+                throw new Error(`Storage error: ${error.message}`);
+            }
+
+            if (!data || !data.signedUrl) {
+                throw new Error("Failed to generate download link");
+            }
+
+            console.log('✓ Download link generated');
+
+            // Open download in new tab
+            window.open(data.signedUrl, '_blank');
+
+            // Update button feedback
+            btn.innerHTML = "✓ Download Started";
+            btn.style.background = "#10b981";
+
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                btn.className = originalClass;
+                btn.style.background = "";
+            }, 3000);
+
+        } catch (err) {
+            console.error('Download error:', err);
+            btn.innerHTML = "✗ Failed - Try Again";
+            btn.style.background = "#ef4444";
             btn.disabled = false;
-            btn.innerHTML = originalHTML;
-            btn.className = originalStyle;
-        }, 3000);
 
-    } catch (err) {
-        console.error('Download error:', err);
-        btn.innerHTML = "✗ Failed - Try Again";
-        btn.style.background = "#ef4444";
-        btn.disabled = false;
-
-        // Reset after 3 seconds
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.className = originalStyle;
-        }, 3000);
+            // Reset after 3 seconds
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.className = originalClass;
+                btn.style.background = "";
+            }, 3000);
+        }
     }
-}
 
-/**
- * Display error message in UI
- */
-function showError(msg) {
-    document.getElementById('productTitle').innerText = "⚠️ " + msg;
-    document.getElementById('productTitle').classList.remove('loading-skeleton');
-    
-    document.getElementById('productPrice').innerText = "";
-    document.getElementById('productDescription').innerText = "";
-    
-    const btn = document.getElementById('downloadBtn');
-    btn.disabled = true;
-    btn.style.opacity = "0.5";
-}
+    /**
+     * Display error message in UI
+     */
+    function showError(msg) {
+        console.error('Error:', msg);
+        
+        document.getElementById('productTitle').innerText = "⚠️ " + msg;
+        document.getElementById('productTitle').classList.remove('loading-skeleton');
+        
+        document.getElementById('productPrice').innerText = "";
+        document.getElementById('productPrice').classList.remove('loading-skeleton');
+        
+        document.getElementById('productDescription').innerText = "";
+        document.getElementById('productDescription').classList.remove('loading-skeleton');
+        
+        const btn = document.getElementById('downloadBtn');
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+    }
 
-// Load product when page is ready
-loadProduct();
+    // Expose functions to global scope
+    window.handleDownload = handleDownload;
+
+    // Load product when page is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Page loaded, initializing product...');
+        loadProduct();
+    });
+
+    // Also try loading immediately if DOM is already ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadProduct);
+    } else {
+        loadProduct();
+    }
+
+})();
 </script>
 
 </body>
