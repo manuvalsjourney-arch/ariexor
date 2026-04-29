@@ -85,7 +85,8 @@ async function loadProduct() {
       // This grabs the filename, fixes the spaces, and points to the previews folder
 // Clean the filename first so it matches the storage name
 const fileName = data.image_url;
-document.getElementById('productImage').src =
+document.getElementById('productImage').src = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/${fileName}`;
+
         
            
     } catch (err) {
