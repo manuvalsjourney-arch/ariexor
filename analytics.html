@@ -90,15 +90,22 @@
         const PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%231e293b'/%3E%3Cpath d='M20 38l6-8 4 5 4-4 6 7H20z' fill='%23334155'/%3E%3Ccircle cx='22' cy='24' r='3' fill='%23334155'/%3E%3C/svg%3E`;
 
         /**
-         * Extracts the bare filename from whatever is stored in image_url
-         * (handles full URLs, paths like "previews/foo.png", or bare filenames).
+         * Extracts the clean, decoded filename from whatever is stored in image_url.
+         * Decoding first ensures %20 → space before we split, so we always get
+         * the raw filename (e.g. "Screenshot 2026-04-12.png") ready to re-encode.
+         * Handles: full URLs, paths like "previews/foo.png", or bare filenames.
          */
         function extractFilename(imageUrl) {
             if (!imageUrl) return null;
-            return imageUrl.split('/').pop();
+            try {
+                return decodeURIComponent(imageUrl).split('/').pop();
+            } catch (e) {
+                // If decoding fails (malformed %), fall back to a plain split
+                return imageUrl.split('/').pop();
+            }
         }
 
-        /** Primary URL  → root of the bucket */
+        /** Primary URL → root of the bucket (spaces safe via encodeURIComponent) */
         function getPrimaryUrl(imageUrl) {
             const filename = extractFilename(imageUrl);
             if (!filename) return null;
@@ -145,7 +152,7 @@
                         let status = price > 100 ? "Premium" : (price < 15 ? "Budget" : "Standard");
 
                         const primarySrc  = getPrimaryUrl(item.image_url)  || PLACEHOLDER_SVG;
-                        const fallbackSrc = getPreviewUrl(item.image_url) || PLACEHOLDER_SVG;
+                        const fallbackSrc = getPreviewUrl(item.image_url) || '';
 
                         return `
                         <tr class="hover:bg-white/[0.03]">
@@ -156,12 +163,13 @@
                                         data-fallback="${fallbackSrc}"
                                         class="w-14 h-14 rounded-2xl object-cover bg-slate-900 border border-white/10"
                                         onerror="
-                                            if (this.dataset.fallback) {
-                                                this.src = this.dataset.fallback;
+                                            var fb = this.dataset.fallback;
+                                            if (fb && fb.length > 0) {
                                                 this.dataset.fallback = '';
+                                                this.src = fb;
                                             } else {
                                                 this.onerror = null;
-                                                this.src = '${PLACEHOLDER_SVG}';
+                                                this.src = PLACEHOLDER_SVG;
                                             }
                                         "
                                     >
