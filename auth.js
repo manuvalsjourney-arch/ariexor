@@ -1,6 +1,6 @@
 // Initialize Supabase
-const supabaseUrl = 'https://qtewpjdnnjgvfgllgryy.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0ZXdwamRubmpndmZnbGxncnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MDgzMTksImV4cCI6MjA5MTM4NDMxOX0.SEjH2oD8nh-6Ff3yoDXlD93Ick9ZKf4_PD0lKWsSvDU';
+const supabaseUrl = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
 const _authSupabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 async function updateNavigation() {
