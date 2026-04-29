@@ -8,184 +8,530 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        body { background: #0b0b14; font-family: 'Inter', sans-serif; }
+        :root {
+            --indigo: #6366f1;
+            --indigo-light: #818cf8;
+            --indigo-dark: #4f46e5;
+            --surface: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.08);
+            --border-focus: rgba(99,102,241,0.6);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: #0b0b14;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Ambient background glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Form inputs */
+        .field-input {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            padding: 1rem 1.1rem;
+            border-radius: 1rem;
+            outline: none;
+            color: #fff;
+            font-size: 0.95rem;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            margin-top: 0.35rem;
+        }
+        .field-input::placeholder { color: rgba(255,255,255,0.2); }
+        .field-input:focus {
+            border-color: var(--border-focus);
+            background: rgba(99,102,241,0.06);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        }
+
+        textarea.field-input { height: 130px; resize: vertical; }
+
+        /* File input */
+        .file-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            min-height: 100px;
+            border: 1.5px dashed rgba(99,102,241,0.3);
+            border-radius: 1rem;
+            background: rgba(99,102,241,0.03);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            padding: 1.2rem;
+            text-align: center;
+            margin-top: 0.35rem;
+        }
+        .file-label:hover {
+            border-color: rgba(99,102,241,0.6);
+            background: rgba(99,102,241,0.07);
+        }
+        .file-label .file-icon { font-size: 1.6rem; opacity: 0.5; }
+        .file-label .file-hint { font-size: 0.72rem; color: rgba(255,255,255,0.3); margin-top: 0.2rem; }
+        .file-label .file-name { font-size: 0.8rem; color: var(--indigo-light); font-weight: 600; word-break: break-all; }
+        input[type="file"] { display: none; }
+
+        /* Field label */
+        .field-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(255,255,255,0.35);
+            margin-left: 2px;
+            display: block;
+        }
+        .field-label.accent { color: rgba(129,140,248,0.75); }
+
+
+        /* Submit button */
+        #submitBtn {
+            width: 100%;
+            background: var(--indigo);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 1.1rem;
+            border-radius: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+            box-shadow: 0 8px 32px rgba(99,102,241,0.25);
+            letter-spacing: 0.02em;
+        }
+        #submitBtn:hover:not(:disabled) {
+            background: #5558e8;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 40px rgba(99,102,241,0.35);
+        }
+        #submitBtn:active:not(:disabled) { transform: scale(0.985); }
+        #submitBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* Progress bar */
+        #progressWrap {
+            display: none;
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--indigo), var(--indigo-light));
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1a1a2e;
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 0.85rem 1.4rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            max-width: 420px;
+            width: calc(100% - 2rem);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 999;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            word-break: break-word;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.success { border-color: rgba(52,211,153,0.3); }
+        #toast.error   { border-color: rgba(239,68,68,0.3); }
+        #toast.warning { border-color: rgba(251,191,36,0.3); }
+        #toast .toast-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+        #toast .toast-msg  { line-height: 1.5; color: rgba(255,255,255,0.85); }
+
+        /* Auth badge */
+        #authBadge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.72rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        #authBadge.signed-in  { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+        #authBadge.signed-out { background: rgba(239,68,68,0.1);  color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        #authBadge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        /* Footer */
+        footer { position: relative; z-index: 1; }
     </style>
 </head>
-<body class="text-white min-h-screen flex flex-col items-center justify-center p-6">
+<body class="p-6">
 
-    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem] mb-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
-            <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
+    <!-- Toast notification -->
+    <div id="toast">
+        <span class="toast-icon" id="toastIcon"></span>
+        <span class="toast-msg" id="toastMsg"></span>
+    </div>
+
+    <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem] mb-8 mt-8">
+
+        <!-- Header -->
+        <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
+            <div>
+                <h1 id="pageTitle" class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
+                <p class="text-slate-500 text-xs mt-1">Fill in the details below to publish your digital asset.</p>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+                <a href="index.html" class="text-slate-400 hover:text-white text-sm transition-colors">← Back to Shop</a>
+                <span id="authBadge" class="signed-out"><span class="dot"></span> Checking…</span>
+            </div>
         </div>
 
-        <form id="productForm" class="space-y-6">
+        <form id="productForm" class="space-y-6" novalidate>
+
+            <!-- Title -->
             <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Product Title</label>
-                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                <label class="field-label" for="title">Product Title</label>
+                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" class="field-input" required>
             </div>
 
+            <!-- Description -->
             <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Description</label>
-                <textarea id="description" placeholder="Describe your asset..." class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 h-32 transition-all mt-1" required></textarea>
+                <label class="field-label" for="description">Description</label>
+                <textarea id="description" placeholder="Describe your asset in detail — what it is, who it's for, what's included…" class="field-input" required></textarea>
             </div>
 
+            <!-- Price -->
             <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Price ($)</label>
-                <input type="number" id="price" step="0.01" placeholder="9.99" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-indigo-500 transition-all mt-1" required>
+                <label class="field-label" for="price">Price (USD)</label>
+                <input type="number" id="price" step="0.01" min="0" placeholder="9.99" class="field-input" required>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- File uploads -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <!-- Preview image -->
                 <div>
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Preview Image</label>
-                    <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
+                    <label class="field-label accent">Preview Image</label>
+                    <label for="imageInput" class="file-label" id="imageDrop">
+                        <span class="file-icon">🖼️</span>
+                        <span class="text-slate-400 text-xs font-semibold">Click to upload</span>
+                        <span class="file-hint">PNG, JPG, WEBP — max 10 MB</span>
+                        <span class="file-name" id="imageFileName"></span>
+                    </label>
+                    <input type="file" id="imageInput" accept="image/*" required>
                 </div>
+
+                <!-- Asset file -->
                 <div>
-                    <label class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest ml-1">Upload Asset</label>
-                    <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 mt-2" required>
+                    <label class="field-label accent">Digital Asset</label>
+                    <label for="pdfInput" class="file-label" id="assetDrop">
+                        <span class="file-icon">📦</span>
+                        <span class="text-slate-400 text-xs font-semibold">Click to upload</span>
+                        <span class="file-hint">PDF, ZIP, AEP, FIG, MP4 & more</span>
+                        <span class="file-name" id="assetFileName"></span>
+                    </label>
+                    <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx" required>
                 </div>
             </div>
 
-            <div class="space-y-4 py-6 border-t border-white/5">
-                <div class="flex items-start space-x-3">
-                    <input id="legal-terms" type="checkbox" required class="mt-1 h-4 w-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                    <div class="text-xs">
-                        <label for="legal-terms" class="font-medium text-slate-300">I agree to the <a href="#" class="text-indigo-400 underline hover:text-indigo-300">Terms of Service</a> & <a href="legal.html" class="text-indigo-400 underline hover:text-indigo-300">Privacy Policy</a></label>
-                        <p class="text-slate-500 mt-0.5">I confirm I own the rights to this asset and it contains no malicious content.</p>
-                    </div>
-                </div>
 
-                <div class="flex items-start space-x-3">
-                    <input id="refund-policy" type="checkbox" required class="mt-1 h-4 w-4 rounded border-white/10 bg-white/5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                    <div class="text-xs">
-                        <label for="refund-policy" class="font-medium text-slate-300 tracking-wide">Acknowledge <ahref="legal.html" class="text-indigo-400 underline hover:text-indigo-300">Refund Policy</a></label>
-                        <p class="text-slate-500 mt-0.5">I understand that due to the nature of digital goods, all sales are final.</p>
-                    </div>
-                </div>
-            </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.01] active:scale-95 shadow-xl shadow-indigo-500/20">
-                Publish Product
-            </button>
+            <!-- Submit -->
+            <button type="submit" id="submitBtn">Publish Product</button>
+            <div id="progressWrap"><div id="progressBar"></div></div>
+
         </form>
     </div>
-<footer class="py-12 border-t border-white/5 mt-20">
-    <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div class="text-slate-500 text-[10px] tracking-[0.2em] uppercase font-medium">
-            &copy; 2026 ariexo — All Rights Reserved
-        </div>
 
-        <div class="flex space-x-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-            <a href="legal.html#privacy" class="hover:text-white transition-all duration-300">Privacy Policy</a>
-            <a href="legal.html#terms" class="hover:text-white transition-all duration-300">Terms of Service</a>
-            <a href="legal.html#refunds" class="hover:text-white transition-all duration-300">Refund Policy</a>
-            <a href="mailto:support@ariexor.com" class="text-indigo-400 hover:text-indigo-300 transition-all duration-300 underline decoration-indigo-500/30 underline-offset-4">Support</a>
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/5 w-full mt-4">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-slate-500 text-[10px] tracking-[0.2em] uppercase font-medium">
+                &copy; 2026 ariexo — All Rights Reserved
+            </div>
+            <div class="flex space-x-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <a href="legal.html#privacy"  class="hover:text-white transition-all duration-300">Privacy Policy</a>
+                <a href="legal.html#terms"    class="hover:text-white transition-all duration-300">Terms of Service</a>
+                <a href="legal.html#refunds"  class="hover:text-white transition-all duration-300">Refund Policy</a>
+                <a href="mailto:support@ariexor.com" class="text-indigo-400 hover:text-indigo-300 transition-all duration-300 underline decoration-indigo-500/30 underline-offset-4">Support</a>
+            </div>
         </div>
-    </div>
-</footer>
-
+    </footer>
 
 <script>
-    // Supabase config (Keeping your current credentials)
-    const sb = supabase.createClient(
-        'https://jiuzebbrjbqkoovfrbvp.supabase.co', 
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
-    );
+// ─── Supabase Init ────────────────────────────────────────────────────────────
+const sb = supabase.createClient(
+    'https://jiuzebbrjbqkoovfrbvp.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
+);
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    const form = document.getElementById('productForm');
-    const btn = document.getElementById('submitBtn');
-    const titleHeader = document.querySelector('h1');
+// ─── Toast helper ─────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = 'info') {
+    const toast = document.getElementById('toast');
+    const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    document.getElementById('toastIcon').textContent = icons[type] ?? 'ℹ️';
+    document.getElementById('toastMsg').textContent = msg;
+    toast.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    // Errors stay longer so the user can read the full message
+    toastTimer = setTimeout(() => { toast.className = ''; }, type === 'error' ? 8000 : 4000);
+}
 
-    if (editId) {
-        loadProductData(editId);
+// ─── Progress bar helpers ─────────────────────────────────────────────────────
+function setProgress(pct) {
+    document.getElementById('progressWrap').style.display = 'block';
+    document.getElementById('progressBar').style.width = pct + '%';
+}
+function hideProgress() {
+    setTimeout(() => {
+        document.getElementById('progressWrap').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+    }, 600);
+}
+
+// ─── Auth badge ───────────────────────────────────────────────────────────────
+async function updateAuthBadge() {
+    const badge = document.getElementById('authBadge');
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+        badge.className = 'signed-in';
+        badge.innerHTML = `<span class="dot"></span> ${user.email ?? 'Signed in'}`;
+    } else {
+        badge.className = 'signed-out';
+        badge.innerHTML = `<span class="dot"></span> Not signed in`;
+    }
+}
+updateAuthBadge();
+
+// ─── File input labels ────────────────────────────────────────────────────────
+document.getElementById('imageInput').addEventListener('change', function () {
+    document.getElementById('imageFileName').textContent = this.files[0]?.name ?? '';
+});
+document.getElementById('pdfInput').addEventListener('change', function () {
+    document.getElementById('assetFileName').textContent = this.files[0]?.name ?? '';
+});
+
+// ─── Edit mode ────────────────────────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const editId    = urlParams.get('edit');
+const form      = document.getElementById('productForm');
+const btn       = document.getElementById('submitBtn');
+
+if (editId) {
+    loadProductData(editId);
+}
+
+async function loadProductData(id) {
+    document.getElementById('pageTitle').textContent = 'Edit Product Asset';
+    btn.textContent = 'Save Changes';
+
+    const { data, error } = await sb
+        .from('product_details')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        showToast('Could not load product: ' + error.message, 'error');
+        return;
     }
 
-    async function loadProductData(id) {
-        titleHeader.innerText = "Edit Product Asset";
-        btn.innerText = "Save Changes";
-        
-        const { data, error } = await sb
-            .from('product_details')
-            .select('*')
-            .eq('id', id)
-            .single();
+    if (data) {
+        document.getElementById('title').value       = data.title       ?? '';
+        document.getElementById('description').value = data.description ?? '';
+        document.getElementById('price').value       = data.price       ?? '';
+        // Files already uploaded — not required on edit unless replacing
+        document.getElementById('imageInput').required = false;
+        document.getElementById('pdfInput').required   = false;
+    }
+}
 
-        if (data) {
-            document.getElementById('title').value = data.title;
-            document.getElementById('description').value = data.description;
-            document.getElementById('price').value = data.price;
-            document.getElementById('imageInput').required = false;
-            document.getElementById('pdfInput').required = false;
+// ─── Form submit ──────────────────────────────────────────────────────────────
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    btn.textContent = 'Processing…';
+    btn.disabled    = true;
+    setProgress(5);
+
+    const imgFile  = document.getElementById('imageInput').files[0];
+    const pdfFile  = document.getElementById('pdfInput').files[0];
+    const ts       = Date.now();
+
+    try {
+        // ── 1. Verify authenticated session ──────────────────────────────────
+        const { data: { user }, error: authError } = await sb.auth.getUser();
+
+        if (authError || !user) {
+            throw new Error(
+                'AUTH_REQUIRED: You must be logged in to publish a product.\n' +
+                (authError?.message ?? 'No active session found.')
+            );
         }
-    }
 
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        btn.innerText = "Processing...";
-        btn.disabled = true;
+        setProgress(15);
 
-        const imgFile = document.getElementById('imageInput').files[0];
-        const pdfFile = document.getElementById('pdfInput').files[0];
-        const time = Date.now();
+        // ── 2. Build payload ──────────────────────────────────────────────────
+        const payload = {
+            title:       document.getElementById('title').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            price:       parseFloat(document.getElementById('price').value)
+        };
 
-        try {
-            let updatePayload = {
-                title: document.getElementById('title').value,
-                description: document.getElementById('description').value,
-                price: parseFloat(document.getElementById('price').value)
-            };
+        // ── 3. Upload preview image ───────────────────────────────────────────
+        if (imgFile) {
+            const imgPath = `previews/${ts}-${imgFile.name}`;
+            const { error: imgUploadErr } = await sb.storage
+                .from('product-images')
+                .upload(imgPath, imgFile);
 
-            if (imgFile) {
-                const imgPath = `previews/${time}-${imgFile.name}`;
-                await sb.storage.from('product-images').upload(imgPath, imgFile);
-                const { data: imgData } = sb.storage.from('product-images').getPublicUrl(imgPath);
-                
-                const { data: moderation, error: modError } = await sb.functions.invoke('moderate-image', {
-                    body: { image_url: imgData.publicUrl }
-                });
+            if (imgUploadErr) throw new Error('IMAGE_UPLOAD: ' + imgUploadErr.message);
 
-                if (!modError && moderation && moderation.moderation) {
-                    const m = moderation.moderation;
-                    if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
-                        alert("🚨 Upload blocked: This image violates our safety guidelines.");
-                        btn.innerText = "Publish Product";
-                        btn.disabled = false;
-                        return;
-                    }
+            const { data: imgData } = sb.storage
+                .from('product-images')
+                .getPublicUrl(imgPath);
+
+            setProgress(40);
+
+            // Content moderation
+            const { data: moderation, error: modError } = await sb.functions.invoke('moderate-image', {
+                body: { image_url: imgData.publicUrl }
+            });
+
+            if (!modError && moderation?.moderation) {
+                const m = moderation.moderation;
+                if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
+                    showToast('Upload blocked: Image violates safety guidelines.', 'warning');
+                    btn.textContent = editId ? 'Save Changes' : 'Publish Product';
+                    btn.disabled = false;
+                    hideProgress();
+                    return;
                 }
-
-                updatePayload.image_url = imgData.publicUrl;
             }
 
-            if (pdfFile) {
-                const pdfPath = `downloads/${time}-${pdfFile.name}`;
-                await sb.storage.from('user-products').upload(pdfPath, pdfFile);
-                const { data: pdfData } = sb.storage.from('user-products').getPublicUrl(pdfPath);
-                updatePayload.file_url = pdfData.publicUrl;
-            }
-
-            if (editId) {
-                const { error } = await sb.from('product_details').update(updatePayload).eq('id', editId);
-                if (error) throw error;
-                alert("Changes saved successfully!");
-            } else {
-                updatePayload.seller_id = 'e0bed6bb-f967-436b-9cb2-76c78a5538d5'; 
-                const { error } = await sb.from('product_details').insert([updatePayload]);
-                if (error) throw error;
-                alert("Boom! Your product is live.");
-            }
-
-            window.location.href = 'analytics.html';
-
-        } catch (err) {
-            alert("Action failed: " + err.message);
-            btn.innerText = editId ? "Save Changes" : "Publish Product";
-            btn.disabled = false;
+            payload.image_url = imgData.publicUrl;
         }
-    };
+
+        setProgress(60);
+
+        // ── 4. Upload asset file ──────────────────────────────────────────────
+        if (pdfFile) {
+            const assetPath = `downloads/${ts}-${pdfFile.name}`;
+            const { error: assetUploadErr } = await sb.storage
+                .from('user-products')
+                .upload(assetPath, pdfFile);
+
+            if (assetUploadErr) throw new Error('ASSET_UPLOAD: ' + assetUploadErr.message);
+
+            const { data: assetData } = sb.storage
+                .from('user-products')
+                .getPublicUrl(assetPath);
+
+            payload.file_url = assetData.publicUrl;
+        }
+
+        setProgress(80);
+
+        // ── 5. Write to database ──────────────────────────────────────────────
+        if (editId) {
+            // UPDATE (seller_id already set; don't overwrite)
+            const { error: updateErr } = await sb
+                .from('product_details')
+                .update(payload)
+                .eq('id', editId);
+
+            if (updateErr) {
+                throw new Error(
+                    `DB_UPDATE failed\n` +
+                    `Code: ${updateErr.code}\n` +
+                    `Message: ${updateErr.message}\n` +
+                    `Hint: ${updateErr.hint ?? 'none'}\n` +
+                    `Details: ${updateErr.details ?? 'none'}`
+                );
+            }
+
+            setProgress(100);
+            showToast('Changes saved successfully!', 'success');
+
+        } else {
+            // INSERT — attach the authenticated user's ID so RLS passes
+            payload.seller_id = user.id;
+
+            const { error: insertErr } = await sb
+                .from('product_details')
+                .insert([payload]);
+
+            if (insertErr) {
+                throw new Error(
+                    `DB_INSERT failed\n` +
+                    `Code: ${insertErr.code}\n` +
+                    `Message: ${insertErr.message}\n` +
+                    `Hint: ${insertErr.hint ?? 'none'}\n` +
+                    `Details: ${insertErr.details ?? 'none'}\n\n` +
+                    (insertErr.code === '42501'
+                        ? '👉 RLS violation: confirm your INSERT policy uses `auth.uid() = seller_id` and the user is authenticated.'
+                        : '')
+                );
+            }
+
+            setProgress(100);
+            showToast('Boom! Your product is live. 🚀', 'success');
+        }
+
+        hideProgress();
+
+        // Brief delay so the toast is readable before redirect
+        setTimeout(() => { window.location.href = 'analytics.html'; }, 1800);
+
+    } catch (err) {
+        hideProgress();
+        // Surface the full error in the toast AND the console
+        console.error('[ariexo dashboard]', err);
+        showToast(err.message, 'error');
+        btn.textContent = editId ? 'Save Changes' : 'Publish Product';
+        btn.disabled = false;
+    }
+});
 </script>
 </body>
 </html>
