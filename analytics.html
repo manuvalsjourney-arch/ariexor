@@ -83,6 +83,36 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
         );
 
+        // ─── Image helpers ────────────────────────────────────────────────────────
+        const STORAGE_BASE = 'https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/';
+
+        // Inline placeholder SVG shown when both image paths fail
+        const PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%231e293b'/%3E%3Cpath d='M20 38l6-8 4 5 4-4 6 7H20z' fill='%23334155'/%3E%3Ccircle cx='22' cy='24' r='3' fill='%23334155'/%3E%3C/svg%3E`;
+
+        /**
+         * Extracts the bare filename from whatever is stored in image_url
+         * (handles full URLs, paths like "previews/foo.png", or bare filenames).
+         */
+        function extractFilename(imageUrl) {
+            if (!imageUrl) return null;
+            return imageUrl.split('/').pop();
+        }
+
+        /** Primary URL  → root of the bucket */
+        function getPrimaryUrl(imageUrl) {
+            const filename = extractFilename(imageUrl);
+            if (!filename) return null;
+            return STORAGE_BASE + encodeURIComponent(filename);
+        }
+
+        /** Fallback URL → /previews/ subfolder */
+        function getPreviewUrl(imageUrl) {
+            const filename = extractFilename(imageUrl);
+            if (!filename) return null;
+            return STORAGE_BASE + 'previews/' + encodeURIComponent(filename);
+        }
+        // ─────────────────────────────────────────────────────────────────────────
+
         async function fetchAnalytics() {
             const loading = document.getElementById('loading');
             const list = document.getElementById('inventoryList');
@@ -114,11 +144,27 @@
                         let badgeClass = price > 100 ? "bg-purple-500/10 text-purple-400" : (price < 15 ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400");
                         let status = price > 100 ? "Premium" : (price < 15 ? "Budget" : "Standard");
 
+                        const primarySrc  = getPrimaryUrl(item.image_url)  || PLACEHOLDER_SVG;
+                        const fallbackSrc = getPreviewUrl(item.image_url) || PLACEHOLDER_SVG;
+
                         return `
                         <tr class="hover:bg-white/[0.03]">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
-                                    <img src="${item.image_url}" class="w-14 h-14 rounded-2xl object-cover bg-slate-900 border border-white/10">
+                                    <img
+                                        src="${primarySrc}"
+                                        data-fallback="${fallbackSrc}"
+                                        class="w-14 h-14 rounded-2xl object-cover bg-slate-900 border border-white/10"
+                                        onerror="
+                                            if (this.dataset.fallback) {
+                                                this.src = this.dataset.fallback;
+                                                this.dataset.fallback = '';
+                                            } else {
+                                                this.onerror = null;
+                                                this.src = '${PLACEHOLDER_SVG}';
+                                            }
+                                        "
+                                    >
                                     <div>
                                         <div class="font-bold text-white">${item.title}</div>
                                         <div class="text-[10px] text-slate-500 uppercase tracking-tighter">ID: #${item.id}</div>
