@@ -199,9 +199,9 @@ function renderProducts(products) {
         const fileName = p.image_url ? p.image_url.split('/').pop() : 'placeholder.png';
    // This cleans the name so it works even if there are %20 or full URLs in the table
 // This cleans the filename and adds the folder automatically
+// This one block handles EVERYTHING: full URLs, %20, and the previews folder
 const fileName = p.image_url ? p.image_url.split('/').pop().replace(/%20/g, ' ') : 'placeholder.png';
-const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
-        
+const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;    
         return `
         <div class="relative group fade-in">
             <button onclick="shareProduct(event, '${p.title}', '${p.id}')" 
