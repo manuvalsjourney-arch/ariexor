@@ -198,6 +198,7 @@ function renderProducts(products) {
         // --- THE ROBOT FIX: Extract filename and force /previews/ path ---
         const fileName = p.image_url ? p.image_url.split('/').pop() : 'placeholder.png';
    // This cleans the name so it works even if there are %20 or full URLs in the table
+// This cleans the filename and adds the folder automatically
 const fileName = p.image_url ? p.image_url.split('/').pop().replace(/%20/g, ' ') : 'placeholder.png';
 const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
         
