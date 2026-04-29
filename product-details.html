@@ -82,7 +82,8 @@ async function loadProduct() {
         document.getElementById('productDescription').innerText = data.description;
 
         // IMAGE FIX: Always look in the /previews/ folder
-       const fileName = data.image_url.split('/').pop().replace(/%20/g, ' ');
+      // This grabs the filename, fixes the spaces, and points to the previews folder
+const fileName = data.image_url.split('/').pop().replace(/%20/g, ' ');
 document.getElementById('productImage').src = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
             `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
 
