@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Details | ariexo</title>
-
     <link rel="icon" href="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
         body { background: #0b0b14; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
@@ -17,41 +14,24 @@
         .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(99,102,241,0.3); }
     </style>
 </head>
-
 <body class="min-h-screen">
 
 <div class="max-w-6xl mx-auto p-6 mt-10 md:mt-20 grid md:grid-cols-2 gap-12">
-
-    <!-- Image -->
     <div>
-        <img id="productImage"
-             class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl"
-             src=""
-             alt="Product Preview">
+        <img id="productImage" class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl" src="" alt="Product Preview">
     </div>
 
-    <!-- Content -->
     <div class="flex flex-col justify-center">
         <h1 id="productTitle" class="text-5xl font-extrabold mb-4">Loading...</h1>
         <p id="productPrice" class="text-4xl text-indigo-400 font-black mb-8">$--</p>
-
         <div class="glass p-6 rounded-2xl mb-6">
-            <p id="productDescription" class="text-gray-300 italic">
-                Fetching product details...
-            </p>
+            <p id="productDescription" class="text-gray-300 italic">Fetching product details...</p>
         </div>
-
-        <button id="downloadBtn"
-                onclick="handleDownload()"
-                class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
+        <button id="downloadBtn" onclick="handleDownload()" class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
             Purchase & Download
         </button>
-
-        <p class="text-center text-gray-500 text-xs mt-4">
-            Secure delivery via ariexo cloud
-        </p>
+        <p class="text-center text-gray-500 text-xs mt-4">Secure delivery via ariexo cloud</p>
     </div>
-
 </div>
 
 <script>
@@ -76,21 +56,17 @@ async function loadProduct() {
         if (error || !data) return showError("Product not found");
         currentProduct = data;
 
-        // UI Text
+        // Populate UI
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
-        document.getElementById('productDescription').innerText = data.description;
-
-        // IMAGE FIX: Always look in the /previews/ folder
-      // This grabs the filename, fixes the spaces, and points to the previews folder
-// Clean the filename first so it matches the storage name
-const fileName = data.image_url;
-document.getElementById('productImage').src = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/${fileName}`;
-
+        document.getElementById('productDescription').innerText = data.description || "No description provided.";
         
-           
+        // Fix Image URL
+        const fileName = data.image_url;
+        document.getElementById('productImage').src = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/${fileName}`;
+
     } catch (err) {
-        showError("Something broke");
+        showError("Connection Error");
     }
 }
 
@@ -98,20 +74,16 @@ async function handleDownload() {
     if (!currentProduct) return;
     const btn = document.getElementById('downloadBtn');
     const original = btn.innerHTML;
-
     btn.disabled = true;
     btn.innerHTML = "Preparing download...";
 
     try {
-        // DOWNLOAD FIX: Always look in the /products/ folder
         const fileClean = currentProduct.file_url.split('/').pop();
         const { data, error } = await supabase.storage
             .from('product-images')
             .createSignedUrl(`products/${fileClean}`, 60);
 
         if (error) throw error;
-
-        // Open in new tab for instant secure download
         window.open(data.signedUrl, '_blank');
 
         btn.innerHTML = "Download Started";
@@ -121,9 +93,8 @@ async function handleDownload() {
             btn.innerHTML = original;
             btn.style.background = "";
         }, 3000);
-
     } catch (err) {
-        btn.innerHTML = "Failed - Try Again";
+        btn.innerHTML = "Download Failed";
         btn.disabled = false;
     }
 }
@@ -131,9 +102,10 @@ async function handleDownload() {
 function showError(msg) {
     document.getElementById('productTitle').innerText = msg;
     document.getElementById('productPrice').innerText = "";
-    document.getElementById('productDescription').innerText = "";
+    document.getElementById('productDescription').innerText = "Please check the product ID.";
 }
 
+// THIS STARTS THE ROBOT
 loadProduct();
 </script>
 
