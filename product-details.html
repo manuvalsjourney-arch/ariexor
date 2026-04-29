@@ -32,6 +32,7 @@
         .btn-gradient:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+            transform: none;
         }
         .loading-skeleton {
             background: rgba(255,255,255,0.05);
@@ -84,112 +85,101 @@
 (function() {
     'use strict';
 
-    // Initialize Supabase client ONCE
-    const supabaseURL = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
-    
-    let supabase = null;
-    let currentProduct = null;
+    // ── Supabase config ──────────────────────────────────────────────────────
+    const SUPABASE_URL = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
 
-    // Initialize Supabase safely
+    let supabase = null;
+    let currentProduct = null;  // holds full DB row including asset_url
+    let currentUser = null;     // holds the logged-in Supabase user (or null)
+
+    // ── Init ─────────────────────────────────────────────────────────────────
     function initSupabase() {
         if (!supabase && window.supabase) {
-            supabase = window.supabase.createClient(supabaseURL, supabaseKey);
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             console.log('✓ Supabase initialized');
         }
         return supabase;
     }
 
-    /**
-     * Extract clean filename from URL or path
-     * Handles both full URLs and file paths
-     */
     function extractFileName(urlOrPath) {
         if (!urlOrPath) return '';
         return urlOrPath.split('/').pop().split('?')[0];
     }
 
-    /**
-     * Load product data from Supabase
-     */
+    // ── Auth: get current session user ──────────────────────────────────────
+    async function getCurrentUser() {
+        try {
+            const sb = initSupabase();
+            const { data: { session } } = await sb.auth.getSession();
+            return session ? session.user : null;
+        } catch (e) {
+            console.warn('Auth check failed:', e);
+            return null;
+        }
+    }
+
+    // ── Load product ─────────────────────────────────────────────────────────
     async function loadProduct() {
         try {
             const sb = initSupabase();
-            if (!sb) {
-                return showError("Supabase failed to initialize");
-            }
+            if (!sb) return showError("Supabase failed to initialize");
 
-            // Get product ID from URL query parameter
             const productId = new URLSearchParams(window.location.search).get('id');
-            
-            if (!productId) {
-                return showError("Missing product ID in URL");
-            }
+            if (!productId) return showError("Missing product ID in URL");
 
             console.log('Loading product ID:', productId);
 
-            // Fetch product from database
+            // Fetch product row — includes asset_url (and seller_id if your table has it)
             const { data, error } = await sb
                 .from('product_details')
                 .select('*')
                 .eq('id', parseInt(productId))
                 .single();
 
-            if (error) {
+            if (error || !data) {
                 console.error('Database error:', error);
-                return showError("Product not found or database error");
-            }
-
-            if (!data) {
                 return showError("Product not found");
             }
 
             currentProduct = data;
             console.log('✓ Product loaded:', data.title);
+            console.log('📦 asset_url:', data.asset_url);
 
-            // Update title
+            // ── Populate UI ──────────────────────────────────────────────────
             document.getElementById('productTitle').innerText = data.title;
             document.getElementById('productTitle').classList.remove('loading-skeleton');
 
-            // Update price
             document.getElementById('productPrice').innerText = `$${data.price}`;
             document.getElementById('productPrice').classList.remove('loading-skeleton');
 
-            // Update description
             document.getElementById('productDescription').innerText = data.description;
             document.getElementById('productDescription').classList.remove('loading-skeleton');
 
-            // Build image URL - handle multiple data formats with URL encoding
+            // ── Product image ────────────────────────────────────────────────
             let imageUrl = data.image_url;
-            
-            if (!imageUrl) {
-                return showError("No image URL in product data");
-            }
-
-            // If it's not already a full URL, build it
-            if (!imageUrl.startsWith('http')) {
+            if (imageUrl && !imageUrl.startsWith('http')) {
                 const imageFileName = extractFileName(imageUrl);
                 const encodedFileName = encodeURIComponent(imageFileName);
-                
-                // Check if path already contains 'previews'
                 if (imageUrl.includes('previews')) {
-                    // Path already has previews, but we need to encode just the filename
                     const pathWithoutFileName = imageUrl.substring(0, imageUrl.lastIndexOf('/') + 1);
-                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/${pathWithoutFileName}${encodedFileName}`;
+                    imageUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/${pathWithoutFileName}${encodedFileName}`;
                 } else {
-                    imageUrl = `${supabaseURL}/storage/v1/object/public/product-images/previews/${encodedFileName}`;
+                    imageUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/previews/${encodedFileName}`;
                 }
             }
-            
-            console.log('📸 Final Image URL:', imageUrl);
-            
+
             const imageElement = document.getElementById('productImage');
             imageElement.src = imageUrl;
             imageElement.classList.remove('loading-skeleton');
             imageElement.onerror = () => {
-                console.error('❌ Image failed to load from:', imageUrl);
+                console.error('❌ Image failed to load:', imageUrl);
                 showError("Failed to load product image");
             };
+
+            // ── Resolve user role and update button ──────────────────────────
+            currentUser = await getCurrentUser();
+            updateButton();
 
         } catch (err) {
             console.error('Load product error:', err);
@@ -197,110 +187,113 @@
         }
     }
 
-    /**
-     * Handle download button click
-     */
+    // ── Decide button label based on role ────────────────────────────────────
+    function isSeller() {
+        if (!currentUser || !currentProduct) return false;
+        // Support both "seller_id" and "user_id" column names
+        const ownerId = currentProduct.seller_id ?? currentProduct.user_id ?? null;
+        return ownerId !== null && ownerId === currentUser.id;
+    }
+
+    function updateButton() {
+        const btn = document.getElementById('downloadBtn');
+        if (isSeller()) {
+            btn.innerText = '⬇ Download Your File';
+        } else {
+            btn.innerText = 'Purchase & Download';
+        }
+        btn.disabled = false;
+    }
+
+    // ── Button handler ───────────────────────────────────────────────────────
     async function handleDownload() {
         if (!currentProduct) {
-            alert("Product data not loaded yet");
+            alert("Product data not loaded yet. Please wait.");
             return;
         }
 
         const btn = document.getElementById('downloadBtn');
-        const originalHTML = btn.innerHTML;
-        const originalClass = btn.className;
-
+        const originalText = btn.innerText;
         btn.disabled = true;
-        btn.innerHTML = "Preparing download...";
+        btn.innerText = "Processing…";
 
         try {
-            const sb = initSupabase();
-            if (!sb) {
-                throw new Error("Supabase not initialized");
+            if (isSeller()) {
+                // ── SELLER: open asset_url directly ─────────────────────────
+                const assetUrl = currentProduct.asset_url;
+                if (!assetUrl) throw new Error("No asset_url found for this product");
+
+                console.log('🔓 Seller download:', assetUrl);
+                window.open(assetUrl, '_blank');
+
+                btn.innerText = "✓ Download Started";
+                btn.style.background = "#10b981";
+                setTimeout(() => resetButton(btn, originalText), 3000);
+
+            } else {
+                // ── BUYER: trigger purchase flow ─────────────────────────────
+                console.log('🛒 Buyer purchase flow for product:', currentProduct.id);
+
+                // ── Option A: Stripe checkout ────────────────────────────────
+                // If you have a Stripe price_id or checkout_url stored on the product:
+                if (currentProduct.stripe_checkout_url) {
+                    window.open(currentProduct.stripe_checkout_url, '_blank');
+                    btn.innerText = "✓ Redirecting to Checkout…";
+                    btn.style.background = "#6366f1";
+                    setTimeout(() => resetButton(btn, originalText), 3000);
+                    return;
+                }
+
+                // ── Option B: Call your backend checkout endpoint ────────────
+                // Uncomment and adapt when your backend is ready:
+                //
+                // const res = await fetch('/api/create-checkout', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify({ productId: currentProduct.id })
+                // });
+                // const { url } = await res.json();
+                // window.open(url, '_blank');
+
+                // ── Fallback: show purchase prompt ───────────────────────────
+                alert(`To purchase "${currentProduct.title}", please complete checkout.\n\nCheckout integration coming soon!`);
+                resetButton(btn, originalText);
             }
-
-            // Extract clean filename from file_url with URL encoding
-            const fileClean = extractFileName(currentProduct.file_url);
-            const encodedFileName = encodeURIComponent(fileClean);
-            
-            console.log('📥 Creating signed URL for:', fileClean);
-            console.log('📥 Encoded filename:', encodedFileName);
-
-            // Create signed URL for secure download
-            const { data, error } = await sb.storage
-                .from('product-images')
-                .createSignedUrl(`products/${encodedFileName}`, 60);
-
-            if (error) {
-                throw new Error(`Storage error: ${error.message}`);
-            }
-
-            if (!data || !data.signedUrl) {
-                throw new Error("Failed to generate download link");
-            }
-
-            console.log('✓ Download link generated');
-
-            // Open download in new tab
-            window.open(data.signedUrl, '_blank');
-
-            // Update button feedback
-            btn.innerHTML = "✓ Download Started";
-            btn.style.background = "#10b981";
-
-            // Reset button after 3 seconds
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-                btn.className = originalClass;
-                btn.style.background = "";
-            }, 3000);
 
         } catch (err) {
-            console.error('Download error:', err);
-            btn.innerHTML = "✗ Failed - Try Again";
+            console.error('Download/purchase error:', err);
+            btn.innerText = "✗ Failed – Try Again";
             btn.style.background = "#ef4444";
             btn.disabled = false;
-
-            // Reset after 3 seconds
-            setTimeout(() => {
-                btn.innerHTML = originalHTML;
-                btn.className = originalClass;
-                btn.style.background = "";
-            }, 3000);
+            setTimeout(() => resetButton(btn, originalText), 3000);
         }
     }
 
-    /**
-     * Display error message in UI
-     */
+    function resetButton(btn, originalText) {
+        btn.disabled = false;
+        btn.innerText = originalText;
+        btn.style.background = "";
+        btn.className = btn.className; // keep existing classes intact
+    }
+
+    // ── Error display ────────────────────────────────────────────────────────
     function showError(msg) {
         console.error('Error:', msg);
-        
         document.getElementById('productTitle').innerText = "⚠️ " + msg;
         document.getElementById('productTitle').classList.remove('loading-skeleton');
-        
         document.getElementById('productPrice').innerText = "";
         document.getElementById('productPrice').classList.remove('loading-skeleton');
-        
         document.getElementById('productDescription').innerText = "";
         document.getElementById('productDescription').classList.remove('loading-skeleton');
-        
         const btn = document.getElementById('downloadBtn');
         btn.disabled = true;
         btn.style.opacity = "0.5";
     }
 
-    // Expose functions to global scope
+    // ── Expose to global scope for onclick ───────────────────────────────────
     window.handleDownload = handleDownload;
 
-    // Load product when page is ready
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Page loaded, initializing product...');
-        loadProduct();
-    });
-
-    // Also try loading immediately if DOM is already ready
+    // ── Bootstrap ────────────────────────────────────────────────────────────
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadProduct);
     } else {
