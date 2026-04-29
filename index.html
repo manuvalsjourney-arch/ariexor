@@ -201,7 +201,7 @@ function renderProducts(products) {
     grid.innerHTML = products.map(p => {
         // Grab filename, fix %20, and point to the previews folder
         const fileName = p.image_url ? p.image_url.split('/').pop().replace(/%20/g, ' ') : 'placeholder.png';
-     const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName.replace(/%20/g, ' '))}`;
+        const finalImgUrl = `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
         return `
         <div class="relative group fade-in">
             <button onclick="shareProduct(event, '${p.title}', '${p.id}')" 
