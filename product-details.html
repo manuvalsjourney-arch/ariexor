@@ -62,18 +62,10 @@ const supabase = window.supabase.createClient(
 
 let currentProduct = null;
 
-// Load product
 async function loadProduct() {
     try {
-        const params = new URLSearchParams(window.location.search);
-        const productId = params.get('id');
-
-        console.log("ID:", productId);
-
-        if (!productId) {
-            showError("Missing product ID");
-            return;
-        }
+        const productId = new URLSearchParams(window.location.search).get('id');
+        if (!productId) return showError("Missing product ID");
 
         const { data, error } = await supabase
             .from('product_details')
@@ -81,39 +73,26 @@ async function loadProduct() {
             .eq('id', parseInt(productId))
             .single();
 
-        console.log("DATA:", data, "ERROR:", error);
-
-        if (error || !data) {
-            showError("Product not found");
-            return;
-        }
-
+        if (error || !data) return showError("Product not found");
         currentProduct = data;
 
-        // Text
+        // UI Text
         document.getElementById('productTitle').innerText = data.title;
         document.getElementById('productPrice').innerText = `$${data.price}`;
         document.getElementById('productDescription').innerText = data.description;
 
-        // Image (correct way)
-        if (data.image_url) {
-            const { data: img } = supabase.storage
-                .from('product-images')
-                .getPublicUrl(data.image_url);
-
-            document.getElementById('productImage').src = img.publicUrl;
-        }
+        // IMAGE FIX: Always look in the /previews/ folder
+        const fileName = data.image_url.split('/').pop();
+        document.getElementById('productImage').src = 
+            `https://qtewpjdnnjgvfgllgryy.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
 
     } catch (err) {
-        console.error(err);
         showError("Something broke");
     }
 }
 
-// Download
 async function handleDownload() {
     if (!currentProduct) return;
-
     const btn = document.getElementById('downloadBtn');
     const original = btn.innerHTML;
 
@@ -121,22 +100,19 @@ async function handleDownload() {
     btn.innerHTML = "Preparing download...";
 
     try {
+        // DOWNLOAD FIX: Always look in the /products/ folder
+        const fileClean = currentProduct.file_url.split('/').pop();
         const { data, error } = await supabase.storage
             .from('product-images')
-            .createSignedUrl(currentProduct.file_url, 60);
+            .createSignedUrl(`products/${fileClean}`, 60);
 
         if (error) throw error;
 
-        const link = document.createElement('a');
-        link.href = data.signedUrl;
-        link.download = "";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Open in new tab for instant secure download
+        window.open(data.signedUrl, '_blank');
 
         btn.innerHTML = "Download Started";
         btn.style.background = "#10b981";
-
         setTimeout(() => {
             btn.disabled = false;
             btn.innerHTML = original;
@@ -144,20 +120,17 @@ async function handleDownload() {
         }, 3000);
 
     } catch (err) {
-        console.error(err);
         btn.innerHTML = "Failed - Try Again";
         btn.disabled = false;
     }
 }
 
-// Error UI
 function showError(msg) {
     document.getElementById('productTitle').innerText = msg;
     document.getElementById('productPrice').innerText = "";
     document.getElementById('productDescription').innerText = "";
 }
 
-// Init
 loadProduct();
 </script>
 
