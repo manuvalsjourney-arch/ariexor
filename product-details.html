@@ -278,7 +278,15 @@
                 }
 
                 console.log('[ariexo] ✓ Signed URL generated:', signedData.signedUrl);
-                window.open(signedData.signedUrl, '_blank');
+
+                // Trigger download without leaving the page
+                const a = document.createElement('a');
+                a.href = signedData.signedUrl;
+                a.download = ''; // forces "Save As" dialog; browser infers filename from URL
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
 
                 btn.innerText = "✓ Download Started";
                 btn.style.background = "#10b981";
