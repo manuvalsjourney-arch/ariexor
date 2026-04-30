@@ -86,9 +86,6 @@
         const STORAGE_BASE = 'https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/';
         window.PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%231e293b'/%3E%3Cpath d='M20 38l6-8 4 5 4-4 6 7H20z' fill='%23334155'/%3E%3Ccircle cx='22' cy='24' r='3' fill='%23334155'/%3E%3C/svg%3E`;
 
-        // Cache the logged-in user so delete doesn't need a fresh auth round-trip
-        let currentUser = null;
-
         function extractFilename(imageUrl) {
             if (!imageUrl) return null;
             try { return decodeURIComponent(imageUrl).split('/').pop(); }
@@ -101,7 +98,6 @@
             const loading = document.getElementById('loading');
             const list    = document.getElementById('inventoryList');
 
-            // Reset to spinner on every call (handles post-delete refresh)
             list.innerHTML = '';
             loading.classList.remove('hidden');
             loading.innerHTML = `
@@ -114,7 +110,6 @@
                     loading.innerHTML = `<p class="text-slate-400">Access Denied. Please <a href="login.html" class="text-indigo-400 underline font-bold">Login</a>.</p>`;
                     return;
                 }
-                currentUser = user;
 
                 const { data, error } = await sb
                     .from('product_details')
@@ -181,7 +176,6 @@
                         </tr>`;
                     }).join('');
 
-                    // ✅ Event listeners instead of inline onclick — 100% reliable
                     list.querySelectorAll('.delete-btn').forEach(btn => {
                         btn.addEventListener('click', () => deleteAsset(Number(btn.dataset.id)));
                     });
@@ -203,29 +197,51 @@
         async function deleteAsset(id) {
             if (!confirm('Permanently remove this asset?')) return;
 
-            if (!currentUser) {
-                alert('Session expired. Please refresh and log in again.');
-                return;
-            }
-
-            // Dim row immediately for snappy feel
             const row = document.getElementById(`row-${id}`);
             if (row) row.style.opacity = '0.3';
 
             try {
-                const { error } = await sb
+                // ✅ Fresh auth call — no stale cached user
+                const { data: { user }, error: authError } = await sb.auth.getUser();
+
+                if (authError || !user) {
+                    console.error('Auth error during delete:', authError);
+                    alert('Session expired. Please refresh and log in again.');
+                    if (row) row.style.opacity = '1';
+                    return;
+                }
+
+                console.log('Attempting delete — id:', id, '| seller_id:', user.id);
+
+                const { data, error } = await sb
                     .from('product_details')
                     .delete()
                     .eq('id', id)
-                    .eq('seller_id', currentUser.id); // scoped to owner
+                    .eq('seller_id', user.id)
+                    .select(); // ← forces Supabase to return what was deleted
 
+                // ✅ Full error object logged as requested
                 if (error) {
-                    console.error('Delete error:', error);
+                    console.error('Full Error:', error);
                     if (row) row.style.opacity = '1';
                     alert('Delete failed: ' + error.message);
-                } else {
-                    fetchAnalytics();
+                    return;
                 }
+
+                // If .select() returns an empty array, RLS silently blocked it
+                if (!data || data.length === 0) {
+                    console.warn('Delete ran but no rows were removed. Likely an RLS policy mismatch.', {
+                        attempted_id: id,
+                        seller_id: user.id
+                    });
+                    if (row) row.style.opacity = '1';
+                    alert('Delete was blocked. Check your Supabase RLS policy for the DELETE operation.');
+                    return;
+                }
+
+                console.log('Deleted successfully:', data);
+                fetchAnalytics();
+
             } catch (err) {
                 console.error('Unexpected delete error:', err);
                 if (row) row.style.opacity = '1';
