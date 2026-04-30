@@ -420,6 +420,9 @@ async function loadProductData(id) {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Determine the base label used to reset the button on error/completion
+    const defaultBtnText = editId ? 'Save Changes' : 'Publish Product';
+
     btn.textContent = 'Processing…';
     btn.disabled    = true;
     setProgress(5);
@@ -451,8 +454,9 @@ form.addEventListener('submit', async (e) => {
             price:       parseFloat(document.getElementById('price').value)
         };
 
-        // ── 3. Upload preview image ───────────────────────────────────────────
+        // ── 3. Upload preview image (if a new one was selected) ───────────────
         if (imgFile) {
+            btn.textContent = 'Uploading image…';
             const imgPath = `previews/${ts}-${imgFile.name}`;
             const { error: imgUploadErr } = await sb.storage
                 .from('product-images')
@@ -475,7 +479,7 @@ form.addEventListener('submit', async (e) => {
                 const m = moderation.moderation;
                 if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
                     showToast('Upload blocked: Image violates safety guidelines.', 'warning');
-                    btn.textContent = editId ? 'Save Changes' : 'Publish Product';
+                    btn.textContent = defaultBtnText;
                     btn.disabled = false;
                     hideProgress();
                     return;
@@ -484,11 +488,14 @@ form.addEventListener('submit', async (e) => {
 
             payload.image_url = imgData.publicUrl;
         }
+        // If no new image selected in edit mode, image_url is left out of the
+        // payload so the existing DB value is preserved.
 
         setProgress(60);
 
-        // ── 4. Upload asset file ──────────────────────────────────────────────
+        // ── 4. Upload asset file (if a new one was selected) ──────────────────
         if (pdfFile) {
+            btn.textContent = 'Uploading asset…';
             const assetPath = `downloads/${ts}-${pdfFile.name}`;
             const { error: assetUploadErr } = await sb.storage
                 .from('user-products')
@@ -496,17 +503,22 @@ form.addEventListener('submit', async (e) => {
 
             if (assetUploadErr) throw new Error('Asset upload failed: ' + assetUploadErr.message);
 
-            const { data: assetData } = sb.storage
-                .from('user-products')
-                .getPublicUrl(assetPath);
-
-            // ✅ CHANGED: was payload.file_url — updated to match renamed column
-            payload.asset_url = assetData.publicUrl;
+            // ✅ Store the bare storage path (NOT a public URL).
+            //    product-details.html calls createSignedUrl(storagePath, 60)
+            //    on the private bucket, which requires just the path after the
+            //    bucket name — e.g. "downloads/1234567890-file.zip".
+            //    Storing a full public URL here would cause signed URL
+            //    generation to silently fail.
+            payload.asset_url = assetPath;
         }
+        // If no new asset selected in edit mode, asset_url is left out of the
+        // payload so the existing DB value is preserved.
 
         setProgress(80);
 
         // ── 5. Write to database ──────────────────────────────────────────────
+        btn.textContent = editId ? 'Saving…' : 'Publishing…';
+
         if (editId) {
             const { error: updateErr } = await sb
                 .from('product_details')
@@ -548,7 +560,7 @@ form.addEventListener('submit', async (e) => {
         hideProgress();
         console.error('[ariexo dashboard]', err);
         showToast(err.message, 'error');
-        btn.textContent = editId ? 'Save Changes' : 'Publish Product';
+        btn.textContent = defaultBtnText;
         btn.disabled = false;
     }
 });
