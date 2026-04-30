@@ -3,165 +3,895 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-   <title>ariexo | Buy/Sell Premium Digital Assets & Creator Tools</title>
-<meta name="title" content="ariexo | Buy or Sell Premium Digital Assets & Creator Tools">
- <link rel="icon" type="image/png" href="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
-    <meta name="title" content="ariexo | Premium Digital Assets & Creator Tools">
+    <title>ariexo | Buy/Sell Premium Digital Assets & Creator Tools</title>
+    <meta name="title" content="ariexo | Buy or Sell Premium Digital Assets & Creator Tools">
+    <link rel="icon" type="image/png" href="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
     <meta name="description" content="Shop high-end aesthetic planners, video editing assets, and digital tools. Join the ariexo ecosystem to elevate your digital workspace.">
     <meta name="keywords" content="digital assets, aesthetic planners, video editing templates, ariexo, digital marketplace, creator tools">
     <meta name="author" content="ariexo">
-
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://ariexor.vercel.app/">
     <meta property="og:title" content="ariexo | Level Up Your Digital Life">
     <meta property="og:description" content="One account to buy or sell everything. Explore our latest drops in aesthetic digital tools.">
-    <meta property="og:image" content="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png"> <meta property="twitter:card" content="summary_large_image">
+    <meta property="og:image" content="https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/favicon.png">
+    <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://ariexor.vercel.app/">
     <meta property="twitter:title" content="ariexo | Premium Digital Marketplace">
     <meta property="twitter:description" content="Shop the latest in aesthetic digital productivity.">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --indigo: #6366f1;
+            --indigo-dark: #4f46e5;
+            --emerald: #10b981;
+            --rose: #f43f5e;
+            --card-bg: rgba(255,255,255,0.03);
+            --card-border: rgba(255,255,255,0.07);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         .hidden { display: none !important; }
+
+        html { scroll-behavior: smooth; }
+
         body {
-            background: linear-gradient(270deg, #0b0b14, #111827, #0b0b14);
-            background-size: 600% 600%;
-            animation: gradientMove 12s ease infinite;
+            background: #060611;
+            color: #e2e8f0;
+            font-family: 'DM Sans', sans-serif;
+            overflow-x: hidden;
+            cursor: none;
         }
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+
+        /* ── Custom cursor ── */
+        #cursor {
+            position: fixed;
+            width: 12px; height: 12px;
+            background: var(--indigo);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.08s, width 0.2s, height 0.2s, background 0.2s;
+            mix-blend-mode: screen;
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.4s ease;
+        #cursor-ring {
+            position: fixed;
+            width: 36px; height: 36px;
+            border: 1px solid rgba(99,102,241,0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.18s ease, width 0.25s, height 0.25s, opacity 0.2s;
         }
-        .glass-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        body:hover #cursor { opacity: 1; }
+        a:hover ~ #cursor, button:hover ~ #cursor { width: 20px; height: 20px; }
+
+        /* ── Canvas particle field ── */
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
         }
-        .glow-text {
-            text-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
+
+        /* ── Noise overlay ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
         }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(6,6,17,0.7);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.75rem;
+            letter-spacing: -0.04em;
+            color: #fff;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+        }
+        .logo span { color: var(--indigo); }
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 0;
+            width: 0; height: 2px;
+            background: var(--indigo);
+            transition: width 0.3s ease;
+        }
+        .logo:hover::after { width: 100%; }
+
+        .nav-links { display: flex; gap: 2.5rem; }
+        .nav-links a {
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: #fff; }
+
+        .nav-cta { display: flex; gap: 1rem; align-items: center; }
+        .btn-ghost {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.2s;
+            cursor: pointer;
+            background: none; border: none;
+        }
+        .btn-ghost:hover { color: #fff; }
+        .btn-primary {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--indigo);
+            color: #fff;
+            padding: 0.6rem 1.4rem;
+            border-radius: 100px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        }
+        .btn-primary:hover {
+            background: var(--indigo-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 0 30px rgba(99,102,241,0.5);
+        }
+
+        /* ── HERO ── */
+        #home {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 2rem;
+            padding-top: 72px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 100px;
+            padding: 0.35rem 1rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #a5b4fc;
+            margin-bottom: 2rem;
+            animation: fadeDown 0.8s ease both;
+        }
+        .hero-badge-dot {
+            width: 6px; height: 6px;
+            background: var(--emerald);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.4); }
+        }
+
+        .hero-headline {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(3rem, 9vw, 7.5rem);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.04em;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            animation: fadeUp 0.9s 0.1s ease both;
+        }
+        .hero-headline .buy { color: var(--emerald); }
+        .hero-headline .sell { color: var(--rose); }
+        .hero-headline .accent {
+            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 50%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            max-width: 540px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 2.5rem;
+            animation: fadeUp 0.9s 0.2s ease both;
+        }
+        .hero-sub em { color: rgba(255,255,255,0.75); font-style: normal; font-weight: 500; }
+
+        /* ── Search bar ── */
+        .search-wrap {
+            position: relative;
+            width: 100%;
+            max-width: 520px;
+            margin-bottom: 2rem;
+            animation: fadeUp 0.9s 0.3s ease both;
+        }
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.25);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        #productSearch {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1rem;
+            padding: 1rem 1.2rem 1rem 3rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+        }
+        #productSearch::placeholder { color: rgba(255,255,255,0.2); }
         #productSearch:focus {
-            box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);
-            border-color: #6366f1;
+            border-color: rgba(99,102,241,0.5);
+            background: rgba(99,102,241,0.06);
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.08), 0 0 40px rgba(99,102,241,0.15);
         }
-        .fade-in {
-            animation: fadeInUp 0.8s ease forwards;
+
+        /* ── Hero CTA row ── */
+        .hero-ctas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            animation: fadeUp 0.9s 0.4s ease both;
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
+        .cta-explore {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: #fff;
+            color: #0b0b18;
+            padding: 0.8rem 2rem;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .cta-explore:hover { background: #e2e8f0; transform: translateY(-2px); }
+        .cta-sell {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+            padding: 0.8rem 2rem;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .cta-sell:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .cta-analytics {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.25);
+            color: #a5b4fc;
+            padding: 0.8rem 2rem;
+            border-radius: 100px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .cta-analytics:hover { background: rgba(99,102,241,0.2); transform: translateY(-2px); }
+
+        /* ── Scroll hint ── */
+        .scroll-hint {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255,255,255,0.2);
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            animation: fadeUp 1s 0.8s ease both;
+        }
+        .scroll-line {
+            width: 1px;
+            height: 40px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+            animation: scrollDown 1.8s infinite;
+        }
+        @keyframes scrollDown {
+            0% { transform: scaleY(0); transform-origin: top; }
+            50% { transform: scaleY(1); transform-origin: top; }
+            51% { transform: scaleY(1); transform-origin: bottom; }
+            100% { transform: scaleY(0); transform-origin: bottom; }
+        }
+
+        /* ── 3D Floating orbs ── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 1;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+            top: -200px; right: -200px;
+            animation: floatOrb1 18s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
+            bottom: -100px; left: -150px;
+            animation: floatOrb2 22s ease-in-out infinite;
+        }
+        .orb-3 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(244,63,94,0.08) 0%, transparent 70%);
+            top: 40%; left: 40%;
+            animation: floatOrb3 16s ease-in-out infinite;
+        }
+        @keyframes floatOrb1 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(-60px, 80px) scale(1.1); }
+            66% { transform: translate(40px, -40px) scale(0.95); }
+        }
+        @keyframes floatOrb2 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(80px, -60px) scale(1.08); }
+        }
+        @keyframes floatOrb3 {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(60px, 30px) scale(1.05); }
+            66% { transform: translate(-40px, 60px) scale(0.9); }
+        }
+
+        /* ── GRID ── */
+        #products {
+            position: relative;
+            z-index: 2;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 6rem 2rem 8rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #fff;
+        }
+        .section-count {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.25);
+            font-weight: 400;
+        }
+
+        #products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* ── Product card ── */
+        .product-card-outer {
+            position: relative;
+            border-radius: 1.5rem;
+            transition: transform 0.4s ease;
+            transform-style: preserve-3d;
+            perspective: 800px;
+            animation: cardReveal 0.6s ease both;
+        }
+        @keyframes cardReveal {
+            from { opacity: 0; transform: translateY(30px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .product-card-outer:hover { transform: translateY(-8px); }
+
+        /* Glow on hover */
+        .product-card-outer::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 1.5rem;
+            background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(99,102,241,0) 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            z-index: -1;
+        }
+        .product-card-outer:hover::before { opacity: 1; }
+
+        .product-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(20px);
+            transition: border-color 0.4s, box-shadow 0.4s;
+        }
+        .product-card-outer:hover .product-card {
+            border-color: rgba(99,102,241,0.2);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        .card-img-wrap {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            background: #0d0d1f;
+        }
+        .card-img-wrap img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s cubic-bezier(0.4,0,0.2,1), filter 0.4s;
+            filter: brightness(0.9);
+        }
+        .product-card-outer:hover .card-img-wrap img {
+            transform: scale(1.08);
+            filter: brightness(1);
+        }
+
+        /* Shimmer on image */
+        .card-img-wrap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        .product-card-outer:hover .card-img-wrap::after {
+            transform: translateX(100%);
+        }
+
+        /* Share btn */
+        .share-btn {
+            position: absolute;
+            top: 0.75rem; right: 0.75rem;
+            z-index: 10;
+            width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s, transform 0.2s, border-color 0.2s;
+            backdrop-filter: blur(8px);
+            color: rgba(255,255,255,0.7);
+        }
+        .share-btn:hover {
+            background: var(--indigo);
+            border-color: var(--indigo);
+            color: #fff;
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        /* Price badge */
+        .price-badge {
+            position: absolute;
+            bottom: 0.75rem; left: 0.75rem;
+            background: rgba(6,6,17,0.85);
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 100px;
+            padding: 0.3rem 0.9rem;
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            backdrop-filter: blur(8px);
+        }
+
+        .card-body {
+            padding: 1.25rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+        .card-desc {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 1.2rem;
+            flex: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-link-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.2);
+            text-decoration: none;
+            transition: color 0.3s, gap 0.3s;
+        }
+        .product-card-outer:hover .card-link-arrow {
+            color: rgba(255,255,255,0.8);
+            gap: 0.7rem;
+        }
+        .card-link-arrow svg { transition: transform 0.3s; }
+        .product-card-outer:hover .card-link-arrow svg { transform: translateX(3px); }
+
+        /* ── Animations ── */
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-16px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .share-btn:hover { 
-            background: #4f46e5 !important; 
-            color: white !important; 
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .white-glow {
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.2);
+
+        /* ── No results ── */
+        #no-results {
+            text-align: center;
+            padding: 6rem 0;
+            color: rgba(255,255,255,0.15);
+            font-size: 1rem;
+        }
+
+        /* ── Footer ── */
+        footer {
+            position: relative;
+            z-index: 2;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding: 3rem 2rem;
+        }
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .footer-copy {
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.2);
+        }
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .footer-links a {
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.2);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: rgba(255,255,255,0.7); }
+
+        /* ── 3D Tilt on cards ── */
+        .tilt-card { transform-style: preserve-3d; }
+
+        /* ── Skeleton loader ── */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 1.5rem;
+        }
+        @keyframes shimmer {
+            from { background-position: -200% 0; }
+            to { background-position: 200% 0; }
+        }
+        .skeleton-card { height: 380px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            #products-grid { grid-template-columns: 1fr; }
+            .hero-headline { font-size: 3.2rem; }
         }
     </style>
 </head>
+<body>
 
-<body class="text-white font-['Inter']">
+<!-- Custom cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
 
-<nav class="fixed w-full z-50 bg-[#0b0b14]/80 backdrop-blur-md border-b border-white/5">
-    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center h-20">
-        <span class="text-3xl font-extrabold text-indigo-500 tracking-tighter cursor-pointer hover:scale-105 transition"
-              onclick="window.location.href='#home'">
-            ariexo
-        </span>
-        <div class="hidden md:flex space-x-8">
-            <a href="#home" class="hover:text-indigo-400">Home</a>
-            <a href="#products" class="hover:text-indigo-400">Products</a>
-            <a href="analytics.html" id="navAnalytics" class="text-indigo-400 hidden">Analytics</a>
-        </div>
-        <div class="flex gap-4" id="nav-auth">
-            <a href="login.html" class="self-center">Login</a>
-            <a href="signup.html" class="bg-indigo-600 px-6 py-2.5 rounded-full font-bold hover:bg-indigo-500 hover:scale-105">
-                Sign Up
-            </a>
-        </div>
+<!-- Ambient orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Particle canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+    <a href="#home" class="logo">ari<span>exo</span></a>
+    <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#products">Products</a>
+        <a href="analytics.html" id="navAnalytics" class="hidden" style="color:#a5b4fc;">Analytics</a>
+    </div>
+    <div class="nav-cta" id="nav-auth">
+        <a href="login.html" class="btn-ghost">Login</a>
+        <a href="signup.html" class="btn-primary">Sign Up</a>
     </div>
 </nav>
 
-<header id="home" class="pt-40 pb-20 text-center fade-in">
-   <h1 class="text-6xl md:text-8xl font-extrabold mb-8 glow-text">
-    <span class="text-emerald-500">Buy</span> / <span class="text-red-500">Sell</span> <span class="text-indigo-500">Premium</span> Digital Assets
-</h1>
-<p class="text-white max-w-2xl mx-auto mb-10 white-glow">
-    Join the ariexo ecosystem. The all-in-one marketplace to discover, <span class="text-emerald-500 font-medium">buy</span>, or <span class="text-red-500 font-medium">sell</span> high-end creator tools.
-</p>
-    <div class="relative max-w-xl mx-auto mb-8">
-        <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500"></span>
-        <input type="text" id="productSearch"
-            placeholder="Search premium assets..."
-            class="w-full bg-white/5 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-lg outline-none transition-all glass-card">
+<!-- HERO -->
+<header id="home">
+    <div class="hero-badge">
+        <div class="hero-badge-dot"></div>
+        Now Live — ariexo Marketplace
     </div>
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="#products" class="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-gray-200 hover:scale-105">
-            Explore Marketplace
-        </a>
-        <a href="dashboard.html" id="heroSell"
-           class="bg-slate-900 border border-white/10 px-8 py-4 rounded-2xl hidden hover:scale-105">
-            Start Selling
-        </a>
-        <a href="analytics.html" id="heroAnalytics"
-           class="bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 px-8 py-4 rounded-2xl hidden hover:scale-105">
-            View Analytics
-        </a>
+
+    <h1 class="hero-headline">
+        <span class="buy">Buy</span> / <span class="sell">Sell</span><br>
+        <span class="accent">Premium</span> Digital Assets
+    </h1>
+
+    <p class="hero-sub">
+        The all-in-one creator marketplace.<br>
+        <em>Discover, buy, or sell</em> high-end digital tools in one place.
+    </p>
+
+    <div class="search-wrap">
+        <span class="search-icon">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+        </span>
+        <input type="text" id="productSearch" placeholder="Search premium assets…" autocomplete="off">
+    </div>
+
+    <div class="hero-ctas">
+        <a href="#products" class="cta-explore">Explore Marketplace</a>
+        <a href="dashboard.html" id="heroSell" class="cta-sell hidden">Start Selling</a>
+        <a href="analytics.html" id="heroAnalytics" class="cta-analytics hidden">View Analytics</a>
+    </div>
+
+    <div class="scroll-hint">
+        <span>Scroll</span>
+        <div class="scroll-line"></div>
     </div>
 </header>
 
-<section id="products" class="py-20 max-w-7xl mx-auto px-4">
-    <h2 class="text-3xl font-extrabold mb-12">Latest Drops</h2>
-    <div id="products-grid" class="grid md:grid-cols-3 gap-8"></div>
-    <div id="no-results" class="hidden text-center py-20">
-        <p class="text-slate-500 text-xl">No products found.</p>
+<!-- PRODUCTS -->
+<section id="products">
+    <div class="section-header">
+        <h2 class="section-title">Latest Drops</h2>
+        <span class="section-count" id="product-count"></span>
+    </div>
+    <div id="products-grid">
+        <!-- Skeleton loaders -->
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+    </div>
+    <div id="no-results" class="hidden">
+        <p>No products found matching your search.</p>
     </div>
 </section>
 
-<footer class="py-12 border-t border-white/5">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-        <div class="text-slate-500 text-xs tracking-widest uppercase">
-            &copy; 2026 ariexo — All Rights Reserved
-        </div>
-        <div class="flex space-x-8 text-[11px] font-medium text-slate-400 uppercase tracking-widest">
-            <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" class="hover:text-white transition-colors">Refund Policy</a>
-            <a href="mailto:support@ariexor.com" class="hover:text-indigo-400 transition-colors">Support</a>
+<!-- FOOTER -->
+<footer>
+    <div class="footer-inner">
+        <div class="footer-copy">&copy; 2026 ariexo — All Rights Reserved</div>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Refund Policy</a>
+            <a href="mailto:support@ariexor.com">Support</a>
         </div>
     </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const sb = supabase.createClient(
-    'https://jiuzebbrjbqkoovfrbvp.supabase.co', 
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc' 
-);
+/* ── Cursor ── */
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function animateCursor() {
+    cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animateCursor);
+})();
+document.querySelectorAll('a,button,input').forEach(el => {
+    el.addEventListener('mouseenter', () => { cur.style.width = '20px'; cur.style.height = '20px'; ring.style.opacity = '0.4'; });
+    el.addEventListener('mouseleave', () => { cur.style.width = '12px'; cur.style.height = '12px'; ring.style.opacity = '1'; });
+});
+
+/* ── Particle canvas ── */
+(function initParticles() {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+
+    function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    class Particle {
+        constructor() { this.reset(); }
+        reset() {
+            this.x = Math.random() * W;
+            this.y = Math.random() * H;
+            this.r = Math.random() * 1.2 + 0.3;
+            this.vx = (Math.random() - 0.5) * 0.3;
+            this.vy = (Math.random() - 0.5) * 0.3;
+            this.alpha = Math.random() * 0.4 + 0.05;
+            this.pulse = Math.random() * Math.PI * 2;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.pulse += 0.01;
+            if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+        }
+        draw() {
+            const a = this.alpha * (0.7 + 0.3 * Math.sin(this.pulse));
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(99,102,241,${a})`;
+            ctx.fill();
+        }
+    }
+
+    for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+    function drawConnections() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 100) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(99,102,241,${0.06 * (1 - dist/100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, W, H);
+        particles.forEach(p => { p.update(); p.draw(); });
+        drawConnections();
+        requestAnimationFrame(loop);
+    }
+    loop();
+})();
+
+/* ── 3D Card tilt ── */
+function addTilt(el) {
+    el.addEventListener('mousemove', e => {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dx = (e.clientX - cx) / (r.width / 2);
+        const dy = (e.clientY - cy) / (r.height / 2);
+        el.style.transform = `translateY(-8px) rotateY(${dx * 5}deg) rotateX(${-dy * 5}deg)`;
+    });
+    el.addEventListener('mouseleave', () => {
+        el.style.transform = '';
+    });
+}
+
+/* ── Supabase ── */
+const SUPABASE_URL = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
+
+let _sb = null;
+function getSB() {
+    if (!_sb) _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return _sb;
+}
 
 let cachedProducts = [];
 
 async function logout() {
-    await sb.auth.signOut(); 
+    await getSB().auth.signOut();
     localStorage.removeItem('userRole');
-    window.location.href = 'index.html'; 
+    window.location.href = 'index.html';
 }
 
 async function updateAuthUI() {
-    const { data: { user } } = await sb.auth.getUser();
+    const { data: { user } } = await getSB().auth.getUser();
     const navAuth = document.getElementById('nav-auth');
     if (user) {
-        navAuth.innerHTML = `<button onclick="logout()" class="bg-red-500/10 text-red-400 border border-red-500/20 px-6 py-2.5 rounded-full font-bold hover:bg-red-500 hover:text-white transition-all">Logout</button>`;
+        navAuth.innerHTML = `<button onclick="logout()" class="btn-primary" style="background:rgba(244,63,94,0.15);color:#f43f5e;box-shadow:none;border:1px solid rgba(244,63,94,0.2);">Logout</button>`;
         const role = user.user_metadata?.role || localStorage.getItem('userRole');
         if (role === 'seller') {
             document.getElementById('navAnalytics')?.classList.remove('hidden');
@@ -174,77 +904,91 @@ async function updateAuthUI() {
 
 async function loadProducts() {
     try {
-        const { data, error } = await sb.from('product_details')
+        const { data, error } = await getSB().from('product_details')
             .select('*')
-            .order('id', { ascending: false });
+            .eq('is_remix', false)
+            .order('created_at', { ascending: false });
         if (error) throw error;
         cachedProducts = data || [];
         renderProducts(cachedProducts);
     } catch (err) {
-        console.error("Error loading products:", err.message);
+        console.error('Error loading products:', err.message);
+        renderProducts([]);
     }
 }
 
 function renderProducts(products) {
     const grid = document.getElementById('products-grid');
     const noResults = document.getElementById('no-results');
+    const count = document.getElementById('product-count');
 
     if (products.length === 0) {
         grid.innerHTML = '';
         noResults.classList.remove('hidden');
+        count.textContent = '';
         return;
     }
 
     noResults.classList.add('hidden');
-    
-    // THE FIX: Cleanly map the products without crashing the script
-    grid.innerHTML = products.map(p => {
-        // Grab filename, fix %20, and point to the previews folder
-       // This handles both the %20 from the table and the spaces in your storage folder
-const fileName = p.image_url ? p.image_url.split('/').pop().replace(/%20/g, ' ') : 'placeholder.png';
-const finalImgUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
+    count.textContent = `${products.length} item${products.length !== 1 ? 's' : ''}`;
+
+    grid.innerHTML = products.map((p, i) => {
+        const fileName = p.image_url ? p.image_url.split('/').pop().replace(/%20/g, ' ') : 'placeholder.png';
+        const finalImgUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${encodeURIComponent(fileName)}`;
         return `
-        <div class="relative group fade-in">
-            <button onclick="shareProduct(event, '${p.title}', '${p.id}')" 
-                    class="share-btn absolute top-4 right-4 p-3 bg-white/10 rounded-full z-10 backdrop-blur-md hover:bg-white/20 transition">
-                🔗
-            </button>
-
-            <a href="product-details.html?id=${p.id}" class="block glass-card p-6 rounded-[2rem] h-full transition-all duration-300 hover:translate-y-[-5px]">
-                <div class="overflow-hidden rounded-2xl mb-4 bg-slate-800 aspect-video">
-                    <img src="${finalImgUrl}" 
-                         alt="${p.title}" 
-                         class="w-full h-full object-cover group-hover:scale-110 transition duration-500" 
-                         onerror="this.src='https://via.placeholder.com/400x225?text=Image+Not+Found'">
+        <div class="product-card-outer tilt-card" style="animation-delay:${i * 0.07}s">
+            <div class="product-card">
+                <div class="card-img-wrap">
+                    <button onclick="shareProduct(event,'${p.title}','${p.id}')" class="share-btn" title="Share">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                            <polyline points="16 6 12 2 8 6"/>
+                            <line x1="12" y1="2" x2="12" y2="15"/>
+                        </svg>
+                    </button>
+                    <img src="${finalImgUrl}"
+                         alt="${p.title}"
+                         loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/640x360/0d0d1f/333?text=Preview'">
+                    <div class="price-badge">$${p.price}</div>
                 </div>
-
-                <h3 class="text-xl font-bold text-white mb-2">${p.title}</h3>
-                <p class="text-white/60 text-sm mb-4 line-clamp-2">${p.description || 'No description available.'}</p>
-                
-                <div class="flex justify-between items-center mt-auto">
-                    <span class="text-indigo-400 font-black text-xl">$${p.price}</span>
-                    <span class="text-xs text-slate-500 uppercase tracking-widest group-hover:text-white transition">Details →</span>
+                <div class="card-body">
+                    <h3 class="card-title">${p.title}</h3>
+                    <p class="card-desc">${p.description || 'No description available.'}</p>
+                    <div class="card-footer">
+                        <a href="product-details.html?id=${p.id}" class="card-link-arrow">
+                            View Details
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
                 </div>
-            </a>
+            </div>
         </div>`;
     }).join('');
+
+    // Add 3D tilt to each card
+    document.querySelectorAll('.tilt-card').forEach(addTilt);
 }
 
 async function shareProduct(e, title, id) {
     e.preventDefault();
+    e.stopPropagation();
     const url = `${window.location.origin}/product-details.html?id=${id}`;
     if (navigator.share) {
-        try { await navigator.share({ title, url }); } catch (err) {}
+        try { await navigator.share({ title, url }); } catch (_) {}
     } else {
- const rawUrl = p.image_url || '';
-        const fileName = rawUrl.split('/').pop().split('?')[0];
-        const finalImgUrl = `https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/previews/${fileName}`;
+        try { await navigator.clipboard.writeText(url); } catch (_) {}
     }
 }
 
 document.getElementById('productSearch').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase();
-    const filtered = cachedProducts.filter(p => p.title.toLowerCase().includes(q));
+    const q = e.target.value.toLowerCase().trim();
+    const filtered = q ? cachedProducts.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+    ) : cachedProducts;
     renderProducts(filtered);
 });
 
