@@ -270,7 +270,7 @@
                 const { data: signedData, error: signedError } = await sb
                     .storage
                     .from('user-products')
-                    .createSignedUrl(storagePath, 60); // 60-second expiry
+                    .createSignedUrl(storagePath, 60, { download: true }); // download:true forces Content-Disposition: attachment, fixing PNGs opening in a new tab
 
                 if (signedError) {
                     console.error('[ariexo] Signed URL error:', signedError);
