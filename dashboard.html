@@ -29,7 +29,6 @@
             align-items: center;
         }
 
-        /* Ambient background glow */
         body::before {
             content: '';
             position: fixed;
@@ -52,7 +51,6 @@
             z-index: 1;
         }
 
-        /* Form inputs */
         .field-input {
             width: 100%;
             background: rgba(255,255,255,0.04);
@@ -74,7 +72,6 @@
 
         textarea.field-input { height: 130px; resize: vertical; }
 
-        /* File input */
         .file-label {
             display: flex;
             flex-direction: column;
@@ -101,7 +98,6 @@
         .file-label .file-name { font-size: 0.8rem; color: var(--indigo-light); font-weight: 600; word-break: break-all; }
         input[type="file"] { display: none; }
 
-        /* Field label */
         .field-label {
             font-size: 0.65rem;
             font-weight: 700;
@@ -113,7 +109,6 @@
         }
         .field-label.accent { color: rgba(129,140,248,0.75); }
 
-        /* Submit button */
         #submitBtn {
             width: 100%;
             background: var(--indigo);
@@ -136,7 +131,6 @@
         #submitBtn:active:not(:disabled) { transform: scale(0.985); }
         #submitBtn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-        /* Progress bar */
         #progressWrap {
             display: none;
             width: 100%;
@@ -154,7 +148,6 @@
             transition: width 0.4s ease;
         }
 
-        /* Toast */
         #toast {
             position: fixed;
             bottom: 2rem;
@@ -184,7 +177,6 @@
         #toast .toast-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
         #toast .toast-msg  { line-height: 1.5; color: rgba(255,255,255,0.85); }
 
-        /* Auth badge */
         #authBadge {
             display: inline-flex;
             align-items: center;
@@ -194,26 +186,23 @@
             border-radius: 999px;
             font-weight: 600;
         }
-        #authBadge.checking  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
-        #authBadge.signed-in  { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
-        #authBadge.signed-out { background: rgba(239,68,68,0.1);  color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        #authBadge.checking   { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2); }
+        #authBadge.signed-in  { background: rgba(52,211,153,0.1);  color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+        #authBadge.signed-out { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
         #authBadge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
-        /* Footer */
         footer { position: relative; z-index: 1; }
     </style>
 </head>
 <body class="p-6">
 
-    <!-- Toast notification -->
     <div id="toast">
         <span class="toast-icon" id="toastIcon"></span>
-        <span class="toast-msg" id="toastMsg"></span>
+        <span class="toast-msg"  id="toastMsg"></span>
     </div>
 
     <div class="w-full max-w-2xl glass-card p-10 rounded-[2.5rem] mb-8 mt-8">
 
-        <!-- Header -->
         <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
             <div>
                 <h1 id="pageTitle" class="text-3xl font-extrabold tracking-tighter text-indigo-500">List New Product</h1>
@@ -225,30 +214,29 @@
             </div>
         </div>
 
+        <!--
+            novalidate: we do all validation manually in JS so the browser
+            never blocks submit because a file input is "missing" in edit mode.
+        -->
         <form id="productForm" class="space-y-6" novalidate>
 
-            <!-- Title -->
             <div>
                 <label class="field-label" for="title">Product Title</label>
-                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" class="field-input" required>
+                <input type="text" id="title" placeholder="e.g. Midnight Sky Digital Planner" class="field-input">
             </div>
 
-            <!-- Description -->
             <div>
                 <label class="field-label" for="description">Description</label>
-                <textarea id="description" placeholder="Describe your asset in detail — what it is, who it's for, what's included…" class="field-input" required></textarea>
+                <textarea id="description" placeholder="Describe your asset in detail…" class="field-input"></textarea>
             </div>
 
-            <!-- Price -->
             <div>
                 <label class="field-label" for="price">Price (USD)</label>
-                <input type="number" id="price" step="0.01" min="0" placeholder="9.99" class="field-input" required>
+                <input type="number" id="price" step="0.01" min="0" placeholder="9.99" class="field-input">
             </div>
 
-            <!-- File uploads -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-                <!-- Preview image -->
                 <div>
                     <label class="field-label accent">Preview Image</label>
                     <label for="imageInput" class="file-label" id="imageDrop">
@@ -257,10 +245,10 @@
                         <span class="file-hint">PNG, JPG, WEBP — max 10 MB</span>
                         <span class="file-name" id="imageFileName"></span>
                     </label>
-                    <input type="file" id="imageInput" accept="image/*" required>
+                    <!-- No required attr — validated in JS -->
+                    <input type="file" id="imageInput" accept="image/*">
                 </div>
 
-                <!-- Asset file -->
                 <div>
                     <label class="field-label accent">Digital Asset</label>
                     <label for="pdfInput" class="file-label" id="assetDrop">
@@ -269,18 +257,17 @@
                         <span class="file-hint">PDF, ZIP, AEP, FIG, MP4 & more</span>
                         <span class="file-name" id="assetFileName"></span>
                     </label>
-                    <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx" required>
+                    <!-- No required attr — validated in JS -->
+                    <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx">
                 </div>
             </div>
 
-            <!-- Submit -->
             <button type="submit" id="submitBtn">Publish Product</button>
             <div id="progressWrap"><div id="progressBar"></div></div>
 
         </form>
     </div>
 
-    <!-- Footer -->
     <footer class="py-12 border-t border-white/5 w-full mt-4">
         <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="text-slate-500 text-[10px] tracking-[0.2em] uppercase font-medium">
@@ -302,37 +289,35 @@ const sb = supabase.createClient(
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
 );
 
-// ─── Cached user (set by updateAuthBadge, used in form submit) ────────────────
 let currentUser = null;
 
-// ─── Toast helper ─────────────────────────────────────────────────────────────
+// ─── Toast ────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg, type = 'info') {
     const toast = document.getElementById('toast');
     const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
     document.getElementById('toastIcon').textContent = icons[type] ?? 'ℹ️';
-    document.getElementById('toastMsg').textContent = msg;
+    document.getElementById('toastMsg').textContent  = msg;
     toast.className = `show ${type}`;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { toast.className = ''; }, type === 'error' ? 8000 : 4000);
 }
 
-// ─── Progress bar helpers ─────────────────────────────────────────────────────
+// ─── Progress ─────────────────────────────────────────────────────────────────
 function setProgress(pct) {
     document.getElementById('progressWrap').style.display = 'block';
-    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressBar').style.width    = pct + '%';
 }
 function hideProgress() {
     setTimeout(() => {
         document.getElementById('progressWrap').style.display = 'none';
-        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressBar').style.width    = '0%';
     }, 600);
 }
 
-// ─── Auth badge (with timeout + try/catch) ────────────────────────────────────
+// ─── Auth badge ───────────────────────────────────────────────────────────────
 async function updateAuthBadge() {
     const badge = document.getElementById('authBadge');
-
     try {
         const result = await Promise.race([
             sb.auth.getUser(),
@@ -340,11 +325,8 @@ async function updateAuthBadge() {
                 setTimeout(() => reject(new Error('Connection Timeout')), 5000)
             )
         ]);
-
         const { data: { user }, error } = result;
-
         if (error) throw error;
-
         if (user) {
             currentUser = user;
             badge.className = 'signed-in';
@@ -355,7 +337,6 @@ async function updateAuthBadge() {
             showToast('Please sign in to access the dashboard.', 'warning');
             setTimeout(() => { window.location.href = 'login.html'; }, 2000);
         }
-
     } catch (err) {
         console.error('[ariexo auth]', err);
         const isTimeout = err.message === 'Connection Timeout';
@@ -370,7 +351,6 @@ async function updateAuthBadge() {
         setTimeout(() => { window.location.href = 'login.html'; }, 3000);
     }
 }
-
 updateAuthBadge();
 
 // ─── File input labels ────────────────────────────────────────────────────────
@@ -381,7 +361,7 @@ document.getElementById('pdfInput').addEventListener('change', function () {
     document.getElementById('assetFileName').textContent = this.files[0]?.name ?? '';
 });
 
-// ─── Edit mode ────────────────────────────────────────────────────────────────
+// ─── Edit mode setup ──────────────────────────────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
 const editId    = urlParams.get('edit');
 const form      = document.getElementById('productForm');
@@ -410,9 +390,16 @@ async function loadProductData(id) {
         document.getElementById('title').value       = data.title       ?? '';
         document.getElementById('description').value = data.description ?? '';
         document.getElementById('price').value       = data.price       ?? '';
-        // Files already uploaded — not required on edit unless replacing
-        document.getElementById('imageInput').required = false;
-        document.getElementById('pdfInput').required   = false;
+
+        // Show existing file names so the seller knows what's already saved
+        if (data.image_url) {
+            document.getElementById('imageFileName').textContent =
+                '✓ Current: ' + data.image_url.split('/').pop().split('?')[0];
+        }
+        if (data.asset_url) {
+            document.getElementById('assetFileName').textContent =
+                '✓ Current: ' + data.asset_url.split('/').pop().split('?')[0];
+        }
     }
 }
 
@@ -420,33 +407,44 @@ async function loadProductData(id) {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Determine the base label used to reset the button on error/completion
     const defaultBtnText = editId ? 'Save Changes' : 'Publish Product';
+    const imgFile = document.getElementById('imageInput').files[0];
+    const pdfFile = document.getElementById('pdfInput').files[0];
+
+    // ── Manual validation (replaces browser 'required') ──────────────────────
+    // On a NEW listing, both files are mandatory.
+    // On EDIT, files are optional — only upload if the seller chose a new one.
+    if (!editId) {
+        if (!document.getElementById('title').value.trim()) {
+            showToast('Please enter a product title.', 'warning'); return;
+        }
+        if (!imgFile) {
+            showToast('Please select a preview image.', 'warning'); return;
+        }
+        if (!pdfFile) {
+            showToast('Please select a digital asset file.', 'warning'); return;
+        }
+    }
 
     btn.textContent = 'Processing…';
     btn.disabled    = true;
     setProgress(5);
 
-    const imgFile = document.getElementById('imageInput').files[0];
-    const pdfFile = document.getElementById('pdfInput').files[0];
-    const ts      = Date.now();
+    const ts = Date.now();
 
     try {
-        // ── 1. Verify authenticated session ──────────────────────────────────
+        // ── 1. Verify session ─────────────────────────────────────────────────
         if (!currentUser) {
             const { data: { user }, error: authError } = await sb.auth.getUser();
             if (authError || !user) {
-                throw new Error(
-                    'You must be signed in to publish a product. ' +
-                    (authError?.message ?? 'No active session found.')
-                );
+                throw new Error('You must be signed in. ' + (authError?.message ?? 'No session.'));
             }
             currentUser = user;
         }
 
         setProgress(15);
 
-        // ── 2. Build payload ──────────────────────────────────────────────────
+        // ── 2. Build payload (only fields being changed) ──────────────────────
         const payload = {
             seller_id:   currentUser.id,
             title:       document.getElementById('title').value.trim(),
@@ -454,15 +452,14 @@ form.addEventListener('submit', async (e) => {
             price:       parseFloat(document.getElementById('price').value)
         };
 
-        // ── 3. Upload preview image (if a new one was selected) ───────────────
+        // ── 3. Upload preview image if a new one was selected ─────────────────
         if (imgFile) {
             btn.textContent = 'Uploading image…';
             const imgPath = `previews/${ts}-${imgFile.name}`;
-            const { error: imgUploadErr } = await sb.storage
+            const { error: imgErr } = await sb.storage
                 .from('product-images')
                 .upload(imgPath, imgFile);
-
-            if (imgUploadErr) throw new Error('Image upload failed: ' + imgUploadErr.message);
+            if (imgErr) throw new Error('Image upload failed: ' + imgErr.message);
 
             const { data: imgData } = sb.storage
                 .from('product-images')
@@ -471,48 +468,42 @@ form.addEventListener('submit', async (e) => {
             setProgress(40);
 
             // Content moderation
-            const { data: moderation, error: modError } = await sb.functions.invoke('moderate-image', {
+            const { data: mod, error: modErr } = await sb.functions.invoke('moderate-image', {
                 body: { image_url: imgData.publicUrl }
             });
-
-            if (!modError && moderation?.moderation) {
-                const m = moderation.moderation;
+            if (!modErr && mod?.moderation) {
+                const m = mod.moderation;
                 if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
                     showToast('Upload blocked: Image violates safety guidelines.', 'warning');
                     btn.textContent = defaultBtnText;
-                    btn.disabled = false;
+                    btn.disabled    = false;
                     hideProgress();
                     return;
                 }
             }
 
+            // ✅ Explicitly overwrite image_url with the new public URL
             payload.image_url = imgData.publicUrl;
         }
-        // If no new image selected in edit mode, image_url is left out of the
-        // payload so the existing DB value is preserved.
+        // If no new image in edit mode, image_url is omitted → DB keeps old value
 
         setProgress(60);
 
-        // ── 4. Upload asset file (if a new one was selected) ──────────────────
+        // ── 4. Upload asset file if a new one was selected ────────────────────
         if (pdfFile) {
             btn.textContent = 'Uploading asset…';
             const assetPath = `downloads/${ts}-${pdfFile.name}`;
-            const { error: assetUploadErr } = await sb.storage
+            const { error: assetErr } = await sb.storage
                 .from('user-products')
                 .upload(assetPath, pdfFile);
+            if (assetErr) throw new Error('Asset upload failed: ' + assetErr.message);
 
-            if (assetUploadErr) throw new Error('Asset upload failed: ' + assetUploadErr.message);
-
-            // ✅ Store the bare storage path (NOT a public URL).
-            //    product-details.html calls createSignedUrl(storagePath, 60)
-            //    on the private bucket, which requires just the path after the
-            //    bucket name — e.g. "downloads/1234567890-file.zip".
-            //    Storing a full public URL here would cause signed URL
-            //    generation to silently fail.
+            // ✅ Store BARE PATH only — NOT a public URL.
+            //    product-details.html uses createSignedUrl(path, 60, {download:true})
+            //    on the private bucket, which needs just: "downloads/file.zip"
             payload.asset_url = assetPath;
         }
-        // If no new asset selected in edit mode, asset_url is left out of the
-        // payload so the existing DB value is preserved.
+        // If no new asset in edit mode, asset_url is omitted → DB keeps old value
 
         setProgress(80);
 
@@ -526,11 +517,17 @@ form.addEventListener('submit', async (e) => {
                 .eq('id', editId);
 
             if (updateErr) {
-                throw new Error(
-                    `Save failed (${updateErr.code}): ${updateErr.message}` +
-                    (updateErr.hint ? `\nHint: ${updateErr.hint}` : '') +
-                    (updateErr.code === '42501' ? '\n👉 RLS: confirm UPDATE policy uses auth.uid() = seller_id.' : '')
-                );
+                // ✅ Alert with the raw error code so you can see it immediately
+                const detail = [
+                    `Code: ${updateErr.code}`,
+                    `Message: ${updateErr.message}`,
+                    updateErr.hint ? `Hint: ${updateErr.hint}` : '',
+                    updateErr.code === '42501'
+                        ? 'RLS block — check UPDATE policy uses auth.uid() = seller_id'
+                        : ''
+                ].filter(Boolean).join('\n');
+                alert('❌ Save failed:\n\n' + detail);
+                throw new Error(`Save failed (${updateErr.code}): ${updateErr.message}`);
             }
 
             setProgress(100);
@@ -542,11 +539,16 @@ form.addEventListener('submit', async (e) => {
                 .insert([payload]);
 
             if (insertErr) {
-                throw new Error(
-                    `Publish failed (${insertErr.code}): ${insertErr.message}` +
-                    (insertErr.hint ? `\nHint: ${insertErr.hint}` : '') +
-                    (insertErr.code === '42501' ? '\n👉 RLS: confirm INSERT policy uses auth.uid() = seller_id.' : '')
-                );
+                const detail = [
+                    `Code: ${insertErr.code}`,
+                    `Message: ${insertErr.message}`,
+                    insertErr.hint ? `Hint: ${insertErr.hint}` : '',
+                    insertErr.code === '42501'
+                        ? 'RLS block — check INSERT policy uses auth.uid() = seller_id'
+                        : ''
+                ].filter(Boolean).join('\n');
+                alert('❌ Publish failed:\n\n' + detail);
+                throw new Error(`Publish failed (${insertErr.code}): ${insertErr.message}`);
             }
 
             setProgress(100);
@@ -561,7 +563,7 @@ form.addEventListener('submit', async (e) => {
         console.error('[ariexo dashboard]', err);
         showToast(err.message, 'error');
         btn.textContent = defaultBtnText;
-        btn.disabled = false;
+        btn.disabled    = false;
     }
 });
 </script>
