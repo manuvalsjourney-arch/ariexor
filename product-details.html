@@ -299,6 +299,8 @@
             updateButton();
 
             // ── Remix visibility ─────────────────────────────────────────
+            // Show remix button/badge whenever license_type === 'remix',
+            // regardless of price or any other field.
             if (data.license_type === 'remix') {
                 document.getElementById('remixBtn').classList.remove('hidden');
                 document.getElementById('remixBadge').classList.remove('hidden');
@@ -425,19 +427,18 @@
         try {
             const sb = initSupabase();
 
-            // Build the remixed product row.
-            // We copy safe fields and override the remix-specific ones.
+            // Clone the product row, reusing image_url and asset_url as-is.
+            // No stripe_checkout_url — the remixer sets up their own payment later.
             const remixPayload = {
-                title:      currentProduct.title,
-                description: currentProduct.description,
-                price:      currentProduct.price,
-                image_url:  currentProduct.image_url,
-                asset_url:  currentProduct.asset_url,
+                title:        currentProduct.title,
+                description:  currentProduct.description,
+                price:        currentProduct.price,
+                image_url:    currentProduct.image_url,
+                asset_url:    currentProduct.asset_url,
                 license_type: currentProduct.license_type,
-                stripe_checkout_url: null, // buyer must set up their own checkout
-                seller_id:  currentUser.id,
-                is_remix:   true,
-                parent_id:  currentProduct.id,
+                seller_id:    currentUser.id,
+                is_remix:     true,
+                parent_id:    currentProduct.id,
             };
 
             console.log('[ariexo] Inserting remix product:', remixPayload);
@@ -454,12 +455,8 @@
 
             console.log('[ariexo] ✓ Remix created:', insertedRows);
 
-            showToast("✓ Remix created! Redirecting to your dashboard…");
-
-            // Small delay so the user sees the toast, then redirect
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 2000);
+            // Redirect immediately once the DB confirms the insert.
+            window.location.href = 'dashboard.html';
 
         } catch (err) {
             console.error('[ariexo] Remix error:', err);
