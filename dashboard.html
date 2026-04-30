@@ -109,6 +109,69 @@
         }
         .field-label.accent { color: rgba(129,140,248,0.75); }
 
+        /* ── Remix toggle ───────────────────────────────────────────────── */
+        .remix-toggle-wrap {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            background: rgba(168,85,247,0.06);
+            border: 1px solid rgba(168,85,247,0.18);
+            border-radius: 1rem;
+            padding: 1rem 1.1rem;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            user-select: none;
+        }
+        .remix-toggle-wrap:hover {
+            background: rgba(168,85,247,0.11);
+            border-color: rgba(168,85,247,0.35);
+        }
+        /* Hide the native checkbox; we draw our own box */
+        .remix-toggle-wrap input[type="checkbox"] {
+            display: none;
+        }
+        .remix-checkbox-box {
+            flex-shrink: 0;
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            border: 1.5px solid rgba(168,85,247,0.45);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+            transition: background 0.18s, border-color 0.18s;
+        }
+        .remix-checkbox-box svg {
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        #remixLicenseCheck:checked ~ * .remix-checkbox-box,
+        .remix-toggle-wrap.checked .remix-checkbox-box {
+            background: #a855f7;
+            border-color: #a855f7;
+        }
+        #remixLicenseCheck:checked ~ * .remix-checkbox-box svg,
+        .remix-toggle-wrap.checked .remix-checkbox-box svg {
+            opacity: 1;
+        }
+        .remix-toggle-label-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .remix-toggle-label-text strong {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #c084fc;
+        }
+        .remix-toggle-label-text span {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.35);
+            line-height: 1.5;
+        }
+
         #submitBtn {
             width: 100%;
             background: var(--indigo);
@@ -262,6 +325,29 @@
                 </div>
             </div>
 
+            <!-- ── Remix & Resell licence toggle ─────────────────────────── -->
+            <!--
+                The real checkbox is hidden; clicking anywhere on .remix-toggle-wrap
+                toggles it. JS reads #remixLicenseCheck.checked at submit time and
+                writes license_type: 'remix' | 'personal' into the payload.
+            -->
+            <div>
+                <label class="field-label" style="margin-bottom:0.5rem;">Licensing</label>
+                <label class="remix-toggle-wrap" id="remixToggleWrap" for="remixLicenseCheck">
+                    <input type="checkbox" id="remixLicenseCheck">
+                    <div class="remix-checkbox-box">
+                        <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                            <polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="1.8"
+                                      stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="remix-toggle-label-text">
+                        <strong>Allow others to Remix &amp; Resell this asset</strong>
+                        <span>Buyers can clone this listing to their own dashboard and sell it independently. You keep your original listing.</span>
+                    </div>
+                </label>
+            </div>
+
             <button type="submit" id="submitBtn">Publish Product</button>
             <div id="progressWrap"><div id="progressBar"></div></div>
 
@@ -353,6 +439,14 @@ async function updateAuthBadge() {
 }
 updateAuthBadge();
 
+// ─── Remix toggle — keep .checked class in sync for CSS ──────────────────────
+const remixCheckbox  = document.getElementById('remixLicenseCheck');
+const remixWrap      = document.getElementById('remixToggleWrap');
+
+remixCheckbox.addEventListener('change', () => {
+    remixWrap.classList.toggle('checked', remixCheckbox.checked);
+});
+
 // ─── File input labels ────────────────────────────────────────────────────────
 document.getElementById('imageInput').addEventListener('change', function () {
     document.getElementById('imageFileName').textContent = this.files[0]?.name ?? '';
@@ -390,6 +484,11 @@ async function loadProductData(id) {
         document.getElementById('title').value       = data.title       ?? '';
         document.getElementById('description').value = data.description ?? '';
         document.getElementById('price').value       = data.price       ?? '';
+
+        // Pre-populate the remix toggle from the saved license_type
+        const isRemix = data.license_type === 'remix';
+        remixCheckbox.checked = isRemix;
+        remixWrap.classList.toggle('checked', isRemix);
 
         // Show existing file names so the seller knows what's already saved
         if (data.image_url) {
@@ -445,11 +544,18 @@ form.addEventListener('submit', async (e) => {
         setProgress(15);
 
         // ── 2. Build payload (only fields being changed) ──────────────────────
+        // license_type is always written on every save — 'remix' if checked,
+        // 'personal' if unchecked. This ensures the value is never left null.
+        const licenseType = document.getElementById('remixLicenseCheck').checked
+            ? 'remix'
+            : 'personal';
+
         const payload = {
-            seller_id:   currentUser.id,
-            title:       document.getElementById('title').value.trim(),
-            description: document.getElementById('description').value.trim(),
-            price:       parseFloat(document.getElementById('price').value)
+            seller_id:    currentUser.id,
+            title:        document.getElementById('title').value.trim(),
+            description:  document.getElementById('description').value.trim(),
+            price:        parseFloat(document.getElementById('price').value),
+            license_type: licenseType,
         };
 
         // ── 3. Upload preview image if a new one was selected ─────────────────
