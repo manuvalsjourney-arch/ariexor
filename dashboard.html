@@ -334,7 +334,6 @@ async function updateAuthBadge() {
     const badge = document.getElementById('authBadge');
 
     try {
-        // Race the Supabase auth call against a 5-second timeout
         const result = await Promise.race([
             sb.auth.getUser(),
             new Promise((_, reject) =>
@@ -351,7 +350,6 @@ async function updateAuthBadge() {
             badge.className = 'signed-in';
             badge.innerHTML = `<span class="dot"></span> ${user.email ?? 'Signed in'}`;
         } else {
-            // Valid response but no session — redirect to login
             badge.className = 'signed-out';
             badge.innerHTML = `<span class="dot"></span> Not signed in`;
             showToast('Please sign in to access the dashboard.', 'warning');
@@ -369,12 +367,10 @@ async function updateAuthBadge() {
                 : 'Authentication error: ' + err.message,
             'error'
         );
-        // Redirect to login after showing the message
         setTimeout(() => { window.location.href = 'login.html'; }, 3000);
     }
 }
 
-// Run auth check immediately on page load
 updateAuthBadge();
 
 // ─── File input labels ────────────────────────────────────────────────────────
@@ -434,7 +430,6 @@ form.addEventListener('submit', async (e) => {
 
     try {
         // ── 1. Verify authenticated session ──────────────────────────────────
-        // Re-check auth in case the session expired since page load
         if (!currentUser) {
             const { data: { user }, error: authError } = await sb.auth.getUser();
             if (authError || !user) {
@@ -505,14 +500,14 @@ form.addEventListener('submit', async (e) => {
                 .from('user-products')
                 .getPublicUrl(assetPath);
 
-            payload.file_url = assetData.publicUrl;
+            // ✅ CHANGED: was payload.file_url — updated to match renamed column
+            payload.asset_url = assetData.publicUrl;
         }
 
         setProgress(80);
 
         // ── 5. Write to database ──────────────────────────────────────────────
         if (editId) {
-            // UPDATE existing product
             const { error: updateErr } = await sb
                 .from('product_details')
                 .update(payload)
@@ -530,7 +525,6 @@ form.addEventListener('submit', async (e) => {
             showToast('Changes saved successfully!', 'success');
 
         } else {
-            // INSERT new product
             const { error: insertErr } = await sb
                 .from('product_details')
                 .insert([payload]);
@@ -548,8 +542,6 @@ form.addEventListener('submit', async (e) => {
         }
 
         hideProgress();
-
-        // Brief delay so the toast is readable before redirect
         setTimeout(() => { window.location.href = 'analytics.html'; }, 1800);
 
     } catch (err) {
