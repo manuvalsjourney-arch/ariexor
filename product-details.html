@@ -11,23 +11,23 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { 
-            background: #0b0b14; 
-            color: white; 
-            font-family: 'Inter', sans-serif; 
+        body {
+            background: #0b0b14;
+            color: white;
+            font-family: 'Inter', sans-serif;
         }
-        .glass { 
-            background: rgba(255,255,255,0.05); 
-            border: 1px solid rgba(255,255,255,0.1); 
-            backdrop-filter: blur(10px); 
+        .glass {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
         }
-        .btn-gradient { 
-            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); 
-            transition: 0.3s; 
+        .btn-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            transition: 0.3s;
         }
-        .btn-gradient:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 10px 20px rgba(99,102,241,0.3); 
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99,102,241,0.3);
         }
         .btn-gradient:disabled {
             opacity: 0.7;
@@ -48,56 +48,60 @@
 
 <body class="min-h-screen">
 
-<div class="max-w-6xl mx-auto p-6 mt-10 md:mt-20 grid md:grid-cols-2 gap-12">
+<div class="max-w-6xl mx-auto px-6 py-12 md:py-20">
+    <div class="grid md:grid-cols-2 gap-12 items-start">
 
-    <!-- Image -->
-    <div>
-        <img id="productImage"
-             class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl loading-skeleton"
-             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23222' width='400' height='400'/%3E%3C/svg%3E"
-             alt="Product Preview">
-    </div>
-
-    <!-- Content -->
-    <div class="flex flex-col justify-center">
-        <h1 id="productTitle" class="text-5xl font-extrabold mb-4 loading-skeleton h-12 rounded-lg"></h1>
-        <p id="productPrice" class="text-4xl text-indigo-400 font-black mb-8 loading-skeleton h-10 rounded-lg w-32"></p>
-
-        <div class="glass p-6 rounded-2xl mb-6">
-            <p id="productDescription" class="text-gray-300 italic loading-skeleton h-24 rounded-lg">
-            </p>
+        <!-- Image -->
+        <div class="w-full">
+            <img id="productImage"
+                 class="rounded-3xl w-full object-cover border border-white/10 shadow-2xl loading-skeleton"
+                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23222' width='400' height='400'/%3E%3C/svg%3E"
+                 alt="Product Preview">
         </div>
 
-        <button id="downloadBtn"
-                onclick="handleDownload()"
-                class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
-            Purchase & Download
-        </button>
+        <!-- Content — no justify-center, just a normal block flow -->
+        <div class="flex flex-col gap-6">
 
-        <p class="text-center text-gray-500 text-xs mt-4">
-            Secure delivery via ariexo cloud
-        </p>
+            <!-- Title -->
+            <h1 id="productTitle" class="text-4xl md:text-5xl font-extrabold leading-tight loading-skeleton min-h-[3rem] rounded-lg"></h1>
+
+            <!-- Price -->
+            <p id="productPrice" class="text-3xl text-indigo-400 font-black loading-skeleton min-h-[2.5rem] rounded-lg w-32"></p>
+
+            <!-- Description -->
+            <div class="glass p-6 rounded-2xl">
+                <p id="productDescription" class="text-gray-300 italic leading-relaxed loading-skeleton min-h-[6rem] rounded-lg"></p>
+            </div>
+
+            <!-- Download button -->
+            <button id="downloadBtn"
+                    onclick="handleDownload()"
+                    class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
+                Purchase & Download
+            </button>
+
+            <p class="text-center text-gray-500 text-xs">
+                Secure delivery via ariexo cloud
+            </p>
+
+        </div>
     </div>
-
 </div>
 
 <script>
 (function() {
     'use strict';
 
-    // ── Supabase config ──────────────────────────────────────────────────────
     const SUPABASE_URL = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
 
-    let supabase = null;
-    let currentProduct = null;  // holds full DB row including asset_url
-    let currentUser = null;     // holds the logged-in Supabase user (or null)
+    let supabase      = null;
+    let currentProduct = null;
+    let currentUser    = null;
 
-    // ── Init ─────────────────────────────────────────────────────────────────
     function initSupabase() {
         if (!supabase && window.supabase) {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✓ Supabase initialized');
         }
         return supabase;
     }
@@ -107,7 +111,6 @@
         return urlOrPath.split('/').pop().split('?')[0];
     }
 
-    // ── Auth: get current session user ──────────────────────────────────────
     async function getCurrentUser() {
         try {
             const sb = initSupabase();
@@ -119,7 +122,6 @@
         }
     }
 
-    // ── Load product ─────────────────────────────────────────────────────────
     async function loadProduct() {
         try {
             const sb = initSupabase();
@@ -128,9 +130,6 @@
             const productId = new URLSearchParams(window.location.search).get('id');
             if (!productId) return showError("Missing product ID in URL");
 
-            console.log('Loading product ID:', productId);
-
-            // Fetch product row — includes asset_url (and seller_id if your table has it)
             const { data, error } = await sb
                 .from('product_details')
                 .select('*')
@@ -143,20 +142,25 @@
             }
 
             currentProduct = data;
-            console.log('✓ Product loaded:', data.title);
-            console.log('📦 asset_url:', data.asset_url);
 
-            // ── Populate UI ──────────────────────────────────────────────────
-            document.getElementById('productTitle').innerText = data.title;
-            document.getElementById('productTitle').classList.remove('loading-skeleton');
+            // Title
+            const titleEl = document.getElementById('productTitle');
+            titleEl.innerText = data.title;
+            titleEl.classList.remove('loading-skeleton');
 
-            document.getElementById('productPrice').innerText = `$${data.price}`;
-            document.getElementById('productPrice').classList.remove('loading-skeleton');
+            // Price
+            const priceEl = document.getElementById('productPrice');
+            priceEl.innerText = `$${data.price}`;
+            priceEl.classList.remove('loading-skeleton');
+            priceEl.style.minHeight = '';   // remove skeleton height once loaded
 
-            document.getElementById('productDescription').innerText = data.description;
-            document.getElementById('productDescription').classList.remove('loading-skeleton');
+            // Description
+            const descEl = document.getElementById('productDescription');
+            descEl.innerText = data.description;
+            descEl.classList.remove('loading-skeleton');
+            descEl.style.minHeight = '';
 
-            // ── Product image ────────────────────────────────────────────────
+            // Image
             let imageUrl = data.image_url;
             if (imageUrl && !imageUrl.startsWith('http')) {
                 const imageFileName = extractFileName(imageUrl);
@@ -173,11 +177,10 @@
             imageElement.src = imageUrl;
             imageElement.classList.remove('loading-skeleton');
             imageElement.onerror = () => {
-                console.error('❌ Image failed to load:', imageUrl);
-                showError("Failed to load product image");
+                console.error('Image failed to load:', imageUrl);
+                imageElement.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%231e293b' width='400' height='400' rx='20'/%3E%3Ctext x='50%25' y='50%25' fill='%2364748b' font-size='18' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E`;
             };
 
-            // ── Resolve user role and update button ──────────────────────────
             currentUser = await getCurrentUser();
             updateButton();
 
@@ -187,25 +190,18 @@
         }
     }
 
-    // ── Decide button label based on role ────────────────────────────────────
     function isSeller() {
         if (!currentUser || !currentProduct) return false;
-        // Support both "seller_id" and "user_id" column names
         const ownerId = currentProduct.seller_id ?? currentProduct.user_id ?? null;
         return ownerId !== null && ownerId === currentUser.id;
     }
 
     function updateButton() {
         const btn = document.getElementById('downloadBtn');
-        if (isSeller()) {
-            btn.innerText = '⬇ Download Your File';
-        } else {
-            btn.innerText = 'Purchase & Download';
-        }
+        btn.innerText = isSeller() ? '⬇ Download Your File' : 'Purchase & Download';
         btn.disabled = false;
     }
 
-    // ── Button handler ───────────────────────────────────────────────────────
     async function handleDownload() {
         if (!currentProduct) {
             alert("Product data not loaded yet. Please wait.");
@@ -219,23 +215,13 @@
 
         try {
             if (isSeller()) {
-                // ── SELLER: open asset_url directly ─────────────────────────
                 const assetUrl = currentProduct.asset_url;
                 if (!assetUrl) throw new Error("No asset_url found for this product");
-
-                console.log('🔓 Seller download:', assetUrl);
                 window.open(assetUrl, '_blank');
-
                 btn.innerText = "✓ Download Started";
                 btn.style.background = "#10b981";
                 setTimeout(() => resetButton(btn, originalText), 3000);
-
             } else {
-                // ── BUYER: trigger purchase flow ─────────────────────────────
-                console.log('🛒 Buyer purchase flow for product:', currentProduct.id);
-
-                // ── Option A: Stripe checkout ────────────────────────────────
-                // If you have a Stripe price_id or checkout_url stored on the product:
                 if (currentProduct.stripe_checkout_url) {
                     window.open(currentProduct.stripe_checkout_url, '_blank');
                     btn.innerText = "✓ Redirecting to Checkout…";
@@ -243,23 +229,9 @@
                     setTimeout(() => resetButton(btn, originalText), 3000);
                     return;
                 }
-
-                // ── Option B: Call your backend checkout endpoint ────────────
-                // Uncomment and adapt when your backend is ready:
-                //
-                // const res = await fetch('/api/create-checkout', {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify({ productId: currentProduct.id })
-                // });
-                // const { url } = await res.json();
-                // window.open(url, '_blank');
-
-                // ── Fallback: show purchase prompt ───────────────────────────
                 alert(`To purchase "${currentProduct.title}", please complete checkout.\n\nCheckout integration coming soon!`);
                 resetButton(btn, originalText);
             }
-
         } catch (err) {
             console.error('Download/purchase error:', err);
             btn.innerText = "✗ Failed – Try Again";
@@ -273,33 +245,27 @@
         btn.disabled = false;
         btn.innerText = originalText;
         btn.style.background = "";
-        btn.className = btn.className; // keep existing classes intact
     }
 
-    // ── Error display ────────────────────────────────────────────────────────
     function showError(msg) {
         console.error('Error:', msg);
-        document.getElementById('productTitle').innerText = "⚠️ " + msg;
-        document.getElementById('productTitle').classList.remove('loading-skeleton');
-        document.getElementById('productPrice').innerText = "";
-        document.getElementById('productPrice').classList.remove('loading-skeleton');
-        document.getElementById('productDescription').innerText = "";
-        document.getElementById('productDescription').classList.remove('loading-skeleton');
+        ['productTitle','productPrice','productDescription'].forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('loading-skeleton');
+            el.innerText = id === 'productTitle' ? '⚠️ ' + msg : '';
+        });
         const btn = document.getElementById('downloadBtn');
         btn.disabled = true;
         btn.style.opacity = "0.5";
     }
 
-    // ── Expose to global scope for onclick ───────────────────────────────────
     window.handleDownload = handleDownload;
 
-    // ── Bootstrap ────────────────────────────────────────────────────────────
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadProduct);
     } else {
         loadProduct();
     }
-
 })();
 </script>
 
