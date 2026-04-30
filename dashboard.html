@@ -375,7 +375,12 @@ const sb = supabase.createClient(
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
 );
 
-let currentUser = null;
+let currentUser   = null;
+
+// Submission lock — prevents double-inserts from rapid clicks or accidental
+// re-submissions. Set to true the moment the handler starts real work;
+// reset to false only on failure so the user can retry without refreshing.
+let isSubmitting  = false;
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 let toastTimer;
