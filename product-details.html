@@ -153,6 +153,14 @@
                     </svg>
                     Remix &amp; Resell
                 </button>
+
+                <!-- Shown instead of remix button when user already remixed this asset -->
+                <div id="alreadyRemixed" class="hidden items-center justify-center gap-2 px-6 py-4 rounded-xl w-full text-sm font-semibold text-purple-300 border border-purple-500/30 bg-purple-500/10">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    You have already remixed this asset!
+                </div>
             </div>
 
             <p class="text-center text-gray-500 text-xs">
@@ -302,13 +310,48 @@
             // Show remix button/badge whenever license_type === 'remix',
             // regardless of price or any other field.
             if (data.license_type === 'remix') {
-                document.getElementById('remixBtn').classList.remove('hidden');
                 document.getElementById('remixBadge').classList.remove('hidden');
+
+                const alreadyRemixed = await checkAlreadyRemixed(data.id);
+                if (alreadyRemixed) {
+                    // User has already remixed this asset — show the notice instead
+                    const msg = document.getElementById('alreadyRemixed');
+                    msg.classList.remove('hidden');
+                    msg.classList.add('flex');
+                } else {
+                    document.getElementById('remixBtn').classList.remove('hidden');
+                }
             }
 
         } catch (err) {
             console.error('Load product error:', err);
             showError("Something went wrong loading the product");
+        }
+    }
+
+    // ── Duplicate remix check ──────────────────────────────────────────────
+
+    async function checkAlreadyRemixed(productId) {
+        // If no user is logged in there's nothing to check
+        if (!currentUser) return false;
+        try {
+            const sb = initSupabase();
+            const { data, error } = await sb
+                .from('product_details')
+                .select('id')
+                .eq('seller_id', currentUser.id)
+                .eq('parent_id', productId)
+                .eq('is_remix', true)
+                .limit(1);
+
+            if (error) {
+                console.warn('[ariexo] checkAlreadyRemixed query error:', error);
+                return false;
+            }
+            return data && data.length > 0;
+        } catch (e) {
+            console.warn('[ariexo] checkAlreadyRemixed failed:', e);
+            return false;
         }
     }
 
