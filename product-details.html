@@ -144,8 +144,8 @@
                 </button>
 
                 <!-- Remix button: hidden by default, shown when license_type === 'remix' -->
+                <!-- Click listener is attached via addEventListener {once:true} in JS — no onclick here -->
                 <button id="remixBtn"
-                        onclick="handleRemix(event)"
                         disabled
                         class="btn-remix hidden px-6 py-4 rounded-xl font-bold w-full text-lg flex items-center justify-center gap-2">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -182,6 +182,12 @@
     let supabase       = null;
     let currentProduct = null;
     let currentUser    = null;
+
+    // Guards against concurrent remix submissions (double-click, race conditions).
+    // Set to true the moment handleRemix starts work; never reset to false —
+    // on success we navigate away, on failure the { once:true } listener already
+    // detached itself so the button needs a fresh listener before it can fire again.
+    let isProcessing = false;
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -323,6 +329,9 @@
                     const remixBtn = document.getElementById('remixBtn');
                     remixBtn.classList.remove('hidden');
                     remixBtn.disabled = false; // safe to use — product is loaded
+                    // { once: true } means the browser automatically removes this
+                    // listener after the first click — it physically cannot fire twice.
+                    remixBtn.addEventListener('click', handleRemix, { once: true });
                 }
             }
 
@@ -445,8 +454,6 @@
     // ── Remix & Resell ─────────────────────────────────────────────────────
 
     async function handleRemix(event) {
-        // Prevent any default browser action and stop the event bubbling
-        // so this handler can only fire once per deliberate click.
         if (event) {
             event.preventDefault();
             event.stopPropagation();
@@ -454,38 +461,54 @@
 
         const btn = document.getElementById('remixBtn');
 
-        // ── Null check: if currentProduct isn't loaded yet, disable the
-        // button so nothing can be cloned accidentally and bail out.
+        // ── Safety lock 1: Immediate disable ──────────────────────────────
+        // This is the very first thing we do — before any guard, any await,
+        // any conditional. The button is dead the instant the handler runs.
+        btn.disabled = true;
+
+        // ── Safety lock 2: isProcessing flag ──────────────────────────────
+        // A second layer of protection in case the { once:true } listener or
+        // the disabled attribute were somehow bypassed (e.g. programmatic
+        // .click() calls, browser extensions). If we're already mid-insert,
+        // bail out immediately — nothing is written to the database.
+        if (isProcessing) {
+            console.warn('[ariexo] handleRemix called while already processing — ignored.');
+            return;
+        }
+        isProcessing = true;
+
+        // ── Null check ────────────────────────────────────────────────────
+        // If currentProduct isn't fully loaded, nothing gets cloned.
         if (!currentProduct || !currentProduct.id) {
-            btn.disabled = true;
             showToast("Product data not loaded yet. Please wait.", true);
+            isProcessing = false;
+            btn.disabled = false;
             return;
         }
 
-        // Snapshot the exact product loaded on this page right now.
-        // All subsequent logic reads only from this snapshot — never from
-        // a shared or closure variable that could have changed.
+        // Snapshot the exact product on this page right now. All subsequent
+        // logic reads from this local const — never from the shared module
+        // variable, which could theoretically change if navigation is fast.
         const product = currentProduct;
 
         // Must be logged in
         if (!currentUser) {
             showToast("Please log in to remix this product.", true);
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1800);
+            isProcessing = false;
+            btn.disabled = false;
+            setTimeout(() => { window.location.href = 'login.html'; }, 1800);
             return;
         }
 
         // Seller can't remix their own product
         if (isSeller()) {
             showToast("You can't remix your own product.", true);
+            isProcessing = false;
+            btn.disabled = false;
             return;
         }
 
-        // Disable immediately and keep disabled for the lifetime of this
-        // async operation so a double-click cannot queue a second insert.
         const originalHTML = btn.innerHTML;
-        btn.disabled = true;
         btn.innerHTML = `<svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Creating remix…`;
 
         try {
@@ -503,7 +526,7 @@
                 license_type: product.license_type,
                 seller_id:    currentUser.id,
                 is_remix:     true,
-                parent_id:    product.id,      // ties remix back to this exact product
+                parent_id:    product.id,
             };
 
             console.log('[ariexo] Inserting remix for product id:', product.id, remixPayload);
@@ -513,21 +536,33 @@
                 .insert([remixPayload])
                 .select();
 
+            // ── Safety lock 4: Success check ──────────────────────────────
+            // Only redirect after Supabase confirms the row exists.
+            // We validate both the absence of an error AND that the returned
+            // array contains exactly one new row with a real id.
             if (insertError) {
                 console.error('[ariexo] Remix insert error:', insertError);
                 throw new Error(insertError.message || "Failed to create remix.");
             }
 
-            console.log('[ariexo] ✓ Remix created:', insertedRows);
+            if (!insertedRows || insertedRows.length === 0 || !insertedRows[0].id) {
+                throw new Error("Insert appeared to succeed but no row was returned. Please try again.");
+            }
 
-            // Redirect immediately once the DB confirms the single insert.
+            console.log('[ariexo] ✓ Remix confirmed in DB, id:', insertedRows[0].id);
+
+            // DB has confirmed the row — safe to navigate away.
             window.location.href = 'dashboard.html';
 
         } catch (err) {
             console.error('[ariexo] Remix error:', err);
-            // Re-enable only on failure so the user can try again.
+            // Reset state so the user can try again after a failure.
+            isProcessing = false;
             btn.disabled = false;
             btn.innerHTML = originalHTML;
+            // Re-attach the { once:true } listener since the original one
+            // already consumed itself when this click fired.
+            btn.addEventListener('click', handleRemix, { once: true });
             showToast("✗ " + (err.message || "Something went wrong. Try again."), true);
         }
     }
@@ -553,9 +588,10 @@
     }
 
     // ── Expose to HTML onclick attrs ───────────────────────────────────────
+    // handleRemix is NOT on window — it is wired up via addEventListener {once:true}
+    // in loadProduct, so it never needs a global reference.
 
     window.handleDownload = handleDownload;
-    window.handleRemix    = (e) => handleRemix(e);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadProduct);
