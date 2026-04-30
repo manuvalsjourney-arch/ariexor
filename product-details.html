@@ -59,21 +59,16 @@
                  alt="Product Preview">
         </div>
 
-        <!-- Content — no justify-center, just a normal block flow -->
+        <!-- Content -->
         <div class="flex flex-col gap-6">
 
-            <!-- Title -->
             <h1 id="productTitle" class="text-4xl md:text-5xl font-extrabold leading-tight loading-skeleton min-h-[3rem] rounded-lg"></h1>
-
-            <!-- Price -->
             <p id="productPrice" class="text-3xl text-indigo-400 font-black loading-skeleton min-h-[2.5rem] rounded-lg w-32"></p>
 
-            <!-- Description -->
             <div class="glass p-6 rounded-2xl">
                 <p id="productDescription" class="text-gray-300 italic leading-relaxed loading-skeleton min-h-[6rem] rounded-lg"></p>
             </div>
 
-            <!-- Download button -->
             <button id="downloadBtn"
                     onclick="handleDownload()"
                     class="btn-gradient px-6 py-4 rounded-xl font-bold w-full text-lg">
@@ -95,7 +90,7 @@
     const SUPABASE_URL = 'https://jiuzebbrjbqkoovfrbvp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc';
 
-    let supabase      = null;
+    let supabase       = null;
     let currentProduct = null;
     let currentUser    = null;
 
@@ -109,6 +104,53 @@
     function extractFileName(urlOrPath) {
         if (!urlOrPath) return '';
         return urlOrPath.split('/').pop().split('?')[0];
+    }
+
+    /**
+     * Extracts the storage object path from an asset_url so it can be passed
+     * to createSignedUrl(), which only wants the path AFTER the bucket name.
+     *
+     * Handles all three common formats:
+     *
+     *   1. Full public URL (public bucket):
+     *      https://<project>.supabase.co/storage/v1/object/public/user-products/downloads/file.zip
+     *      → "downloads/file.zip"
+     *
+     *   2. Full authenticated URL (private bucket):
+     *      https://<project>.supabase.co/storage/v1/object/user-products/downloads/file.zip
+     *      → "downloads/file.zip"
+     *
+     *   3. Bare path already stripped of the bucket name:
+     *      downloads/file.zip  OR  /downloads/file.zip
+     *      → "downloads/file.zip"
+     */
+    function extractStoragePath(assetUrl) {
+        if (!assetUrl) return null;
+
+        // ── Format 1: …/object/public/<bucket>/<path> ──────────────────────
+        const publicMarker = '/object/public/user-products/';
+        const publicIdx = assetUrl.indexOf(publicMarker);
+        if (publicIdx !== -1) {
+            const path = assetUrl.substring(publicIdx + publicMarker.length).split('?')[0];
+            console.log('[ariexo] extractStoragePath (public URL) →', path);
+            return path;
+        }
+
+        // ── Format 2: …/object/<bucket>/<path>  (no "public" segment) ──────
+        const privateMarker = '/object/user-products/';
+        const privateIdx = assetUrl.indexOf(privateMarker);
+        if (privateIdx !== -1) {
+            const path = assetUrl.substring(privateIdx + privateMarker.length).split('?')[0];
+            console.log('[ariexo] extractStoragePath (private URL) →', path);
+            return path;
+        }
+
+        // ── Format 3: Bare path (may have a leading slash) ──────────────────
+        // Strip leading slash so createSignedUrl gets "downloads/file.zip",
+        // not "/downloads/file.zip".
+        const path = assetUrl.replace(/^\/+/, '').split('?')[0];
+        console.log('[ariexo] extractStoragePath (bare path) →', path);
+        return path;
     }
 
     async function getCurrentUser() {
@@ -152,7 +194,7 @@
             const priceEl = document.getElementById('productPrice');
             priceEl.innerText = `$${data.price}`;
             priceEl.classList.remove('loading-skeleton');
-            priceEl.style.minHeight = '';   // remove skeleton height once loaded
+            priceEl.style.minHeight = '';
 
             // Description
             const descEl = document.getElementById('productDescription');
@@ -177,7 +219,6 @@
             imageElement.src = imageUrl;
             imageElement.classList.remove('loading-skeleton');
             imageElement.onerror = () => {
-                console.error('Image failed to load:', imageUrl);
                 imageElement.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%231e293b' width='400' height='400' rx='20'/%3E%3Ctext x='50%25' y='50%25' fill='%2364748b' font-size='18' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E`;
             };
 
@@ -215,13 +256,37 @@
 
         try {
             if (isSeller()) {
+                // ── SELLER: generate a 60-second signed URL from private bucket ──
+
                 const assetUrl = currentProduct.asset_url;
-                if (!assetUrl) throw new Error("No asset_url found for this product");
-                window.open(assetUrl, '_blank');
+                if (!assetUrl) throw new Error("No asset file found for this product.");
+
+                const storagePath = extractStoragePath(assetUrl);
+                if (!storagePath) throw new Error("Could not resolve storage path from asset_url.");
+
+                console.log('[ariexo] Requesting signed URL for bucket path:', storagePath);
+
+                const sb = initSupabase();
+                const { data: signedData, error: signedError } = await sb
+                    .storage
+                    .from('user-products')
+                    .createSignedUrl(storagePath, 60); // 60-second expiry
+
+                if (signedError) {
+                    console.error('[ariexo] Signed URL error:', signedError);
+                    throw new Error("Failed to generate download link: " + signedError.message);
+                }
+
+                console.log('[ariexo] ✓ Signed URL generated:', signedData.signedUrl);
+                window.open(signedData.signedUrl, '_blank');
+
                 btn.innerText = "✓ Download Started";
                 btn.style.background = "#10b981";
                 setTimeout(() => resetButton(btn, originalText), 3000);
+
             } else {
+                // ── BUYER: purchase flow ─────────────────────────────────────
+
                 if (currentProduct.stripe_checkout_url) {
                     window.open(currentProduct.stripe_checkout_url, '_blank');
                     btn.innerText = "✓ Redirecting to Checkout…";
@@ -229,11 +294,13 @@
                     setTimeout(() => resetButton(btn, originalText), 3000);
                     return;
                 }
+
                 alert(`To purchase "${currentProduct.title}", please complete checkout.\n\nCheckout integration coming soon!`);
                 resetButton(btn, originalText);
             }
+
         } catch (err) {
-            console.error('Download/purchase error:', err);
+            console.error('[ariexo] Download/purchase error:', err);
             btn.innerText = "✗ Failed – Try Again";
             btn.style.background = "#ef4444";
             btn.disabled = false;
@@ -248,8 +315,8 @@
     }
 
     function showError(msg) {
-        console.error('Error:', msg);
-        ['productTitle','productPrice','productDescription'].forEach(id => {
+        console.error('[ariexo] Error:', msg);
+        ['productTitle', 'productPrice', 'productDescription'].forEach(id => {
             const el = document.getElementById(id);
             el.classList.remove('loading-skeleton');
             el.innerText = id === 'productTitle' ? '⚠️ ' + msg : '';
@@ -266,6 +333,7 @@
     } else {
         loadProduct();
     }
+
 })();
 </script>
 
