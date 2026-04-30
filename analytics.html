@@ -84,15 +84,40 @@
         );
 
         const STORAGE_BASE = 'https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/';
-        window.PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%231e293b'/%3E%3Cpath d='M20 38l6-8 4 5 4-4 6 7H20z' fill='%23334155'/%3E%3Ccircle cx='22' cy='24' r='3' fill='%23334155'/%3E%3C/svg%3E`;
 
-        function extractFilename(imageUrl) {
+        // Fallback: a clean grey placeholder SVG rendered inline — never a broken icon
+        window.PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' rx='10' fill='%231e293b'/%3E%3Crect x='14' y='18' width='28' height='20' rx='3' fill='%23334155'/%3E%3Ccircle cx='21' cy='25' r='3' fill='%2394a3b8'/%3E%3Cpath d='M14 34l8-7 5 5 4-3 7 5H14z' fill='%2364748b'/%3E%3C/svg%3E`;
+
+        /**
+         * Resolves the best usable image URL from whatever is stored in image_url.
+         *
+         * image_url can arrive in three forms:
+         *   (a) A full public URL already  → use as-is
+         *   (b) A storage path like "previews/foo.png" → prepend STORAGE_BASE
+         *   (c) A bare filename "foo.png"  → prepend STORAGE_BASE
+         *
+         * The old approach stripped the path back to a bare filename and
+         * reconstructed the URL, which silently broke subfolder paths (b).
+         */
+        function resolveImageUrl(imageUrl) {
             if (!imageUrl) return null;
-            try { return decodeURIComponent(imageUrl).split('/').pop(); }
-            catch (e) { return imageUrl.split('/').pop(); }
+
+            // Already a full URL — use it directly, no reconstruction needed
+            if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                return imageUrl;
+            }
+
+            // Relative path or bare filename — prepend the storage base
+            // Decode first so we don't double-encode existing %20 etc.
+            try {
+                const decoded = decodeURIComponent(imageUrl);
+                // Re-encode each path segment individually to preserve slashes
+                const encoded = decoded.split('/').map(encodeURIComponent).join('/');
+                return STORAGE_BASE + encoded;
+            } catch (e) {
+                return STORAGE_BASE + imageUrl;
+            }
         }
-        function getPrimaryUrl(u) { const f = extractFilename(u); return f ? STORAGE_BASE + encodeURIComponent(f) : null; }
-        function getPreviewUrl(u) { const f = extractFilename(u); return f ? STORAGE_BASE + 'previews/' + encodeURIComponent(f) : null; }
 
         async function fetchAnalytics() {
             const loading = document.getElementById('loading');
@@ -111,6 +136,7 @@
                     return;
                 }
 
+                // ✅ select('*') includes image_url
                 const { data, error } = await sb
                     .from('product_details')
                     .select('*')
@@ -139,17 +165,22 @@
                             : price < 15
                                 ? "bg-amber-500/10 text-amber-400"
                                 : "bg-emerald-500/10 text-emerald-400";
-                        const status     = price > 100 ? "Premium" : price < 15 ? "Budget" : "Standard";
-                        const primarySrc = getPrimaryUrl(item.image_url) || window.PLACEHOLDER_SVG;
-                        const fallback   = getPreviewUrl(item.image_url) || '';
+                        const status = price > 100 ? "Premium" : price < 15 ? "Budget" : "Standard";
+
+                        // ✅ resolveImageUrl handles full URLs, subpaths, and bare filenames
+                        // ✅ Falls back to PLACEHOLDER_SVG if null or broken — never a broken icon
+                        const imgSrc = resolveImageUrl(item.image_url) || window.PLACEHOLDER_SVG;
 
                         return `
                         <tr id="row-${item.id}" class="hover:bg-white/[0.03]">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
-                                    <img src="${primarySrc}" data-fallback="${fallback}"
+                                    <img
+                                        src="${imgSrc}"
                                         class="w-14 h-14 rounded-2xl object-cover bg-slate-900 border border-white/10"
-                                        onerror="var fb=this.dataset.fallback;if(fb&&fb.length>0){this.dataset.fallback='';this.src=fb;}else{this.onerror=null;this.src=window.PLACEHOLDER_SVG;}">
+                                        onerror="this.onerror=null; this.src=window.PLACEHOLDER_SVG;"
+                                        alt="${item.title}"
+                                    >
                                     <div>
                                         <div class="font-bold text-white">${item.title}</div>
                                         <div class="text-[10px] text-slate-500 uppercase tracking-tighter">ID: #${item.id}</div>
@@ -201,7 +232,6 @@
             if (row) row.style.opacity = '0.3';
 
             try {
-                // ✅ Fresh auth call — no stale cached user
                 const { data: { user }, error: authError } = await sb.auth.getUser();
 
                 if (authError || !user) {
@@ -218,9 +248,8 @@
                     .delete()
                     .eq('id', id)
                     .eq('seller_id', user.id)
-                    .select(); // ← forces Supabase to return what was deleted
+                    .select();
 
-                // ✅ Full error object logged as requested
                 if (error) {
                     console.error('Full Error:', error);
                     if (row) row.style.opacity = '1';
@@ -228,7 +257,6 @@
                     return;
                 }
 
-                // If .select() returns an empty array, RLS silently blocked it
                 if (!data || data.length === 0) {
                     console.warn('Delete ran but no rows were removed. Likely an RLS policy mismatch.', {
                         attempted_id: id,
