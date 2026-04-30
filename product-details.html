@@ -145,7 +145,8 @@
 
                 <!-- Remix button: hidden by default, shown when license_type === 'remix' -->
                 <button id="remixBtn"
-                        onclick="handleRemix()"
+                        onclick="handleRemix(event)"
+                        disabled
                         class="btn-remix hidden px-6 py-4 rounded-xl font-bold w-full text-lg flex items-center justify-center gap-2">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
@@ -319,7 +320,9 @@
                     msg.classList.remove('hidden');
                     msg.classList.add('flex');
                 } else {
-                    document.getElementById('remixBtn').classList.remove('hidden');
+                    const remixBtn = document.getElementById('remixBtn');
+                    remixBtn.classList.remove('hidden');
+                    remixBtn.disabled = false; // safe to use — product is loaded
                 }
             }
 
@@ -441,11 +444,28 @@
 
     // ── Remix & Resell ─────────────────────────────────────────────────────
 
-    async function handleRemix() {
-        if (!currentProduct) {
+    async function handleRemix(event) {
+        // Prevent any default browser action and stop the event bubbling
+        // so this handler can only fire once per deliberate click.
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const btn = document.getElementById('remixBtn');
+
+        // ── Null check: if currentProduct isn't loaded yet, disable the
+        // button so nothing can be cloned accidentally and bail out.
+        if (!currentProduct || !currentProduct.id) {
+            btn.disabled = true;
             showToast("Product data not loaded yet. Please wait.", true);
             return;
         }
+
+        // Snapshot the exact product loaded on this page right now.
+        // All subsequent logic reads only from this snapshot — never from
+        // a shared or closure variable that could have changed.
+        const product = currentProduct;
 
         // Must be logged in
         if (!currentUser) {
@@ -462,7 +482,8 @@
             return;
         }
 
-        const btn = document.getElementById('remixBtn');
+        // Disable immediately and keep disabled for the lifetime of this
+        // async operation so a double-click cannot queue a second insert.
         const originalHTML = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = `<svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Creating remix…`;
@@ -470,21 +491,22 @@
         try {
             const sb = initSupabase();
 
-            // Clone the product row, reusing image_url and asset_url as-is.
-            // No stripe_checkout_url — the remixer sets up their own payment later.
+            // Explicitly map only the fields we intend to copy from the
+            // single product loaded on this page. No spread, no loops —
+            // every field is named so it's clear exactly what gets cloned.
             const remixPayload = {
-                title:        currentProduct.title,
-                description:  currentProduct.description,
-                price:        currentProduct.price,
-                image_url:    currentProduct.image_url,
-                asset_url:    currentProduct.asset_url,
-                license_type: currentProduct.license_type,
+                title:        product.title,
+                description:  product.description,
+                price:        product.price,
+                image_url:    product.image_url,
+                asset_url:    product.asset_url,
+                license_type: product.license_type,
                 seller_id:    currentUser.id,
                 is_remix:     true,
-                parent_id:    currentProduct.id,
+                parent_id:    product.id,      // ties remix back to this exact product
             };
 
-            console.log('[ariexo] Inserting remix product:', remixPayload);
+            console.log('[ariexo] Inserting remix for product id:', product.id, remixPayload);
 
             const { data: insertedRows, error: insertError } = await sb
                 .from('product_details')
@@ -498,11 +520,12 @@
 
             console.log('[ariexo] ✓ Remix created:', insertedRows);
 
-            // Redirect immediately once the DB confirms the insert.
+            // Redirect immediately once the DB confirms the single insert.
             window.location.href = 'dashboard.html';
 
         } catch (err) {
             console.error('[ariexo] Remix error:', err);
+            // Re-enable only on failure so the user can try again.
             btn.disabled = false;
             btn.innerHTML = originalHTML;
             showToast("✗ " + (err.message || "Something went wrong. Try again."), true);
@@ -532,7 +555,7 @@
     // ── Expose to HTML onclick attrs ───────────────────────────────────────
 
     window.handleDownload = handleDownload;
-    window.handleRemix    = handleRemix;
+    window.handleRemix    = (e) => handleRemix(e);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadProduct);
