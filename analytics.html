@@ -83,87 +83,78 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
         );
 
-        // ─── Image helpers ────────────────────────────────────────────────────────
         const STORAGE_BASE = 'https://jiuzebbrjbqkoovfrbvp.supabase.co/storage/v1/object/public/product-images/';
-
-        // FIX: Defined on window so inline onerror handlers can access it globally
         window.PLACEHOLDER_SVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%231e293b'/%3E%3Cpath d='M20 38l6-8 4 5 4-4 6 7H20z' fill='%23334155'/%3E%3Ccircle cx='22' cy='24' r='3' fill='%23334155'/%3E%3C/svg%3E`;
+
+        // Cache the logged-in user so delete doesn't need a fresh auth round-trip
+        let currentUser = null;
 
         function extractFilename(imageUrl) {
             if (!imageUrl) return null;
-            try {
-                return decodeURIComponent(imageUrl).split('/').pop();
-            } catch (e) {
-                return imageUrl.split('/').pop();
-            }
+            try { return decodeURIComponent(imageUrl).split('/').pop(); }
+            catch (e) { return imageUrl.split('/').pop(); }
         }
-
-        function getPrimaryUrl(imageUrl) {
-            const filename = extractFilename(imageUrl);
-            if (!filename) return null;
-            return STORAGE_BASE + encodeURIComponent(filename);
-        }
-
-        function getPreviewUrl(imageUrl) {
-            const filename = extractFilename(imageUrl);
-            if (!filename) return null;
-            return STORAGE_BASE + 'previews/' + encodeURIComponent(filename);
-        }
-        // ─────────────────────────────────────────────────────────────────────────
+        function getPrimaryUrl(u) { const f = extractFilename(u); return f ? STORAGE_BASE + encodeURIComponent(f) : null; }
+        function getPreviewUrl(u) { const f = extractFilename(u); return f ? STORAGE_BASE + 'previews/' + encodeURIComponent(f) : null; }
 
         async function fetchAnalytics() {
             const loading = document.getElementById('loading');
-            const list = document.getElementById('inventoryList');
+            const list    = document.getElementById('inventoryList');
+
+            // Reset to spinner on every call (handles post-delete refresh)
+            list.innerHTML = '';
+            loading.classList.remove('hidden');
+            loading.innerHTML = `
+                <div class="inline-block animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mb-4"></div>
+                <p class="text-slate-500 font-medium">Synchronizing with marketplace...</p>`;
 
             try {
-                const { data: { user } } = await sb.auth.getUser();
-                if (!user) {
+                const { data: { user }, error: authError } = await sb.auth.getUser();
+                if (authError || !user) {
                     loading.innerHTML = `<p class="text-slate-400">Access Denied. Please <a href="login.html" class="text-indigo-400 underline font-bold">Login</a>.</p>`;
                     return;
                 }
+                currentUser = user;
 
-                const { data, error } = await sb.from('product_details').select('*').eq('seller_id', user.id).order('id', { ascending: false });
+                const { data, error } = await sb
+                    .from('product_details')
+                    .select('*')
+                    .eq('seller_id', user.id)
+                    .order('id', { ascending: false });
+
                 if (error) throw error;
 
                 if (data && data.length > 0) {
                     loading.classList.add('hidden');
+
                     const total = data.reduce((s, i) => s + Number(i.price || 0), 0);
-                    const avg = total / data.length;
-                    const top = data.reduce((a, b) => Number(a.price) > Number(b.price) ? a : b);
+                    const avg   = total / data.length;
+                    const top   = data.reduce((a, b) => Number(a.price) > Number(b.price) ? a : b);
 
                     document.getElementById('totalItems').innerText = data.length;
                     document.getElementById('totalValue').innerText = `$${total.toLocaleString()}`;
-                    document.getElementById('avgPrice').innerText = `$${avg.toFixed(2)}`;
-                    document.getElementById('revenue').innerText = `$${(total * 0.95).toFixed(2)}`;
+                    document.getElementById('avgPrice').innerText   = `$${avg.toFixed(2)}`;
+                    document.getElementById('revenue').innerText    = `$${(total * 0.95).toFixed(2)}`;
                     document.getElementById('topProduct').innerText = top.title;
 
                     list.innerHTML = data.map(item => {
                         const price = Number(item.price);
-                        let badgeClass = price > 100 ? "bg-purple-500/10 text-purple-400" : (price < 15 ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400");
-                        let status = price > 100 ? "Premium" : (price < 15 ? "Budget" : "Standard");
-
-                        const primarySrc  = getPrimaryUrl(item.image_url)  || window.PLACEHOLDER_SVG;
-                        const fallbackSrc = getPreviewUrl(item.image_url) || '';
+                        const badgeClass = price > 100
+                            ? "bg-purple-500/10 text-purple-400"
+                            : price < 15
+                                ? "bg-amber-500/10 text-amber-400"
+                                : "bg-emerald-500/10 text-emerald-400";
+                        const status     = price > 100 ? "Premium" : price < 15 ? "Budget" : "Standard";
+                        const primarySrc = getPrimaryUrl(item.image_url) || window.PLACEHOLDER_SVG;
+                        const fallback   = getPreviewUrl(item.image_url) || '';
 
                         return `
-                        <tr class="hover:bg-white/[0.03]">
+                        <tr id="row-${item.id}" class="hover:bg-white/[0.03]">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
-                                    <img
-                                        src="${primarySrc}"
-                                        data-fallback="${fallbackSrc}"
+                                    <img src="${primarySrc}" data-fallback="${fallback}"
                                         class="w-14 h-14 rounded-2xl object-cover bg-slate-900 border border-white/10"
-                                        onerror="
-                                            var fb = this.dataset.fallback;
-                                            if (fb && fb.length > 0) {
-                                                this.dataset.fallback = '';
-                                                this.src = fb;
-                                            } else {
-                                                this.onerror = null;
-                                                this.src = window.PLACEHOLDER_SVG;
-                                            }
-                                        "
-                                    >
+                                        onerror="var fb=this.dataset.fallback;if(fb&&fb.length>0){this.dataset.fallback='';this.src=fb;}else{this.onerror=null;this.src=window.PLACEHOLDER_SVG;}">
                                     <div>
                                         <div class="font-bold text-white">${item.title}</div>
                                         <div class="text-[10px] text-slate-500 uppercase tracking-tighter">ID: #${item.id}</div>
@@ -182,29 +173,63 @@
                                     <a href="dashboard.html?edit=${item.id}" class="p-2 hover:bg-blue-500/10 text-blue-400 rounded-lg transition" title="Edit">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                                     </a>
-                                    <button onclick="deleteAsset(${item.id})" class="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition" title="Delete">
+                                    <button data-id="${item.id}" class="delete-btn p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition" title="Delete">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>`;
                     }).join('');
+
+                    // ✅ Event listeners instead of inline onclick — 100% reliable
+                    list.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', () => deleteAsset(Number(btn.dataset.id)));
+                    });
+
                     lucide.createIcons();
                 } else {
-                    loading.innerHTML = `<div class="py-10 text-center"><p class="text-slate-500 mb-6 font-medium">No products listed.</p><a href="dashboard.html" class="bg-white text-black px-8 py-3 rounded-2xl font-bold hover:bg-gray-200 transition">Create First Listing</a></div>`;
+                    loading.innerHTML = `
+                        <div class="py-10 text-center">
+                            <p class="text-slate-500 mb-6 font-medium">No products listed.</p>
+                            <a href="dashboard.html" class="bg-white text-black px-8 py-3 rounded-2xl font-bold hover:bg-gray-200 transition">Create First Listing</a>
+                        </div>`;
                 }
             } catch (err) {
-                console.error(err);
-                loading.innerHTML = `<p class="text-red-400 font-bold">Error loading analytics: ${err.message}</p>`;
+                console.error('fetchAnalytics error:', err);
+                loading.innerHTML = `<p class="text-red-400 font-bold">Error: ${err.message}</p>`;
             }
         }
 
-        // FIX: Assigned to window so onclick="deleteAsset(...)" in HTML can find it
-        window.deleteAsset = async function(id) {
-            if (confirm('Permanently remove this asset?')) {
-                const { error } = await sb.from('product_details').delete().eq('id', id);
-                if (!error) fetchAnalytics();
-                else alert("Action failed: " + error.message);
+        async function deleteAsset(id) {
+            if (!confirm('Permanently remove this asset?')) return;
+
+            if (!currentUser) {
+                alert('Session expired. Please refresh and log in again.');
+                return;
+            }
+
+            // Dim row immediately for snappy feel
+            const row = document.getElementById(`row-${id}`);
+            if (row) row.style.opacity = '0.3';
+
+            try {
+                const { error } = await sb
+                    .from('product_details')
+                    .delete()
+                    .eq('id', id)
+                    .eq('seller_id', currentUser.id); // scoped to owner
+
+                if (error) {
+                    console.error('Delete error:', error);
+                    if (row) row.style.opacity = '1';
+                    alert('Delete failed: ' + error.message);
+                } else {
+                    fetchAnalytics();
+                }
+            } catch (err) {
+                console.error('Unexpected delete error:', err);
+                if (row) row.style.opacity = '1';
+                alert('Unexpected error: ' + err.message);
             }
         }
 
