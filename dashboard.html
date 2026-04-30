@@ -277,10 +277,6 @@
             </div>
         </div>
 
-        <!--
-            novalidate: we do all validation manually in JS so the browser
-            never blocks submit because a file input is "missing" in edit mode.
-        -->
         <form id="productForm" class="space-y-6" novalidate>
 
             <div>
@@ -308,7 +304,6 @@
                         <span class="file-hint">PNG, JPG, WEBP — max 10 MB</span>
                         <span class="file-name" id="imageFileName"></span>
                     </label>
-                    <!-- No required attr — validated in JS -->
                     <input type="file" id="imageInput" accept="image/*">
                 </div>
 
@@ -320,17 +315,10 @@
                         <span class="file-hint">PDF, ZIP, AEP, FIG, MP4 & more</span>
                         <span class="file-name" id="assetFileName"></span>
                     </label>
-                    <!-- No required attr — validated in JS -->
                     <input type="file" id="pdfInput" accept=".pdf,.zip,.rar,.png,.jpg,.jpeg,.prproj,.aep,.mp4,.mov,.drt,.fig,.otf,.ttf,.json,.html,.css,.js,.csv,.xlsx">
                 </div>
             </div>
 
-            <!-- ── Remix & Resell licence toggle ─────────────────────────── -->
-            <!--
-                The real checkbox is hidden; clicking anywhere on .remix-toggle-wrap
-                toggles it. JS reads #remixLicenseCheck.checked at submit time and
-                writes license_type: 'remix' | 'personal' into the payload.
-            -->
             <div>
                 <label class="field-label" style="margin-bottom:0.5rem;">Licensing</label>
                 <label class="remix-toggle-wrap" id="remixToggleWrap" for="remixLicenseCheck">
@@ -375,12 +363,13 @@ const sb = supabase.createClient(
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImppdXplYmJyamJxa29vdmZyYnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NDc0NzYsImV4cCI6MjA5MzAyMzQ3Nn0.EWf2226D-wJZE25MLzqOToC-1LFu3o7vb0Sqi0q8FSc'
 );
 
-let currentUser   = null;
+let currentUser = null;
 
-// Submission lock — prevents double-inserts from rapid clicks or accidental
-// re-submissions. Set to true the moment the handler starts real work;
-// reset to false only on failure so the user can retry without refreshing.
-let isSubmitting  = false;
+// ── CHANGE 1: Renamed isSubmitting → isUploading, used throughout ─────────────
+// Guards against double-submits from rapid clicks. Flipped to true at the very
+// top of the handler (before any async work) and only reset to false on error,
+// so a successful run proceeds straight to redirect without re-enabling the btn.
+let isUploading = false;
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 let toastTimer;
@@ -490,12 +479,10 @@ async function loadProductData(id) {
         document.getElementById('description').value = data.description ?? '';
         document.getElementById('price').value       = data.price       ?? '';
 
-        // Pre-populate the remix toggle from the saved license_type
         const isRemix = data.license_type === 'remix';
         remixCheckbox.checked = isRemix;
         remixWrap.classList.toggle('checked', isRemix);
 
-        // Show existing file names so the seller knows what's already saved
         if (data.image_url) {
             document.getElementById('imageFileName').textContent =
                 '✓ Current: ' + data.image_url.split('/').pop().split('?')[0];
@@ -511,27 +498,42 @@ async function loadProductData(id) {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // ── CHANGE 2: Disable the button immediately as the very first action,
+    //    then bail out if a submission is already running. This two-step approach
+    //    means even a near-simultaneous second click is blocked before any async
+    //    work begins, preventing duplicate DB writes. ──────────────────────────
+    btn.disabled = true;
+    if (isUploading) return;
+    isUploading = true;
+
     const defaultBtnText = editId ? 'Save Changes' : 'Publish Product';
     const imgFile = document.getElementById('imageInput').files[0];
     const pdfFile = document.getElementById('pdfInput').files[0];
 
-    // ── Manual validation (replaces browser 'required') ──────────────────────
-    // On a NEW listing, both files are mandatory.
-    // On EDIT, files are optional — only upload if the seller chose a new one.
+    // ── Manual validation ─────────────────────────────────────────────────────
     if (!editId) {
         if (!document.getElementById('title').value.trim()) {
-            showToast('Please enter a product title.', 'warning'); return;
+            showToast('Please enter a product title.', 'warning');
+            // Reset on validation failure so the user can correct and retry
+            btn.disabled = false;
+            isUploading  = false;
+            return;
         }
         if (!imgFile) {
-            showToast('Please select a preview image.', 'warning'); return;
+            showToast('Please select a preview image.', 'warning');
+            btn.disabled = false;
+            isUploading  = false;
+            return;
         }
         if (!pdfFile) {
-            showToast('Please select a digital asset file.', 'warning'); return;
+            showToast('Please select a digital asset file.', 'warning');
+            btn.disabled = false;
+            isUploading  = false;
+            return;
         }
     }
 
     btn.textContent = 'Processing…';
-    btn.disabled    = true;
     setProgress(5);
 
     const ts = Date.now();
@@ -548,9 +550,7 @@ form.addEventListener('submit', async (e) => {
 
         setProgress(15);
 
-        // ── 2. Build payload (only fields being changed) ──────────────────────
-        // license_type is always written on every save — 'remix' if checked,
-        // 'personal' if unchecked. This ensures the value is never left null.
+        // ── 2. Build payload ──────────────────────────────────────────────────
         const licenseType = document.getElementById('remixLicenseCheck').checked
             ? 'remix'
             : 'personal';
@@ -587,16 +587,16 @@ form.addEventListener('submit', async (e) => {
                 if (m.adult === 'VERY_LIKELY' || m.adult === 'LIKELY' || m.violence === 'VERY_LIKELY') {
                     showToast('Upload blocked: Image violates safety guidelines.', 'warning');
                     btn.textContent = defaultBtnText;
-                    btn.disabled    = false;
+                    // ── CHANGE 3 (partial): re-enable on moderation block (not success) ──
+                    btn.disabled = false;
+                    isUploading  = false;
                     hideProgress();
                     return;
                 }
             }
 
-            // ✅ Explicitly overwrite image_url with the new public URL
             payload.image_url = imgData.publicUrl;
         }
-        // If no new image in edit mode, image_url is omitted → DB keeps old value
 
         setProgress(60);
 
@@ -609,12 +609,8 @@ form.addEventListener('submit', async (e) => {
                 .upload(assetPath, pdfFile);
             if (assetErr) throw new Error('Asset upload failed: ' + assetErr.message);
 
-            // ✅ Store BARE PATH only — NOT a public URL.
-            //    product-details.html uses createSignedUrl(path, 60, {download:true})
-            //    on the private bucket, which needs just: "downloads/file.zip"
             payload.asset_url = assetPath;
         }
-        // If no new asset in edit mode, asset_url is omitted → DB keeps old value
 
         setProgress(80);
 
@@ -628,7 +624,6 @@ form.addEventListener('submit', async (e) => {
                 .eq('id', editId);
 
             if (updateErr) {
-                // ✅ Alert with the raw error code so you can see it immediately
                 const detail = [
                     `Code: ${updateErr.code}`,
                     `Message: ${updateErr.message}`,
@@ -666,15 +661,20 @@ form.addEventListener('submit', async (e) => {
             showToast('Boom! Your product is live. 🚀', 'success');
         }
 
+        // ── CHANGE 3: On success, do NOT re-enable the button — redirect
+        //    immediately. The button stays disabled for the entire redirect
+        //    window, making a second submission physically impossible. ──────────
         hideProgress();
-        setTimeout(() => { window.location.href = 'analytics.html'; }, 1800);
+        window.location.href = 'analytics.html';
 
     } catch (err) {
+        // ── CHANGE 3 (cont): Only re-enable on error so the user can retry. ───
         hideProgress();
         console.error('[ariexo dashboard]', err);
         showToast(err.message, 'error');
         btn.textContent = defaultBtnText;
         btn.disabled    = false;
+        isUploading     = false;
     }
 });
 </script>
